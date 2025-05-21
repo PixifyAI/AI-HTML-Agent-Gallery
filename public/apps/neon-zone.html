@@ -1,0 +1,141 @@
+#Agent:gemini 2.5 pro 05-06,Model:Gemini Pro
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Dark Theme</title>
+    <style>
+        /* Basic Reset */
+        body {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Dark Background */
+        body {
+            background-color: #0a0a0a; /* Very dark gray/black */
+            color: #00ffff; /* Default neon text color (Cyan) */
+            font-family: 'Courier New', Courier, monospace; /* Futuristic/monospace font */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Full viewport height */
+            text-align: center;
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 90%;
+            width: 600px;
+        }
+
+        /* Neon Text Style */
+        h1, p, .neon-text {
+            text-shadow:
+                0 0 5px #00ffff,   /* Smaller glow */
+                0 0 10px #00ffff,  /* Medium glow */
+                0 0 20px #00ffff,  /* Larger glow */
+                0 0 40px #00ffff,  /* Extra glow */
+                0 0 80px #00ffff; /* Intense glow */
+            animation: flicker 1.5s infinite alternate; /* Subtle flicker effect */
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 3em;
+            text-transform: uppercase;
+        }
+
+        p {
+            font-size: 1.2em;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        /* Optional: Different neon color */
+        .neon-pink {
+            color: #ff00ff; /* Magenta */
+            text-shadow:
+                0 0 5px #ff00ff,
+                0 0 10px #ff00ff,
+                0 0 20px #ff00ff,
+                0 0 40px #ff00ff,
+                0 0 80px #ff00ff;
+            animation: flicker-pink 2s infinite alternate;
+        }
+
+         .neon-green {
+            color: #00ff00; /* Green */
+            text-shadow:
+                0 0 5px #00ff00,
+                0 0 10px #00ff00,
+                0 0 20px #00ff00,
+                0 0 40px #00ff00,
+                0 0 80px #00ff00;
+            animation: flicker-green 1.8s infinite alternate;
+        }
+
+
+        /* Flicker Animation */
+        @keyframes flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                text-shadow:
+                    0 0 5px #00ffff,
+                    0 0 10px #00ffff,
+                    0 0 20px #00ffff,
+                    0 0 40px #00ffff,
+                    0 0 80px #00ffff;
+            }
+            20%, 24%, 55% {
+                text-shadow: none; /* Turn off glow briefly */
+            }
+        }
+         @keyframes flicker-pink {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                 text-shadow:
+                    0 0 5px #ff00ff,
+                    0 0 10px #ff00ff,
+                    0 0 20px #ff00ff,
+                    0 0 40px #ff00ff,
+                    0 0 80px #ff00ff;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+            }
+        }
+         @keyframes flicker-green {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% {
+                 text-shadow:
+                    0 0 5px #00ff00,
+                    0 0 10px #00ff00,
+                    0 0 20px #00ff00,
+                    0 0 40px #00ff00,
+                    0 0 80px #00ff00;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1><span class="neon-pink">W</span>elcome <span class="neon-green">t</span>o <span class="neon-pink">t</span>he <span class="neon-green">N</span>eon <span class="neon-pink">Z</span>one</h1>
+        <p class="neon-text">This page demonstrates a dark background with glowing neon text effects using pure HTML and CSS.</p>
+        <p>Feel the cyber aesthetic!</p>
+        <p class="neon-green">Different
+            <span class="neon-pink">colors</span>
+            <span class="neon-text">are</span>
+            <span class="neon-green">possible</span>
+            <span class="neon-pink">too!</span>
+        </p>
+    </div>
+
+    <!-- No JavaScript needed for this simple styling example -->
+
+</body>
+</html>

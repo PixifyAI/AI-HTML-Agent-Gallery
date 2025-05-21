@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Alchemy - Single File Image Toolkit</title>
+    <meta name="description" content="A client-side image resizer, converter, and optimizer. All in a single HTML file!">
+    
+    <style>
+        /* ------------------------- */
+        /* --- Global Styles & CSS Variables --- */
+        /* ------------------------- */
+        :root {
+            --primary-color: #4a90e2;
+            --primary-dark: #3a7bc8;
+            --secondary-color: #f5f7fa;
+            --text-color: #333;
+            --light-text-color: #fff;
+            --border-color: #d1d8e0;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+            --warning-color: #f39c12;
+            --disabled-color: #bdc3c7;
+            --bg-color: #ffffff;
+            --card-bg-color: #ffffff;
+            
+            --font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --transition-speed: 0.3s;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        main {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+        }
+
+        /* ------------------------- */
+        /* --- Typography & Basic Elements --- */
+        /* ------------------------- */
+        h1, h2, h3 {
+            margin-bottom: 0.5em;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            text-align: center;
+        }
+        
+        h2 {
+            font-size: 1.75rem;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.3em;
+            margin-bottom: 1em;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.8em;
+        }
+        
+        p {
+            margin-bottom: 1em;
+        }
+
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color var(--transition-speed);
+        }
+
+        a:hover, a:focus {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        button,
+        input[type="button"],
+        input[type="submit"],
+        input[type="reset"] {
+            cursor: pointer;
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--border-radius);
+            background-color: var(--primary-color);
+            color: var(--light-text-color);
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color var(--transition-speed), transform var(--transition-speed);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        button:hover,
+        input[type="button"]:hover,
+        input[type="submit"]:hover,
+        input[type="reset"]:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        button:disabled,
+        input:disabled {
+            background-color: var(--disabled-color);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .button-secondary {
+            background-color: #6c757d;
+        }
+        .button-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .button-success {
+            background-color: var(--success-color);
+        }
+        .button-success:hover {
+            background-color: #27ae60;
+        }
+
+        .button-danger {
+            background-color: var(--error-color);
+        }
+        .button-danger:hover {
+            background-color: #c0392b;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: border-color var(--transition-speed), box-shadow var(--transition-speed);
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.3);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        /* ------------------------- */
+        /* --- Layout & Structure --- */
+        /* ------------------------- */
+        .container {
+            max-width: 1200px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background-color: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 25px;
+            margin-bottom: 25px;
+            transition: box-shadow var(--transition-speed);
+        }
+        
+        .card:hover {
+           box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        /* On larger screens, use a 2-column layout */
+        @media (min-width: 992px) {
+            .app-grid {
+                grid-template-columns: 1fr 1fr; /* Control panel and preview side-by-side */
+            }
+            .control-panel {
+                grid-column: 1 / 2;
+            }
+            .preview-area {
+                 grid-column: 2 / 3;
+            }
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+        
+        .control-row {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .control-row label {
+             margin-bottom: 0; /* Remove bottom margin for inline labels */
+             flex-shrink: 0; /* Prevent label from shrinking */
+        }
+        
+        .control-row input[type="number"],
+        .control-row select {
+            flex-grow: 1; /* Allow input/select to take available space */
+        }
+
+        /* ------------------------- */
+        /* --- File Input & Dropzone --- */
+        /* ------------------------- */
+        .file-drop-zone {
+            border: 3px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color var(--transition-speed), background-color var(--transition-speed);
+            background-color: var(--secondary-color);
+        }
+
+        .file-drop-zone.dragover {
+            border-color: var(--primary-color);
+            background-color: #eaf2fb;
+        }
+
+        .file-drop-zone p {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .file-drop-zone span {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        #fileInput {
+            display: none; /* Hide the actual file input */
+        }
+
+        /* ------------------------- */
+        /* --- Preview Area --- */
+        /* ------------------------- */
+        .preview-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px; /* Limit max preview width */
+            margin: 0 auto;
+            background-color: var(--secondary-color);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        #imagePreview {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            margin: 0 auto;
+            border-radius: var(--border-radius);
+            background: 
+                linear-gradient(45deg, #ccc 25%, transparent 25%), 
+                linear-gradient(-45deg, #ccc 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #ccc 75%),
+                linear-gradient(-45deg, transparent 75%, #ccc 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            min-height: 150px; /* Placeholder height */
+        }
+
+        #previewPlaceholder {
+            text-align: center;
+            padding: 50px 20px;
+            color: #6c757d;
+        }
+        
+        #imageInfo {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: #555;
+            text-align: center;
+        }
+
+        #imageInfo span {
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        #imageInfo strong {
+             color: var(--text-color);
+        }
+        
+        /* ------------------------- */
+        /* --- Sliders --- */
+        /* ------------------------- */
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .slider-container input[type="range"] {
+            flex-grow: 1;
+            cursor: pointer;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--border-color);
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background-color var(--transition-speed);
+        }
+
+        .slider-container input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+             transition: background-color var(--transition-speed);
+        }
+        
+        .slider-container input[type="range"]:hover::-webkit-slider-thumb {
+            background: var(--primary-dark);
+        }
+        
+        .slider-container input[type="range"]:hover::-moz-range-thumb {
+            background: var(--primary-dark);
+        }
+
+        .slider-container span {
+            min-width: 40px; /* Ensure value text doesn't jump around */
+            text-align: right;
+            font-weight: 600;
+        }
+
+        /* ------------------------- */
+        /* --- Output Area --- */
+        /* ------------------------- */
+        .output-area {
+             margin-top: 20px;
+             text-align: center;
+        }
+
+        #downloadBtn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+        }
+        
+        #outputMessage {
+            margin-top: 15px;
+            min-height: 1.5em; /* Reserve space */
+            font-weight: 600;
+        }
+        
+        .message-success {
+            color: var(--success-color);
+        }
+        
+        .message-error {
+            color: var(--error-color);
+        }
+        
+        .message-warning {
+            color: var(--warning-color);
+        }
+
+        /* ------------------------- */
+        /* --- Footer --- */
+        /* ------------------------- */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px 0;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+
+        /* ------------------------- */
+        /* --- Helper Classes --- */
+        /* ------------------------- */
+        .hidden {
+            display: none !important;
+        }
+
+        .control-group-disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        /* ------------------------- */
+        /* --- Responsive Design Adjustments --- */
+        /* ------------------------- */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+             .card {
+                padding: 20px;
+            }
+            .control-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            .control-row label {
+                 margin-bottom: 5px;
+            }
+            .slider-container {
+                 flex-direction: column;
+                 align-items: stretch;
+                 gap: 10px;
+            }
+             .slider-container span {
+                 text-align: left;
+             }
+        }
+        
+         @media (max-width: 480px) {
+            body {
+                padding: 15px;
+            }
+             h1 {
+                font-size: 1.8rem;
+            }
+            h2 {
+                font-size: 1.3rem;
+            }
+             .file-drop-zone {
+                 padding: 30px;
+             }
+             button,
+             input[type="button"],
+             input[type="submit"],
+             input[type="reset"] {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+             }
+              #downloadBtn {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Image Alchemy <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 30px; height: 30px; vertical-align: middle; margin-left: 5px;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8 0-1.57.46-3.03 1.24-4.26L6.7 14.87c.17.58.7 1.01 1.3 1.01h.01c.67 0 1.22-.48 1.33-1.15l.52-3.16c.14-.84.88-1.47 1.74-1.47h.01c.9 0 1.64.68 1.71 1.58l.31 3.87c.07.89.79 1.59 1.69 1.59h.01c.9 0 1.62-.7 1.69-1.59l.31-3.87c.07-.89.79-1.59 1.69-1.59h.01c.9 0 1.62.7 1.69-1.59l.31-3.87c.07-.89.79-1.59 1.69-1.59h.01c.78 0 1.45.54 1.62 1.27l1.14 4.97C20.74 9.6 20 10.75 20 12c0 4.41-3.59 8-8 8z"/></svg></h1>
+            <p style="text-align: center; max-width: 600px; margin: 10px auto 20px auto; color: #555;">Resize, convert, and optimize images directly in your browser. No uploads, 100% client-side.</p>
+        </header>
+
+        <main>
+            <div class="app-grid">
+                
+                <!-- Control Panel Column -->
+                <section class="control-panel card">
+                    <h2>Controls</h2>
+                    
+                    <!-- File Input -->
+                    <div class="control-group">
+                        <h3>1. Load Image</h3>
+                         <div class="file-drop-zone" id="dropZone">
+                            <p>Drag & Drop your image here or <span>click to select</span></p>
+                            <input type="file" id="fileInput" accept="image/png, image/jpeg, image/gif, image/webp, image/bmp">
+                            <p id="fileName" style="font-weight: 500; font-size: 0.9em; margin-top: 10px; color: #333;"></p>
+                        </div>
+                    </div>
+
+                    <!-- Resize Options -->
+                    <div class="control-group" id="resizeGroup">
+                        <h3>2. Resize</h3>
+                        <div class="control-row">
+                             <label for="resizeType">Method:</label>
+                             <select id="resizeType" >
+                                 <option value="percentage" selected>Percentage</option>
+                                 <option value="dimensions">Max Dimensions</option>
+                             </select>
+                        </div>
+                       
+                        <!-- Percentage Controls -->
+                        <div id="percentageControls" class="control-group">
+                           <label for="resizePercentage">Scale:</label>
+                            <div class="slider-container">
+                                <input type="range" id="resizePercentage" min="1" max="100" value="100">
+                                <span id="percentageValue">100%</span>
+                           </div>
+                        </div>
+                       
+                        <!-- Dimensions Controls -->
+                        <div id="dimensionsControls" class="control-group hidden">
+                            <div class="control-row">
+                                <label for="maxWidth">Max Width (px):</label>
+                                <input type="number" id="maxWidth" placeholder="e.g., 1920" min="1">
+                            </div>
+                             <div class="control-row">
+                                <label for="maxHeight">Max Height (px):</label>
+                                <input type="number" id="maxHeight" placeholder="e.g., 1080" min="1">
+                            </div>
+                            <div class="control-row" style="margin-top: 10px;">
+                                <input type="checkbox" id="aspectRatioLock" checked style="width: auto; margin-right: 8px;">
+                                <label for="aspectRatioLock" style="margin-bottom: 0; font-weight: normal;">Maintain Aspect Ratio</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Format & Quality Options -->
+                    <div class="control-group" id="formatGroup">
+                        <h3>3. Format & Quality</h3>
+                         <div class="control-row">
+                            <label for="outputFormat">Output Format:</label>
+                            <select id="outputFormat">
+                                <option value="keep">Keep Original</option>
+                                <option value="png">PNG</option>
+                                <option value="jpeg">JPEG</option>
+                                <!-- WebP option will be added by JS if supported -->
+                            </select>
+                        </div>
+                        
+                        <div id="qualityControl" class="control-group hidden">
+                            <label for="qualitySlider">Quality:</label>
+                             <div class="slider-container">
+                                <input type="range" id="qualitySlider" min="0.1" max="1.0" step="0.05" value="0.85">
+                                <span id="qualityValue">0.85</span>
+                            </div>
+                            <small style="display: block; margin-top: 5px; color: #6c757d;">Applies to JPEG and WebP formats. Lower quality means smaller file size.</small>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                     <div class="control-group">
+                         <h3>4. Process & Download</h3>
+                         <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+                            <button id="processBtn" disabled class="button-success">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1em; height:1em; vertical-align: middle; margin-right: 5px;"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.75v4.5a.75.75 0 001.5 0V14.7l.31.31a7 7 0 0011.3-3.078A.75.75 0 0015.312 11.424zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.75a.75.75 0 000 1.5h4.5V3.25a.75.75 0 00-1.5 0V5.3l-.31-.31a7 7 0 00-11.3 3.078A.75.75 0 004.688 8.576z" clip-rule="evenodd" /></svg>
+                                Process Image
+                            </button>
+                            <button id="resetBtn" type="reset" class="button-secondary" disabled>
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1em; height:1em; vertical-align: middle; margin-right: 5px;"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.75v4.5a.75.75 0 001.5 0V14.7l.31.31a7 7 0 0011.3-3.078A.75.75 0 0015.312 11.424zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.75a.75.75 0 000 1.5h4.5V3.25a.75.75 0 00-1.5 0V5.3l-.31-.31a7 7 0 00-11.3 3.078A.75.75 0 004.688 8.576z" clip-rule="evenodd" /></svg>
+                                Reset
+                            </button>
+                        </div>
+                    </div>
+                    
+                </section>
+                
+                <!-- Preview Column -->
+                <section class="preview-area card">
+                     <h2>Preview & Output</h2>
+                     
+                     <div class="preview-container">
+                         <div id="previewPlaceholder">
+                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 80px; height: 80px; color: var(--disabled-color); margin-bottom: 15px;">
+                                <path fill-rule="evenodd" d="M1.5 6a2.25 2.25 0 012.25-2.25h16.5A2.25 2.25 0 0122.5 6v12a2.25 2.25 0 01-2.25 2.25H3.75A2.25 2.25 0 011.5 18V6zM3 16.06l4.47-4.47a.75.75 0 011.06 0l3.97 3.97 1.97-1.97a.75.75 0 011.06 0l4.47 4.47V6.75a.75.75 0 00-.75-.75H3.75a.75.75 0 00-.75.75v9.31zM12 12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" clip-rule="evenodd" />
+                             </svg>
+                             <p>Your image preview will appear here</p>
+                         </div>
+                         <img id="imagePreview" src="#" alt="Image Preview" class="hidden">
+                     </div>
+                     
+                     <div id="imageInfo" class="hidden">
+                        <h3>Image Details</h3>
+                        <span id="originalInfo"></span>
+                        <span id="outputInfo"></span>
+                     </div>
+                     
+                     <div class="output-area">
+                        <a id="downloadBtn" class="button-success hidden" href="#" download="processed_image.png">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1em; height:1em; vertical-align: middle; margin-right: 5px;">
+                                <path d="M10.75 2.75a.75.75 0 00-1.5 0v8.614L6.295 8.235a.75.75 0 10-1.09 1.03l4.25 4.5a.75.75 0 001.09 0l4.25-4.5a.75.75 0 00-1.09-1.03l-2.955 3.129V2.75z" />
+                                <path d="M3.5 12.75a.75.75 0 00-1.5 0v2.5A2.75 2.75 0 004.75 18h10.5A2.75 2.75 0 0018 15.25v-2.5a.75.75 0 00-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5z" />
+                            </svg>
+                            Download Image
+                        </a>
+                         <p id="outputMessage"></p>
+                     </div>
+                </section>
+            
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2023 Image Alchemy. Created for the AI Battle. All processing is done in your browser.</p>
+        </footer>
+    </div>
+
+    <script>
+        // --- Polyfill for canvas.toBlob if needed (basic) ---
+        // Note: A more robust polyfill might be larger. This is a simple version.
+        if (!HTMLCanvasElement.prototype.toBlob) {
+            Object.defineProperty(HTMLCanvasElement.prototype, 'toBlob', {
+                value: function (callback, type, quality) {
+                    var dataURL = this.toDataURL(type, quality);
+                    // Convert base64 to raw binary data held in a string
+                    var byteString = atob(dataURL.split(',')[1]);
+                    // Write the bytes of the string to a typed array
+                    var ia = new Uint8Array(byteString.length);
+                    for (var i = 0; i < byteString.length; i++) {
+                        ia[i] = byteString.charCodeAt(i);
+                    }
+                    // Write the ArrayBuffer to a blob and call the callback
+                    callback(new Blob([ia], { type: type }));
+                }
+            });
+        }
+        
+        // --- Application Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- DOM Element References ---
+            const dropZone = document.getElementById('dropZone');
+            const fileInput = document.getElementById('fileInput');
+            const fileNameDisplay = document.getElementById('fileName');
+            const imagePreview = document.getElementById('imagePreview');
+            const previewPlaceholder = document.getElementById('previewPlaceholder');
+            const imageInfo = document.getElementById('imageInfo');
+            const originalInfo = document.getElementById('originalInfo');
+            const outputInfo = document.getElementById('outputInfo');
+            
+            const resizeTypeSelect = document.getElementById('resizeType');
+            const percentageControls = document.getElementById('percentageControls');
+            const resizePercentageSlider = document.getElementById('resizePercentage');
+            const percentageValueDisplay = document.getElementById('percentageValue');
+            
+            const dimensionsControls = document.getElementById('dimensionsControls');
+            const maxWidthInput = document.getElementById('maxWidth');
+            const maxHeightInput = document.getElementById('maxHeight');
+            const aspectRatioLock = document.getElementById('aspectRatioLock');
+            
+            const outputFormatSelect = document.getElementById('outputFormat');
+            const qualityControl = document.getElementById('qualityControl');
+            const qualitySlider = document.getElementById('qualitySlider');
+            const qualityValueDisplay = document.getElementById('qualityValue');
+            
+            const processBtn = document.getElementById('processBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const outputMessage = document.getElementById('outputMessage');
+
+            const resizeGroup = document.getElementById('resizeGroup');
+            const formatGroup = document.getElementById('formatGroup');
+
+            // --- State Variables ---
+            let originalImageFile = null;
+            let originalImage = new Image();
+            let originalWidth = 0;
+            let originalHeight = 0;
+            let originalType = '';
+            let originalSize = 0;
+            let processedBlob = null;
+            let webPSupported = false;
+
+            // --- Utility Functions ---
+            const formatBytes = (bytes, decimals = 2) => {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            };
+            
+            // Debounce function to limit rapid function calls (e.g., on slider move)
+            const debounce = (func, wait) => {
+                 let timeout;
+                 return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            };
+            
+            // --- Core Logic ---
+            
+            // Function to check WebP Support
+            const checkWebPSupport = () => {
+                try {
+                    const canvas = document.createElement('canvas');
+                    // Use a small transparent image for testing
+                    if (!!(canvas.getContext && canvas.getContext('2d'))) {
+                         // If basic canvas is supported
+                        const isSupported = canvas.toDataURL('image/webp').indexOf('data:image/webp') === 0;
+                        if (isSupported) {
+                             const webpOption = document.createElement('option');
+                             webpOption.value = 'webp';
+                             webpOption.textContent = 'WebP';
+                             outputFormatSelect.appendChild(webpOption);
+                             webPSupported = true;
+                             console.log("WebP conversion is supported.");
+                        } else {
+                             console.log("WebP conversion is not supported by this browser.");
+                        }
+                    } else {
+                        console.log("Canvas is not supported, cannot check for WebP support.");
+                    }
+                } catch (e) {
+                    console.log("Error checking WebP support:", e);
+                }
+            };
+
+            // Reset application state
+            const resetApp = () => {
+                originalImageFile = null;
+                originalImage = new Image();
+                originalWidth = 0;
+                originalHeight = 0;
+                originalType = '';
+                originalSize = 0;
+                processedBlob = null;
+
+                fileInput.value = ''; // Clear file input
+                fileNameDisplay.textContent = '';
+                imagePreview.classList.add('hidden');
+                imagePreview.src = '#';
+                previewPlaceholder.classList.remove('hidden');
+                imageInfo.classList.add('hidden');
+                originalInfo.textContent = '';
+                outputInfo.textContent = '';
+                
+                resizeTypeSelect.value = 'percentage';
+                resizePercentageSlider.value = 100;
+                percentageValueDisplay.textContent = '100%';
+                maxWidthInput.value = '';
+                maxHeightInput.value = '';
+                aspectRatioLock.checked = true;
+                
+                outputFormatSelect.value = 'keep';
+                qualitySlider.value = 0.85;
+                qualityValueDisplay.textContent = '0.85';
+                
+                updateControlVisibility();
+                
+                processBtn.disabled = true;
+                resetBtn.disabled = true;
+                downloadBtn.classList.add('hidden');
+                downloadBtn.href = '#';
+                outputMessage.textContent = '';
+                outputMessage.className = '';
+
+                // Re-enable control groups
+                resizeGroup.classList.remove('control-group-disabled');
+                formatGroup.classList.remove('control-group-disabled');
+                
+                console.log("Application reset.");
+            };
+
+            // Update UI based on selected options
+            const updateControlVisibility = () => {
+                // Resize method
+                if (resizeTypeSelect.value === 'percentage') {
+                    percentageControls.classList.remove('hidden');
+                    dimensionsControls.classList.add('hidden');
+                } else {
+                    percentageControls.classList.add('hidden');
+                    dimensionsControls.classList.remove('hidden');
+                }
+
+                // Quality slider
+                const selectedFormat = outputFormatSelect.value;
+                const showQuality = selectedFormat === 'jpeg' || selectedFormat === 'webp' || (selectedFormat === 'keep' && (originalType === 'image/jpeg' || originalType === 'image/webp'));
+                
+                if (showQuality) {
+                    qualityControl.classList.remove('hidden');
+                } else {
+                    qualityControl.classList.add('hidden');
+                }
+            };
+
+            // Handle file selection
+            const handleFileSelect = (file) => {
+                if (!file) return;
+
+                if (!file.type.startsWith('image/')) {
+                    showError('Invalid file type. Please select an image.');
+                    resetApp();
+                    return;
+                }
+                
+                resetApp(); // Reset before loading new file
+                
+                originalImageFile = file;
+                originalType = file.type;
+                originalSize = file.size;
+                fileNameDisplay.textContent = `Selected: ${file.name}`;
+                
+                const reader = new FileReader();
+                
+                reader.onload = (e) => {
+                    originalImage.onload = () => {
+                        originalWidth = originalImage.width;
+                        originalHeight = originalImage.height;
+                        
+                        imagePreview.src = e.target.result;
+                        imagePreview.classList.remove('hidden');
+                        previewPlaceholder.classList.add('hidden');
+                        
+                        updateImageInfo();
+                        
+                        // Set max dimensions based on original image
+                        // maxWidthInput.value = originalWidth;
+                        // maxHeightInput.value = originalHeight;
+                        // We'll leave these blank initially for user input.
+                        
+                        // Enable controls
+                        processBtn.disabled = false;
+                        resetBtn.disabled = false;
+                        resizeGroup.classList.remove('control-group-disabled');
+                        formatGroup.classList.remove('control-group-disabled');
+                        
+                        console.log(`Image loaded: ${originalWidth}x${originalHeight}, Type: ${originalType}, Size: ${formatBytes(originalSize)}`);
+                    };
+                    
+                    originalImage.onerror = () => {
+                        showError('Could not load image data.');
+                         resetApp();
+                    };
+                    
+                    originalImage.src = e.target.result;
+                };
+                
+                reader.onerror = () => {
+                     showError('Could not read file.');
+                     resetApp();
+                };
+                
+                reader.readAsDataURL(file);
+            };
+
+            // Update image info display
+            const updateImageInfo = (outputWidth, outputHeight, outputSize) => {
+                originalInfo.innerHTML = `<strong>Original:</strong> ${originalWidth}x${originalHeight} (${formatBytes(originalSize)}) - ${originalType.replace('image/','')}`;
+                 if (outputWidth && outputHeight && outputSize) {
+                    outputInfo.innerHTML = `<strong>Output:</strong> ${outputWidth}x${outputHeight} (${formatBytes(outputSize)})`;
+                } else {
+                    outputInfo.innerHTML = ''; // Clear output info if no processing done yet
+                }
+                imageInfo.classList.remove('hidden');
+            };
+            
+            // Display messages to the user
+            const showMessage = (message, type = 'info') => {
+                outputMessage.textContent = message;
+                outputMessage.className = ''; // Clear previous classes
+                if (type === 'success') {
+                    outputMessage.classList.add('message-success');
+                } else if (type === 'error') {
+                    outputMessage.classList.add('message-error');
+                } else if (type === 'warning') {
+                     outputMessage.classList.add('message-warning');
+                }
+                 // Optionally hide message after a delay
+                 // setTimeout(() => { outputMessage.textContent = ''; outputMessage.className = ''; }, 5000);
+            };
+
+            const showError = (message) => showMessage(message, 'error');
+            const showSuccess = (message) => showMessage(message, 'success');
+            const showWarning = (message) => showMessage(message, 'warning');
+            
+            // Calculate new dimensions based on controls
+            const calculateNewDimensions = () => {
+                let newWidth = originalWidth;
+                let newHeight = originalHeight;
+                const aspectRatio = originalWidth / originalHeight;
+
+                if (resizeTypeSelect.value === 'percentage') {
+                    const percentage = parseInt(resizePercentageSlider.value, 10) / 100;
+                    newWidth = Math.round(originalWidth * percentage);
+                    newHeight = Math.round(originalHeight * percentage);
+                } else if (resizeTypeSelect.value === 'dimensions') {
+                    const maxWidth = parseInt(maxWidthInput.value, 10);
+                    const maxHeight = parseInt(maxHeightInput.value, 10);
+                    
+                    if (!maxWidth && !maxHeight) {
+                         // If neither is set, don't resize
+                         return { width: originalWidth, height: originalHeight };
+                    }
+                    
+                    if (aspectRatioLock.checked) {
+                        if (maxWidth && maxHeight) {
+                            // Fit within bounds
+                             if (originalWidth / maxWidth > originalHeight / maxHeight) {
+                                // Width is the limiting factor
+                                newWidth = maxWidth;
+                                newHeight = Math.round(maxWidth / aspectRatio);
+                            } else {
+                                // Height is the limiting factor
+                                newHeight = maxHeight;
+                                newWidth = Math.round(maxHeight * aspectRatio);
+                            }
+                        } else if (maxWidth) {
+                            // Resize based on width
+                            newWidth = maxWidth;
+                            newHeight = Math.round(maxWidth / aspectRatio);
+                        } else if (maxHeight) {
+                             // Resize based on height
+                            newHeight = maxHeight;
+                            newWidth = Math.round(maxHeight * aspectRatio);
+                        }
+                    } else {
+                        // Aspect ratio not locked, use provided dimensions directly
+                        if (maxWidth) newWidth = maxWidth;
+                        if (maxHeight) newHeight = maxHeight;
+                         // If only one is provided, the other remains original (might be weird, consider warning?)
+                         // Let's assume if lock is off, user provides both or accepts distortion/partial change
+                         if (maxWidth && !maxHeight) newHeight = originalHeight;
+                         if (!maxWidth && maxHeight) newWidth = originalWidth;
+                    }
+                }
+                
+                // Ensure minimum dimensions (e.g., 1px)
+                newWidth = Math.max(1, newWidth);
+                newHeight = Math.max(1, newHeight);
+
+                return { width: newWidth, height: newHeight };
+            };
+            
+            // Process the image
+            const processImage = () => {
+                if (!originalImageFile || !originalImage.src || originalImage.src === '#') {
+                    showError('Please load an image first.');
+                    return;
+                }
+
+                processBtn.disabled = true;
+                processBtn.innerHTML = `
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1em; height:1em; vertical-align: middle; margin-right: 5px; animation: spin 1s linear infinite;">
+                        <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.75v4.5a.75.75 0 001.5 0V14.7l.31.31a7 7 0 0011.3-3.078A.75.75 0 0015.312 11.424zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.75a.75.75 0 000 1.5h4.5V3.25a.75.75 0 00-1.5 0V5.3l-.31-.31a7 7 0 00-11.3 3.078A.75.75 0 004.688 8.576z" clip-rule="evenodd" />
+                    </svg> Processing...
+                    <style>@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }</style>
+                `;
+                showWarning('Processing image...');
+                downloadBtn.classList.add('hidden');
+                
+                // Use setTimeout to allow UI to update before potentially blocking canvas operations
+                setTimeout(() => {
+                    try {
+                        const { width: newWidth, height: newHeight } = calculateNewDimensions();
+                        
+                        if (newWidth <= 0 || newHeight <= 0) {
+                            showError("Calculated dimensions are invalid. Please check inputs.");
+                            resetProcessButton();
+                            return;
+                        }
+                        
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        canvas.width = newWidth;
+                        canvas.height = newHeight;
+                        
+                        // Draw image to canvas (this performs resizing)
+                        // Improve quality for downscaling if possible (simple approach)
+                        // For better quality, consider multi-step downscaling, but that adds complexity
+                        ctx.imageSmoothingQuality = 'high'; 
+                        ctx.drawImage(originalImage, 0, 0, newWidth, newHeight);
+                        
+                        let outputFormat = outputFormatSelect.value;
+                        if (outputFormat === 'keep') {
+                            outputFormat = originalType.split('/')[1] || 'png'; // Default to png if type is weird
+                            // Map common types
+                            if (outputFormat === 'jpg') outputFormat = 'jpeg'; 
+                            // If original was webp but browser doesn't support *encoding* webp, fallback
+                             if (outputFormat === 'webp' && !webPSupported) {
+                                 showWarning("WebP output not supported, falling back to PNG.");
+                                 outputFormat = 'png';
+                             }
+                        }
+                        
+                        let mimeType = `image/${outputFormat}`;
+                        let quality = qualitySlider.value;
+                        
+                        // Quality parameter is only for jpeg and webp
+                        const needsQualityParam = mimeType === 'image/jpeg' || mimeType === 'image/webp';
+                        
+                        canvas.toBlob(
+                            (blob) => {
+                                if (blob) {
+                                    processedBlob = blob;
+                                    const downloadUrl = URL.createObjectURL(blob);
+                                    const fileName = generateFileName(outputFormat);
+
+                                    downloadBtn.href = downloadUrl;
+                                    downloadBtn.download = fileName;
+                                    downloadBtn.classList.remove('hidden');
+                                    
+                                    updateImageInfo(newWidth, newHeight, blob.size);
+                                    showSuccess(`Image processed! Ready for download.`);
+                                    
+                                    // Optional: Update preview to show processed image
+                                    // imagePreview.src = downloadUrl; 
+                                    // Note: this might be slow if the image is large, keep original for now
+                                    
+                                } else {
+                                    showError('Failed to create image blob. The format might be unsupported.');
+                                }
+                                resetProcessButton();
+                            }, 
+                            mimeType, 
+                            needsQualityParam ? quality : undefined
+                        );
+
+                    } catch (error) {
+                        console.error("Processing error:", error);
+                        showError(`An error occurred during processing: ${error.message}`);
+                        resetProcessButton();
+                    }
+                }, 50); // Small delay to let UI update
+            };
+            
+            const resetProcessButton = () => {
+                 processBtn.disabled = false;
+                 processBtn.innerHTML = `
+                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:1em; height:1em; vertical-align: middle; margin-right: 5px;"><path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.201 2.466l-.312-.311h2.433a.75.75 0 000-1.5H3.75v4.5a.75.75 0 001.5 0V14.7l.31.31a7 7 0 0011.3-3.078A.75.75 0 0015.312 11.424zM4.688 8.576a5.5 5.5 0 019.201-2.466l.312.311H11.75a.75.75 0 000 1.5h4.5V3.25a.75.75 0 00-1.5 0V5.3l-.31-.31a7 7 0 00-11.3 3.078A.75.75 0 004.688 8.576z" clip-rule="evenodd" /></svg>
+                     Process Image
+                 `;
+            };
+
+            // Generate a filename for download
+            const generateFileName = (format) => {
+                const baseName = originalImageFile.name.substring(0, originalImageFile.name.lastIndexOf('.')) || 'image';
+                const timestamp = new Date().toISOString().replace(/[:.-]/g, '').replace('T', '_').substring(0, 15);
+                // Ensure format is a valid extension
+                format = format.toLowerCase().replace('jpeg', 'jpg');
+                return `${baseName}_processed_${timestamp}.${format}`;
+            };
+            
+            // --- Event Listeners ---
+            
+            // File Input (Click)
+            fileInput.addEventListener('change', (e) => {
+                 handleFileSelect(e.target.files[0]);
+            });
+
+            // Drop Zone
+            dropZone.addEventListener('click', () => fileInput.click());
+            
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('dragover');
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+                
+                const file = e.dataTransfer.files[0];
+                handleFileSelect(file);
+            });
+
+            // Control Changes
+            resizeTypeSelect.addEventListener('change', updateControlVisibility);
+            outputFormatSelect.addEventListener('change', updateControlVisibility);
+            
+            // Sliders with value display
+            resizePercentageSlider.addEventListener('input', () => {
+                 percentageValueDisplay.textContent = `${resizePercentageSlider.value}%`;
+            });
+            qualitySlider.addEventListener('input', () => {
+                 qualityValueDisplay.textContent = parseFloat(qualitySlider.value).toFixed(2);
+            });
+            
+             // Debounced dimension calculation on number input change
+             const debouncedDimensionCheck = debounce(() => {
+                if (originalImage.src && originalImage.src !== '#') {
+                    // Optional: could add a live preview update here if desired,
+                    // but processing might be slow. For now, just check.
+                    console.log("Dimension input changed, ready for processing.");
+                }
+             }, 300); // 300ms debounce
+             
+             maxWidthInput.addEventListener('input', debouncedDimensionCheck);
+             maxHeightInput.addEventListener('input', debouncedDimensionCheck);
+             
+             // Aspect ratio lock behavior - adjust other dimension input
+             const handleDimensionChange = (changedInput) => {
+                 if (!aspectRatioLock.checked || !originalWidth || !originalHeight) return;
+                 
+                 const aspectRatio = originalWidth / originalHeight;
+                 
+                 if (changedInput === 'width') {
+                     const newWidth = parseInt(maxWidthInput.value, 10);
+                     if (newWidth > 0) {
+                         maxHeightInput.value = Math.round(newWidth / aspectRatio);
+                     }
+                 } else if (changedInput === 'height') {
+                     const newHeight = parseInt(maxHeightInput.value, 10);
+                     if (newHeight > 0) {
+                        maxWidthInput.value = Math.round(newHeight * aspectRatio);
+                     }
+                 }
+             };
+             
+             maxWidthInput.addEventListener('change', () => handleDimensionChange('width'));
+             maxHeightInput.addEventListener('change', () => handleDimensionChange('height'));
+
+
+            // Action Buttons
+            processBtn.addEventListener('click', processImage);
+            resetBtn.addEventListener('click', resetApp);
+            
+            // --- Initialization ---
+            checkWebPSupport();
+            updateControlVisibility();
+            // Disable controls initially until an image is loaded
+            resizeGroup.classList.add('control-group-disabled');
+            formatGroup.classList.add('control-group-disabled');
+            resetBtn.disabled = true;
+            processBtn.disabled = true;
+            
+            console.log("Image Alchemy Initialized!");
+
+        });
+    </script>
+
+</body>
+</html>

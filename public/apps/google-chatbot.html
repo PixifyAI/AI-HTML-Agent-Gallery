@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultimate Gemini Omni-Chat UI (Client-Side Demo)</title>
+    <style>
+        /* --- CSS Variables --- */
+        :root {
+            --bg-color: #1a1a1d; /* Darker background */
+            --container-bg: #2c2f33; /* Discord-like grey */
+            --sidebar-bg: #23272a; /* Darker sidebar */
+            --input-bg: #40444b; /* Darker input */
+            --border-color: #4f545c; /* Subtle border */
+            --text-color: #dcddde; /* Light grey text */
+            --text-muted: #b9bbbe; /* Muted grey */
+            --text-link: #7289da; /* Discord blurple */
+            --accent-color: #7289da; /* Blurple */
+            --accent-hover: #5f73bc;
+            --user-msg-bg: var(--accent-color);
+            --user-msg-text: #ffffff;
+            --gemini-msg-bg: #36393f; /* Slightly lighter grey */
+            --gemini-msg-text: var(--text-color);
+            --error-bg: #f04747; /* Discord red */
+            --error-text: #ffffff;
+            --warning-bg: #faa61a; /* Discord yellow */
+            --warning-text: #ffffff;
+            --info-bg: #4f545c;
+            --info-text: #dcddde;
+            --success-bg: #43b581; /* Discord green */
+            --success-text: #ffffff;
+
+            --font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif; /* Discord font stack */
+            --font-monospace: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            --border-radius-sm: 3px;
+            --border-radius-md: 5px;
+            --border-radius-lg: 8px;
+            --spacing-xs: 4px;
+            --spacing-sm: 8px;
+            --spacing-md: 12px;
+            --spacing-lg: 16px;
+            --spacing-xl: 24px;
+        }
+
+        /* --- Base & Layout --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; font-size: 16px; }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 0; /* Remove body padding */
+            overflow: hidden; /* Prevent body scroll */
+        }
+
+        #app-container {
+            display: flex;
+            width: 100%;
+            height: 100vh;
+            max-width: 1600px; /* Max width for large screens */
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden; /* Important */
+        }
+
+        /* --- Sidebar (Config) --- */
+        #sidebar {
+            width: 350px;
+            flex-shrink: 0;
+            background-color: var(--sidebar-bg);
+            padding: var(--spacing-lg);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+        }
+        #sidebar h2 {
+            color: var(--text-color);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-sm);
+            margin-bottom: var(--spacing-lg);
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+        .config-group {
+            margin-bottom: var(--spacing-xl);
+        }
+        .config-group h3 {
+             color: var(--text-muted);
+             font-size: 0.9em;
+             margin-bottom: var(--spacing-md);
+             text-transform: uppercase;
+             font-weight: 700;
+             display: flex; /* Align button */
+             justify-content: space-between;
+             align-items: center;
+        }
+        .config-item {
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-xs);
+        }
+        .config-item label {
+            color: var(--text-muted);
+            font-size: 0.85em;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .config-item label .value-display {
+            font-weight: 400;
+            color: var(--text-color);
+        }
+        .config-item input[type="password"],
+        .config-item select,
+        .config-item textarea,
+        .config-item input[type="number"],
+        .config-item input[type="text"] { /* Combined common styles */
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border: 1px solid var(--input-bg); /* Input background as border */
+            border-radius: var(--border-radius-sm);
+            background-color: var(--input-bg);
+            color: var(--text-color);
+            font-size: 0.9em;
+            transition: border-color 0.2s ease;
+            font-family: inherit; /* Use body font by default */
+        }
+        .config-item input[type="password"]:focus,
+        .config-item select:focus,
+        .config-item textarea:focus,
+        .config-item input[type="number"]:focus,
+        .config-item input[type="text"]:focus {
+             outline: none;
+             border-color: var(--accent-color);
+        }
+        .config-item select {
+             appearance: none;
+             background-image: url('data:image/svg+xml;utf8,<svg fill="%23b9bbbe" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>');
+             background-repeat: no-repeat;
+             background-position: right var(--spacing-sm) center;
+             background-size: 1.1em;
+             padding-right: 35px;
+         }
+         .config-item select option.experimental {
+            color: var(--warning-text); /* Use warning color */
+         }
+         .config-item select option[disabled] {
+            color: var(--text-muted);
+            font-style: italic;
+         }
+         .config-item textarea {
+             min-height: 80px;
+             resize: vertical;
+             font-family: var(--font-monospace); /* Use monospace for sys instructions */
+         }
+         .config-item input[type="range"] {
+             width: 100%;
+             cursor: pointer;
+             margin-top: var(--spacing-xs);
+         }
+         .config-item input[type="text"]#stop-sequences { /* Specific font for stop sequences */
+             font-family: var(--font-monospace);
+         }
+
+         .api-warning, .model-note { font-size: 0.8em; color: var(--text-muted); margin-top: var(--spacing-xs); padding: var(--spacing-sm); border-radius: var(--border-radius-sm); }
+         .api-warning { background-color: rgba(250, 166, 26, 0.1); border-left: 3px solid var(--warning-bg); color: var(--warning-text); }
+         .model-note { background-color: rgba(79, 84, 92, 0.3); border-left: 3px solid var(--info-bg); }
+         .model-note strong { color: var(--warning-text); }
+
+        /* Hide/Show Parameter Sections */
+        .parameter-section { display: none; }
+        .parameter-section.active { display: block; }
+
+        #sidebar button.clear-btn {
+            background: var(--input-bg);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            font-size: 0.8em;
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            /* float: right; Removed float */
+            /* margin-left: var(--spacing-sm); */
+        }
+         #sidebar button.clear-btn:hover {
+             background: var(--border-color);
+             color: var(--text-color);
+         }
+
+        /* --- Main Chat Area --- */
+        #main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--container-bg);
+            overflow: hidden; /* Crucial */
+        }
+
+        /* Chat Header */
+        #chat-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            flex-shrink: 0;
+            background-color: var(--container-bg); /* Match background */
+            z-index: 10; /* Keep above chat box scrollbar */
+            color: var(--text-color);
+            font-size: 1.05em;
+        }
+         #chat-header .model-display {
+             font-weight: 400;
+             color: var(--text-muted);
+             font-size: 0.9em;
+             margin-left: var(--spacing-xs);
+         }
+
+        /* Chat Box */
+        #chat-box {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: var(--spacing-lg);
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-lg);
+        }
+        /* Custom Scrollbar */
+        #chat-box::-webkit-scrollbar, #sidebar::-webkit-scrollbar { width: 8px; }
+        #chat-box::-webkit-scrollbar-track, #sidebar::-webkit-scrollbar-track { background: transparent; }
+        #chat-box::-webkit-scrollbar-thumb, #sidebar::-webkit-scrollbar-thumb { background-color: var(--sidebar-bg); border-radius: 4px; }
+        #chat-box::-webkit-scrollbar-thumb:hover, #sidebar::-webkit-scrollbar-thumb:hover { background-color: #1e2124; }
+
+        /* Messages */
+        .message-container { display: flex; max-width: 100%; }
+        .message-container.user { justify-content: flex-end; }
+        .message-container.gemini { justify-content: flex-start; }
+        .message {
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            max-width: 80%; /* Allow wider messages */
+            word-wrap: break-word; /* Use break-word for better wrapping */
+            line-height: 1.45;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-sm);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .user-message { background-color: var(--user-msg-bg); color: var(--user-msg-text); border-radius: var(--border-radius-md) var(--spacing-xs) var(--border-radius-md) var(--border-radius-md); /* Slightly different tail */ margin-left: 50px; }
+        .gemini-message { background-color: var(--gemini-msg-bg); color: var(--gemini-msg-text); border-radius: var(--spacing-xs) var(--border-radius-md) var(--border-radius-md) var(--border-radius-md); /* Slightly different tail */ margin-right: 50px; }
+        .gemini-message.error-message { background-color: var(--error-bg); color: var(--error-text); border-left: 3px solid rgba(0,0,0,0.2); }
+        .gemini-message.info-message { background-color: var(--info-bg); color: var(--info-text); }
+
+        .message-sender { font-weight: 600; font-size: 0.9em; margin-bottom: -var(--spacing-xs); opacity: 0.9; }
+        .user-message .message-sender { color: rgba(255,255,255,0.8); text-align: right;} /* No sender shown for user */
+        .gemini-message .message-sender { color: var(--text-muted); }
+
+        .message-content { white-space: pre-wrap; font-size: 1em; }
+        /* Basic styling for code/pre is kept, but the JS won't generate them by default now */
+        .message-content code {
+            font-family: var(--font-monospace);
+            background-color: var(--input-bg);
+            padding: 2px 4px;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.9em;
+        }
+        .message-content pre {
+            background-color: var(--sidebar-bg); /* Darker background for code blocks */
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-sm);
+            overflow-x: auto;
+            font-family: var(--font-monospace);
+            font-size: 0.9em;
+            margin: var(--spacing-sm) 0;
+            border: 1px solid var(--border-color);
+        }
+         .message-content pre code { background: none; padding: 0; border: none; } /* Reset inline style inside pre */
+
+        .message-media-preview { margin-top: var(--spacing-sm); padding-top: var(--spacing-sm); border-top: 1px solid rgba(255, 255, 255, 0.1); }
+        .message-media-preview img,
+        .message-media-preview video { max-width: 100%; /* Fill width */ max-height: 300px; border-radius: var(--border-radius-sm); display: block; margin-bottom: var(--spacing-xs); background-color: var(--sidebar-bg); object-fit: contain; } /* Bg for loading */
+        .message-media-preview audio { width: 100%; margin-top: var(--spacing-xs); }
+        .message-media-preview .media-info { font-size: 0.8em; opacity: 0.8; font-style: italic; }
+
+        .message-timestamp { font-size: 0.7em; color: var(--text-muted); margin-top: var(--spacing-xs); text-align: right; opacity: 0.7; }
+        .user-message .message-timestamp { color: rgba(255, 255, 255, 0.6); }
+
+        /* Generated Image Display */
+        .generated-image-container { display: flex; flex-wrap: wrap; gap: var(--spacing-sm); margin-top: var(--spacing-sm); }
+        .generated-image-container img {
+             max-width: calc(50% - var(--spacing-sm) / 2); /* Show two side-by-side, accounting for gap */
+             max-height: 250px;
+             border-radius: var(--border-radius-sm);
+             border: 1px solid var(--border-color);
+             object-fit: contain; /* Use contain to see whole image */
+             background-color: var(--sidebar-bg);
+             cursor: pointer; /* For potential zoom */
+             transition: transform 0.2s ease;
+         }
+         .generated-image-container img:hover {
+             transform: scale(1.03);
+         }
+
+
+        /* --- Input Area --- */
+        #input-area-container {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-top: 1px solid var(--border-color);
+            background-color: var(--container-bg); /* Match chat area */
+            flex-shrink: 0;
+        }
+        #file-preview-area {
+          min-height: 40px; /* Reserve some space */
+          display: none; /* Hidden by default */
+          flex-wrap: wrap; /* Allow wrapping */ align-items: center; gap: var(--spacing-sm);
+          margin-bottom: var(--spacing-sm);
+        }
+        .file-preview-item {
+            display: flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-xs) var(--spacing-sm);
+            background-color: var(--input-bg); border-radius: var(--border-radius-sm); font-size: 0.85em;
+            border: 1px solid var(--border-color);
+        }
+        .file-preview-item img { max-height: 24px; max-width: 40px; border-radius: var(--border-radius-sm); object-fit: cover; }
+        .file-preview-item .file-icon { font-size: 1.2em; line-height: 1; display: inline-block; width: 20px; text-align: center; } /* For audio/video icons */
+        .file-preview-item span { color: var(--text-muted); max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .clear-file-btn {
+            background: none; border: none; color: var(--text-muted); cursor: pointer;
+            font-size: 1.1em; padding: 0 var(--spacing-xs); line-height: 1; opacity: 0.7;
+        }
+        .clear-file-btn:hover { color: var(--error-bg); opacity: 1; }
+
+        #input-controls { display: flex; align-items: flex-end; /* Align items to bottom */ gap: var(--spacing-sm); }
+        #input-textarea {
+            flex-grow: 1; padding: var(--spacing-sm) var(--spacing-md); border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-md); background-color: var(--input-bg);
+            color: var(--text-color); font-size: 1em; resize: none;
+            max-height: 150px; /* Limit height */ overflow-y: auto;
+            line-height: 1.4;
+            font-family: inherit; /* Match body font */
+        }
+        #input-textarea:focus { outline: none; border-color: var(--accent-color); }
+        #input-textarea::placeholder { color: var(--text-muted); }
+
+        .action-button {
+            background-color: var(--input-bg); /* Match input bg */
+            color: var(--text-muted); border: 1px solid var(--border-color);
+            width: 40px; height: 40px;
+            border-radius: var(--border-radius-md); cursor: pointer; font-size: 1.2em;
+            transition: all 0.2s ease;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+            margin-bottom: 1px; /* Align with textarea bottom border */
+        }
+        .action-button svg { width: 20px; height: 20px; }
+        .action-button:hover { background-color: var(--border-color); color: var(--text-color); }
+        .action-button:disabled { background-color: var(--input-bg); color: #666; cursor: not-allowed; border-color: #555; }
+        #send-button { background-color: var(--accent-color); color: white; border: none; }
+        #send-button:hover { background-color: var(--accent-hover); }
+        #send-button:disabled { background-color: #555c6a; color: #8e9297; border: none; }
+
+        #file-input { display: none; }
+
+        /* Loading Indicator */
+        .loading-indicator {
+            width: 20px; height: 20px; border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%; border-top-color: #fff; animation: spin 1s linear infinite;
+        }
+        #send-button .loading-indicator { border-top-color: rgba(255,255,255,0.8); border-width: 2px;}
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* --- Utility --- */
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <!-- Sidebar -->
+        <aside id="sidebar">
+            <h2>Configuration</h2>
+
+            <!-- API Key -->
+            <div class="config-group">
+                <h3>Credentials</h3>
+                <div class="config-item">
+                    <label for="api-key">Gemini API Key</label>
+                    <input type="password" id="api-key" placeholder="Enter API Key">
+                    <p class="api-warning"><strong>Security Risk:</strong> Never expose API keys client-side in production. Use a backend.</p>
+                </div>
+            </div>
+
+            <!-- Model Selection - ALL MODELS RE-ENABLED -->
+            <div class="config-group">
+                 <h3>Model Selection</h3>
+                 <div class="config-item">
+                     <label for="model-selector">Model</label>
+                     <select id="model-selector">
+                         <optgroup label="Standard Models (Multimodal)">
+                             <option value="gemini-1.5-pro-latest" selected>Gemini 1.5 Pro (Latest)</option>
+                             <option value="gemini-1.5-flash-latest">Gemini 1.5 Flash (Latest)</option>
+                         </optgroup>
+                         <optgroup label="Standard Specific">
+                             <option value="gemini-pro">Gemini Pro (Text Only)</option>
+                             <!-- gemini-pro-vision is generally superseded by 1.5 models -->
+                         </optgroup>
+                         <optgroup label="Preview/Experimental Models">
+                             <!-- Note: These IDs might change, check Google's documentation -->
+                             <option value="gemini-1.5-pro-exp-0827" class="experimental">Gemini 1.5 Pro Exp 0827 [Exp.]</option>
+                             <option value="gemini-1.5-flash-exp-0827" class="experimental">Gemini 1.5 Flash Exp 0827 [Exp.]</option>
+                             <!-- Adding back others from original list for testing -->
+                              <option value="gemini-2.5-pro-exp-03-25" class="experimental">Gemini 2.5 Pro Exp 03-25 [Exp.]</option>
+                              <option value="gemini-2.0-flash" class="experimental">Gemini 2.0 Flash [Exp.]</option>
+                              <option value="gemini-2.0-flash-lite" class="experimental">Gemini 2.0 Flash-Lite [Exp.]</option>
+                              <option value="gemini-1.5-flash-8b" class="experimental">Gemini 1.5 Flash-8B [Exp.?]</option>
+                         </optgroup>
+                          <optgroup label="Specialized Generation (Likely to Fail Here)">
+                              <option value="gemini-2.0-flash-exp-image-generation" class="experimental">G 2.0 Flash (Text+Image Gen) [Exp.]</option>
+                              <option value="imagen-3.0-generate-002">Imagen 3 (Image Gen) [Requires Diff. API]</option>
+                              <option value="veo-2.0-generate-001" disabled>Veo 2 (Video Gen) [Backend Required - Disabled]</option> <!-- Keep Veo disabled -->
+                          </optgroup>
+                         <optgroup label="Specialized Other (Not Usable Here)">
+                             <option value="gemini-embedding-exp" disabled>Gemini Embedding [N/A Chat - Disabled]</option>
+                             <option value="gemini-2.0-flash-live-001" disabled>Gemini 2.0 Flash Live [Live API - N/A - Disabled]</option>
+                         </optgroup>
+                     </select>
+                     <p class="model-note"><strong>Note:</strong> Models marked [Exp.] or specialized (Imagen, Veo, Live) may fail or behave unexpectedly using this client-side setup. They might require different API endpoints, permissions, or backend processing. Veo, Embedding, and Live models are disabled as they are incompatible with this UI.</p>
+                 </div>
+            </div>
+
+            <!-- Generation Parameters -->
+            <div class="config-group">
+                <h3>Generation Settings</h3>
+
+                <!-- General Params (Text + Multimodal) -->
+                <div id="params-general" class="parameter-section active">
+                    <div class="config-item">
+                        <label for="temperature">Temperature <span class="value-display" id="temperature-value">0.9</span></label>
+                        <input type="range" id="temperature" min="0" max="2" step="0.1" value="0.9">
+                    </div>
+                    <div class="config-item">
+                        <label for="top-p">Top P <span class="value-display" id="top-p-value">0.95</span></label>
+                        <input type="range" id="top-p" min="0" max="1" step="0.05" value="0.95">
+                    </div>
+                     <div class="config-item">
+                        <label for="top-k">Top K <span class="value-display" id="top-k-value">40</span></label>
+                        <input type="range" id="top-k" min="1" max="100" step="1" value="40">
+                    </div>
+                    <div class="config-item">
+                        <label for="max-output-tokens">Max Output Tokens</label>
+                        <input type="number" id="max-output-tokens" min="1" placeholder="Default (e.g., 8192)">
+                    </div>
+                     <div class="config-item">
+                        <label for="stop-sequences">Stop Sequences (comma-sep)</label>
+                        <input type="text" id="stop-sequences" placeholder="e.g., END,STOP">
+                    </div>
+                </div>
+
+                 <!-- Imagen 3 Params -->
+                 <div id="params-imagen" class="parameter-section">
+                      <p class="api-warning" style="margin-bottom: var(--spacing-md);"><strong>Imagen parameters are shown, but calling Imagen 3 via this simple client setup is HIGHLY LIKELY TO FAIL. It typically requires Vertex AI endpoints and different authentication.</strong></p>
+                      <div class="config-item">
+                          <label for="imagen-num-images">Number of Images (1-4)</label>
+                          <select id="imagen-num-images"> <!-- Enable for attempt -->
+                              <option value="1">1</option>
+                              <option value="2">2</option>
+                              <option value="3">3</option>
+                              <option value="4" selected>4</option>
+                          </select>
+                      </div>
+                      <div class="config-item">
+                          <label for="imagen-aspect-ratio">Aspect Ratio</label>
+                          <select id="imagen-aspect-ratio"> <!-- Enable for attempt -->
+                              <option value="1:1" selected>1:1 (Square)</option>
+                              <option value="16:9">16:9 (Landscape)</option>
+                              <option value="9:16">9:16 (Portrait)</option>
+                              <option value="4:3">4:3</option>
+                              <option value="3:4">3:4</option>
+                          </select>
+                      </div>
+                       <!-- Note: Other Imagen params like negative_prompt, seed, etc., not added for simplicity -->
+                 </div>
+
+                 <!-- Veo 2 Params (Display Only - Blocked) -->
+                 <div id="params-veo" class="parameter-section">
+                     <p class="api-warning" style="margin-bottom: var(--spacing-md);"><strong>Veo generation requires backend processing and is disabled. Parameters shown for reference only.</strong></p>
+                      <div class="config-item">
+                          <label for="veo-aspect-ratio">Aspect Ratio</label>
+                           <select id="veo-aspect-ratio" disabled>
+                               <option value="16:9" selected>16:9 (Landscape)</option>
+                               <option value="9:16">9:16 (Portrait)</option>
+                           </select>
+                      </div>
+                      <!-- Other Veo params omitted -->
+                 </div>
+
+            </div>
+
+             <!-- System Instructions -->
+             <div class="config-group">
+                 <h3>System Instructions <button type="button" id="clear-system-instruction" class="clear-btn" title="Clear Instructions">Clear</button></h3>
+                 <div class="config-item">
+                     <textarea id="system-instruction" rows="4" placeholder="Optional: Guide the model's behavior (e.g., You are a helpful pirate assistant.)"></textarea>
+                 </div>
+             </div>
+
+        </aside>
+
+        <!-- Main Content -->
+        <main id="main-content">
+            <header id="chat-header">
+                Ultimate Gemini Chat <span class="model-display" id="current-model-display"></span>
+            </header>
+
+            <div id="chat-box">
+                <!-- Welcome message added by JS -->
+            </div>
+
+            <div id="input-area-container">
+                 <div id="file-preview-area">
+                     <!-- File previews appear here -->
+                 </div>
+                 <div id="input-controls">
+                      <label for="file-input" id="file-upload-label" class="action-button" title="Upload Image/Audio/Video">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-paperclip" viewBox="0 0 16 16"><path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0z"/></svg>
+                      </label>
+                      <input type="file" id="file-input" accept="image/*,video/*,audio/*" multiple> <!-- Allow multiple, accept specific common types -->
+
+                     <textarea id="input-textarea" placeholder="Type message, or upload files..." rows="1"></textarea>
+
+                     <button id="send-button" class="action-button" title="Send Message">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.001.26.41a.5.5 0 0 0 .886-.083l6-15zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471l-.575 2.281z"/></svg>
+                     </button>
+                 </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- DOM References ---
+        const apiKeyInput = document.getElementById('api-key');
+        const modelSelector = document.getElementById('model-selector');
+        const currentModelDisplay = document.getElementById('current-model-display');
+        const chatBox = document.getElementById('chat-box');
+        const inputTextArea = document.getElementById('input-textarea');
+        const sendButton = document.getElementById('send-button');
+        const fileInput = document.getElementById('file-input');
+        const fileUploadLabel = document.getElementById('file-upload-label');
+        const filePreviewArea = document.getElementById('file-preview-area');
+        const systemInstructionInput = document.getElementById('system-instruction');
+        const clearSystemInstructionBtn = document.getElementById('clear-system-instruction');
+
+        // Parameter Controls
+        const temperatureSlider = document.getElementById('temperature');
+        const temperatureValue = document.getElementById('temperature-value');
+        const topPSlider = document.getElementById('top-p');
+        const topPValue = document.getElementById('top-p-value');
+        const topKSlider = document.getElementById('top-k');
+        const topKValue = document.getElementById('top-k-value');
+        const maxOutputTokensInput = document.getElementById('max-output-tokens');
+        const stopSequencesInput = document.getElementById('stop-sequences');
+        const imagenNumImagesSelect = document.getElementById('imagen-num-images');
+        const imagenAspectRatioSelect = document.getElementById('imagen-aspect-ratio');
+        // Veo params are display only
+
+        const paramSections = {
+            general: document.getElementById('params-general'),
+            imagen: document.getElementById('params-imagen'),
+            veo: document.getElementById('params-veo'),
+        };
+
+        // --- Constants ---
+        const GENERATE_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models/"; // Base for most calls
+        const MAX_INLINE_FILE_SIZE = 20 * 1024 * 1024; // 20 MB limit for inline data (Generative API limit)
+        const SUPPORTED_MIME_TYPES = [ // From Gemini API docs for inline data
+            'image/png', 'image/jpeg', 'image/heic', 'image/heif', 'image/webp',
+            'video/mov', 'video/mpeg', 'video/mp4', 'video/mpg', 'video/avi', 'video/wmv', 'video/mpegps', 'video/flv',
+            'audio/wav', 'audio/mp3', 'audio/aiff', 'audio/aac', 'audio/ogg', 'audio/flac',
+            'text/plain', 'text/html', 'text/css', 'text/javascript', 'application/json', 'application/xml', 'application/pdf'
+        ];
+        const TEXT_ONLY_MODELS = ['gemini-pro']; // Store base names
+        const BLOCKED_MODEL_TYPES = ['veo', 'embedding', 'live']; // Types to explicitly block
+
+        // --- State ---
+        let isSending = false;
+        let uploadedFiles = []; // Store { file: File, base64Data?: string, objectURL?: string, mimeType?: string }
+        let chatHistory = []; // Store { role: 'user' | 'model', parts: [...] } for context
+
+        // --- Initial Setup ---
+        updateModelDisplay();
+        updateParameterSections();
+        setupEventListeners();
+        autoResizeTextarea();
+        addInitialSystemMessage(); // Add welcome message via JS
+
+        // --- Event Listeners Setup ---
+        function setupEventListeners() {
+            modelSelector.addEventListener('change', () => {
+                updateModelDisplay();
+                updateParameterSections();
+            });
+            sendButton.addEventListener('click', sendMessage);
+            inputTextArea.addEventListener('keypress', handleInputKeypress);
+            inputTextArea.addEventListener('input', autoResizeTextarea);
+            fileInput.addEventListener('change', handleFileSelect);
+            clearSystemInstructionBtn.addEventListener('click', () => { systemInstructionInput.value = ''; });
+
+            // Parameter value displays
+            temperatureSlider.addEventListener('input', () => { temperatureValue.textContent = temperatureSlider.value; });
+            topPSlider.addEventListener('input', () => { topPValue.textContent = topPSlider.value; });
+            topKSlider.addEventListener('input', () => { topKValue.textContent = topKSlider.value; });
+        }
+
+        // --- Core Logic ---
+
+        function addInitialSystemMessage() {
+             chatBox.innerHTML = ''; // Clear any hardcoded message
+             displayMessage('System', 'Welcome! Configure API key & model in the sidebar. Specialized models (Imagen, Experimental) are enabled for *attempted* use but may fail due to client-side/API limitations. Veo/Live/Embedding models remain disabled.', 'gemini', false, true);
+        }
+
+        function handleInputKeypress(event) {
+            if (event.key === 'Enter' && !event.shiftKey && !isSending) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResizeTextarea() {
+            inputTextArea.style.height = 'auto'; // Reset height
+            const newHeight = Math.min(inputTextArea.scrollHeight + 2, 150);
+            inputTextArea.style.height = newHeight + 'px';
+        }
+
+        function updateModelDisplay() {
+            const selectedOption = modelSelector.options[modelSelector.selectedIndex];
+            currentModelDisplay.textContent = `(${selectedOption.text.split('[')[0].trim()})`; // Cleaner display name
+        }
+
+        function updateParameterSections() {
+            const selectedModel = modelSelector.value;
+            // Hide all first
+            Object.values(paramSections).forEach(sec => sec.classList.remove('active'));
+
+            // Show relevant sections based on model ID (heuristic)
+            const modelType = getModelType(selectedModel); // Get type based on ID
+
+            if (modelType === 'imagen') {
+                paramSections.imagen.classList.add('active');
+                paramSections.general.classList.add('active'); // Imagen still needs prompt from general section
+            } else if (modelType === 'veo') {
+                paramSections.veo.classList.add('active'); // Show Veo params (disabled)
+            } else {
+                // Default to general params for all other Gemini models (content, image-gen, exp)
+                paramSections.general.classList.add('active');
+            }
+        }
+
+        function getModelType(modelId) {
+             if (!modelId) return 'unknown';
+             // Check for specific keywords in the model ID string
+             if (modelId.includes('veo')) return 'veo';
+             if (modelId.includes('imagen')) return 'imagen'; // Includes imagen-3...
+             if (modelId.includes('live')) return 'live';
+             if (modelId.includes('embedding')) return 'embedding';
+             if (modelId.includes('exp-image-generation')) return 'gemini-image-gen'; // Specific experimental image gen
+             // Assume standard text/multimodal otherwise
+             return 'gemini-content';
+        }
+
+        async function handleFileSelect(event) {
+            const files = event.target.files;
+            if (!files) return;
+
+            let errors = [];
+            let warnings = [];
+            for (const file of files) {
+                if (uploadedFiles.some(f => f.file.name === file.name && f.file.size === file.size)) {
+                    console.warn(`File "${file.name}" already added.`);
+                    continue; // Skip duplicates
+                }
+                 if (file.size > MAX_INLINE_FILE_SIZE) {
+                      errors.push(`File "${file.name}" (${(file.size / 1024/1024).toFixed(1)} MB) exceeds the ${MAX_INLINE_FILE_SIZE / 1024/1024} MB limit for inline upload.`);
+                     continue; // Skip large files
+                 }
+                 // Check MIME Type more strictly
+                 if (!SUPPORTED_MIME_TYPES.includes(file.type) && !file.type.startsWith('image/') && !file.type.startsWith('video/') && !file.type.startsWith('audio/')) {
+                     warnings.push(`File "${file.name}" has an uncommon MIME type (${file.type || 'unknown'}). It might not be processed correctly by the model.`);
+                 }
+
+                const fileData = { file: file };
+                uploadedFiles.push(fileData); // Add to list immediately
+
+                 // Generate preview (objectURL is faster for display)
+                 if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
+                    try {
+                        fileData.objectURL = URL.createObjectURL(file);
+                    } catch (e) {
+                        console.error("Error creating object URL for preview:", file.name, e);
+                    }
+                 }
+            }
+
+            if (errors.length > 0) {
+                displayMessage('System', `⚠️ Could not add some files:\n- ${errors.join('\n- ')}\nLarge files require backend implementation using the File API.`, 'gemini', true);
+            }
+            if (warnings.length > 0) {
+                 displayMessage('System', `ℹ️ File Type Warning:\n- ${warnings.join('\n- ')}`, 'gemini', false, true); // Info style warning
+            }
+
+            renderFilePreviews();
+            fileInput.value = ''; // Clear the input to allow re-adding the same file if removed
+        }
+
+        function removeFile(fileName, fileSize) {
+            const fileIndex = uploadedFiles.findIndex(f => f.file.name === fileName && f.file.size === fileSize);
+            if (fileIndex > -1) {
+                const fileData = uploadedFiles[fileIndex];
+                if (fileData.objectURL) {
+                    URL.revokeObjectURL(fileData.objectURL); // Clean up preview URL
+                }
+                uploadedFiles.splice(fileIndex, 1);
+                renderFilePreviews();
+            }
+        }
+
+        function renderFilePreviews() {
+            filePreviewArea.innerHTML = ''; // Clear previous previews
+            if (uploadedFiles.length === 0) {
+                filePreviewArea.style.display = 'none'; // Hide area if empty
+                return;
+            }
+            filePreviewArea.style.display = 'flex'; // Show area if files exist
+
+            uploadedFiles.forEach(fileData => {
+                const item = document.createElement('div');
+                item.classList.add('file-preview-item');
+
+                let previewContent = '';
+                 let icon = '📄'; // Default icon
+                 if (fileData.file.type.startsWith('image/')) {
+                     icon = '🖼️';
+                     if (fileData.objectURL) {
+                         previewContent = `<img src="${fileData.objectURL}" alt="Preview">`;
+                     } else {
+                          previewContent = `<span class="file-icon">${icon}</span>`;
+                     }
+                 } else if (fileData.file.type.startsWith('video/')) {
+                     icon = '📹';
+                     previewContent = `<span class="file-icon">${icon}</span>`;
+                 } else if (fileData.file.type.startsWith('audio/')) {
+                     icon = '🎵';
+                     previewContent = `<span class="file-icon">${icon}</span>`;
+                 } else {
+                      previewContent = `<span class="file-icon">${icon}</span>`;
+                 }
+
+                item.innerHTML = `
+                    ${previewContent}
+                    <span>${fileData.file.name} (${(fileData.file.size / 1024 / 1024).toFixed(2)} MB)</span>
+                    <button type="button" class="clear-file-btn" title="Remove file" data-name="${fileData.file.name}" data-size="${fileData.file.size}">×</button>
+                `;
+                item.querySelector('.clear-file-btn').addEventListener('click', (e) => {
+                     const btn = e.currentTarget;
+                     removeFile(btn.dataset.name, parseInt(btn.dataset.size));
+                });
+                filePreviewArea.appendChild(item);
+            });
+        }
+
+        async function sendMessage() {
+            console.log("Attempting to send message...");
+            if (isSending) {
+                console.log("Already sending, returning.");
+                return;
+            }
+
+            const messageText = inputTextArea.value.trim();
+            const apiKey = apiKeyInput.value.trim();
+            const selectedModelId = modelSelector.value; // Original ID from select (e.g., gemini-1.5-pro-latest, imagen-3...)
+            const filesToSend = [...uploadedFiles];
+
+            // --- Basic Validations ---
+            if (!apiKey) {
+                displayMessage('System', '⚠️ API Key Required. Please enter your Gemini API key in the sidebar.', 'gemini', true);
+                apiKeyInput.focus(); return;
+            }
+            if (!selectedModelId) { // Check if a model is selected
+                 displayMessage('System', '⚠️ Model Not Selected. Please choose a model from the dropdown.', 'gemini', true);
+                 modelSelector.focus(); return;
+            }
+             // Re-check for disabled models just in case (Veo, Embed, Live)
+             if (modelSelector.options[modelSelector.selectedIndex].disabled) {
+                 displayMessage('System', `⚠️ Model '${selectedModelId}' is disabled because it's incompatible with this UI (e.g., requires backend, different API).`, 'gemini', true);
+                 return;
+             }
+
+            if (messageText === '' && filesToSend.length === 0) {
+                 inputTextArea.focus(); return; // Nothing to send
+            }
+
+            // Determine model type and full model path for API if needed
+            const modelType = getModelType(selectedModelId);
+            const modelPathForApi = selectedModelId.includes('/') ? selectedModelId : `models/${selectedModelId}`; // Add models/ prefix if not present
+            const modelIdForPayload = selectedModelId.replace(/^models\//, ''); // Remove prefix for API URL path
+
+            console.log(`Selected Model ID: ${selectedModelId}, Type: ${modelType}, Path for API Check: ${modelPathForApi}, ID for URL: ${modelIdForPayload}`);
+
+            // --- Model Specific Validations / Limitations / Warnings ---
+            if (BLOCKED_MODEL_TYPES.includes(modelType)) {
+                 displayMessage('System', `⚠️ Model type '${modelType}' (${selectedModelId}) is not supported for sending requests in this chat interface.`, 'gemini', true);
+                 return;
+            }
+             // Check text-only model with files
+             if (TEXT_ONLY_MODELS.includes(selectedModelId) && filesToSend.length > 0) {
+                  displayMessage('System', `⚠️ Model '${selectedModelId}' is text-only and does not support file input. Remove files or choose a multimodal model.`, 'gemini', true);
+                  return;
+             }
+              // Warn about Imagen call attempt
+             if (modelType === 'imagen') {
+                 if (filesToSend.length > 0) {
+                     displayMessage('System', 'ℹ️ Imagen 3 currently supports text-to-image generation. Attached files will be ignored for this model.', 'gemini', false, true); // Info style
+                     // Clear files visually just for this call attempt? No, keep them in UI for consistency. They just won't be *sent*.
+                 }
+                 displayMessage('System', `⚠️ Attempting Imagen 3 generation with '${selectedModelId}'. This is HIGHLY LIKELY TO FAIL using this client-side setup. Imagen usually requires Vertex AI endpoints/permissions.`, 'gemini', true); // Error style warning
+             }
+             // Warn about Experimental Gemini Image Gen model
+             if (modelType === 'gemini-image-gen') {
+                  displayMessage('System', `ℹ️ Using experimental Gemini text+image generation model ('${selectedModelId}'). Output may include images. API call might be unstable.`, 'gemini', false, true); // Info style
+             }
+             // Warn about other experimental models
+             if (selectedModelId.includes('exp') && modelType !== 'gemini-image-gen') { // Avoid double warning
+                 displayMessage('System', `ℹ️ Using an experimental model ('${selectedModelId}'). Behavior might be unstable or API requirements may differ.`, 'gemini', false, true);
+             }
+             // Check for large files again
+              const largeFiles = filesToSend.filter(f => f.file.size > MAX_INLINE_FILE_SIZE);
+             if (largeFiles.length > 0) {
+                 displayMessage('System', `⚠️ Internal Error: Large files detected before sending. Please remove files > ${MAX_INLINE_FILE_SIZE / 1024 / 1024}MB.`, 'gemini', true);
+                 return;
+             }
+
+            // --- Prepare for Sending ---
+            console.log("Setting sending state to true.");
+            setSendingState(true);
+
+            // --- Prepare File Data (Base64 encode) ---
+            console.log("Preparing file data...");
+            let filesWithData = [];
+            let encodingErrors = [];
+            // Only encode files if the model is NOT Imagen (Imagen ignores files here)
+            if (modelType !== 'imagen') {
+                 filesWithData = await Promise.all(
+                     filesToSend.map(async (fileData) => {
+                         // Encode only if needed and if file has size > 0
+                         if (!fileData.base64Data && fileData.file.size > 0) {
+                             try {
+                                 console.log(`Encoding file: ${fileData.file.name} (${(fileData.file.size/1024).toFixed(1)} KB)`);
+                                 fileData.base64Data = await fileToBase64(fileData.file);
+                                 console.log(`Encoded successfully: ${fileData.file.name}`);
+                                 // Determine API MIME type
+                                 let apiMimeType = fileData.file.type || 'application/octet-stream';
+                                 if (!SUPPORTED_MIME_TYPES.includes(apiMimeType) && !apiMimeType.startsWith('image/') && !apiMimeType.startsWith('video/') && !apiMimeType.startsWith('audio/')) {
+                                     console.warn(`File "${fileData.file.name}" MIME type (${apiMimeType}) might not be directly supported by the API, sending as is.`);
+                                 }
+                                 fileData.mimeType = apiMimeType;
+                                 return fileData;
+                             } catch(err) {
+                                 console.error(`Error encoding file ${fileData.file.name}:`, err);
+                                 encodingErrors.push(fileData.file.name);
+                                 return null; // Skip this file if encoding fails
+                             }
+                         } else if (fileData.file.size === 0) {
+                             console.warn(`Skipping zero-byte file: ${fileData.file.name}`);
+                             return null;
+                         }
+                         return fileData; // Already has data or doesn't need encoding
+                     })
+                 );
+                 filesWithData = filesWithData.filter(f => f !== null); // Remove failed/skipped files
+                 console.log(`Prepared ${filesWithData.length} files with data for sending.`);
+             } else {
+                  console.log("Skipping file encoding because model type is Imagen.");
+             }
+
+             if (encodingErrors.length > 0) {
+                  displayMessage('System', `⚠️ Failed to process some files (${encodingErrors.join(', ')}). They will be skipped. Check console for details.`, 'gemini', true);
+             }
+
+             // --- Construct User Message Content Parts ---
+            const userParts = [];
+            if (messageText) userParts.push({ text: messageText });
+
+            // Add file parts ONLY if model is not Imagen and files were processed
+            if (modelType !== 'imagen') {
+                filesWithData.forEach(fileData => {
+                    if (fileData.base64Data) {
+                        userParts.push({
+                            inlineData: {
+                                mimeType: fileData.mimeType,
+                                data: fileData.base64Data
+                            }
+                        });
+                    } else {
+                        console.warn(`Skipping file part for ${fileData.file.name} due to missing base64 data.`);
+                    }
+                });
+            }
+
+             // Check if there's anything to send in the user message *for this model type*
+             if (userParts.length === 0 && modelType !== 'imagen') { // Imagen only needs text
+                 displayMessage('System', `⚠️ Cannot send message: No text entered and file processing failed or resulted in no valid files for this model type.`, 'gemini', true);
+                 setSendingState(false); return;
+             }
+              if (!messageText && modelType === 'imagen') {
+                  displayMessage('System', `⚠️ Cannot send Imagen request: Text prompt is required.`, 'gemini', true);
+                  setSendingState(false); return;
+              }
+
+             const userMessageForHistory = { role: "user", parts: userParts }; // Use processed parts for history
+
+             // Display user message in chat UI (show original files attempted)
+            displayMessage("You", messageText || `[Sent ${filesToSend.length} file(s)]`, 'user', false, false, filesToSend);
+
+             // Add user message to internal history *before* clearing inputs
+             chatHistory.push(userMessageForHistory);
+             console.log("Updated chat history (User):", JSON.stringify(chatHistory));
+
+
+            // Clear inputs AFTER capturing data and displaying user message
+            inputTextArea.value = '';
+            autoResizeTextarea();
+            uploadedFiles = []; // Clear state
+            renderFilePreviews(); // Update UI
+
+            // --- Gather Parameters ---
+            const generationConfig = getGenerationConfig(); // General config
+            const safetySettings = getSafetySettings();
+            const systemInstructionText = systemInstructionInput.value.trim();
+            console.log("Gathered Params:", { generationConfig, safetySettings, systemInstructionText });
+
+            // --- Construct API Request ---
+            let apiUrl = '';
+            let apiPayload = {};
+            let httpMethod = 'POST';
+            let apiMethodSuffix = ':generateContent'; // Default
+
+            // Build contents array for generateContent API (history + system instruction)
+            const contentsForApi = [];
+            if (systemInstructionText) {
+                  // Simple prepend for this demo
+                 contentsForApi.push({ role: "system", parts: [{ text: systemInstructionText }] });
+                 contentsForApi.push(...chatHistory);
+            } else {
+                 contentsForApi.push(...chatHistory);
+            }
+
+
+            try {
+                switch (modelType) {
+                    case 'imagen':
+                        // *** ATTEMPTING Imagen call via generateContent endpoint structure (HIGHLY LIKELY TO FAIL) ***
+                        // Or potentially a different suffix like :generateImages if that existed on this endpoint
+                        // For this demo, we'll TRY with :generateImages suffix, knowing it's probably wrong here.
+                        apiMethodSuffix = ':generateImages'; // speculative suffix
+                        apiUrl = `${GENERATE_API_BASE}${modelIdForPayload}${apiMethodSuffix}?key=${apiKey}`;
+                        apiPayload = {
+                            // Payload structure for Imagen (might be different for Vertex AI)
+                            prompt: messageText,
+                            number_of_images: parseInt(imagenNumImagesSelect.value) || 1,
+                            aspect_ratio: imagenAspectRatioSelect.value || "1:1",
+                            // Safety settings might be handled differently or implicitly for Imagen
+                            // Generation config (temp, topP etc) usually not applicable or different names
+                        };
+                        // Remove file content from history for Imagen call if it exists
+                        // This is a guess - the actual API might ignore 'contents' entirely
+                        // delete apiPayload.contents; // Let's not send contents array to Imagen attempt
+                         console.warn("Constructing Imagen payload for generativelanguage endpoint - this is speculative and likely to fail.");
+                        break;
+
+                    case 'gemini-image-gen':
+                        apiMethodSuffix = ':generateContent';
+                        apiUrl = `${GENERATE_API_BASE}${modelIdForPayload}${apiMethodSuffix}?key=${apiKey}`;
+                        // Add specific config for this model type
+                        const imageGenConfig = { ...generationConfig }; // Copy general config
+                        imageGenConfig.responseMimeType = "application/json"; // Often needed if expecting mixed content
+                        // Request image output - Specific field name might vary! Check docs.
+                        // This is a common pattern, but might need adjustment based on the exact experimental model.
+                        // Let's assume it might accept a tool/function call approach implicitly or a direct flag.
+                        // Adding responseModalities as a guess:
+                        imageGenConfig.responseModalities = ["TEXT", "IMAGE"];
+                        console.log("Added responseModalities for image gen model.");
+
+                        apiPayload = {
+                            contents: contentsForApi,
+                            generationConfig: imageGenConfig, // Use modified config
+                            safetySettings: safetySettings,
+                        };
+                        break;
+
+                    case 'gemini-content': // Standard Gemini text/multimodal & other experimental
+                    default:
+                        apiMethodSuffix = ':generateContent';
+                        apiUrl = `${GENERATE_API_BASE}${modelIdForPayload}${apiMethodSuffix}?key=${apiKey}`;
+                        apiPayload = {
+                            contents: contentsForApi,
+                            generationConfig: generationConfig,
+                            safetySettings: safetySettings,
+                        };
+                        break;
+                }
+
+                // Clean payload - remove undefined generationConfig/safetySettings if they are empty/not applicable
+                 if (!apiPayload.generationConfig || Object.keys(apiPayload.generationConfig).length === 0) {
+                     delete apiPayload.generationConfig;
+                 }
+                 if (!apiPayload.safetySettings) {
+                      delete apiPayload.safetySettings;
+                 }
+                 // Ensure contents is not empty for generateContent calls
+                 if (apiMethodSuffix === ':generateContent' && (!apiPayload.contents || apiPayload.contents.length === 0)) {
+                      throw new Error("Internal Error: Cannot send request with empty contents for :generateContent method.");
+                 }
+
+
+                // --- Make API Call ---
+                 console.log(`Sending ${httpMethod} Request to: ${apiUrl}`);
+                 console.log("Request Payload:", JSON.stringify(apiPayload, null, 2));
+                 displayMessage('System', `Sending request to ${modelIdForPayload}... (Type: ${modelType})`, 'gemini', false, true); // Info message
+
+                 const response = await fetch(apiUrl, {
+                     method: httpMethod,
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(apiPayload),
+                 });
+
+                 console.log(`Received Response Status: ${response.status}`);
+
+                 // --- Process Response ---
+                 const responseText = await response.text();
+                 let data = null;
+                 try {
+                     data = JSON.parse(responseText);
+                 } catch (e) {
+                     console.error("Failed to parse API response as JSON:", responseText);
+                     if (response.ok) {
+                         throw new Error(`API returned status ${response.status}, but response body was not valid JSON. Response: ${responseText.substring(0, 500)}...`);
+                     } else {
+                         throw new Error(`API request failed (${response.status} ${response.statusText})`, { cause: responseText });
+                     }
+                 }
+
+                 if (!response.ok) {
+                     console.error("API Error Response:", response.status, response.statusText, data || responseText);
+                     throw new Error(`API request failed (${response.status} ${response.statusText})`, { cause: data || responseText });
+                 }
+
+                 console.log("API Response Data Parsed:", data);
+                 handleApiResponse(data, modelType); // Pass modelType to handler
+
+            } catch (error) {
+                console.error(`API Call Failed (Model: ${selectedModelId}, Type: ${modelType}):`, error);
+                let errorTitle = 'API Call Error';
+                let errorMessage = error.message || 'Unknown error during API request.';
+                let errorDetails = '';
+                 if (error.cause && typeof error.cause === 'object' && error.cause.error) {
+                     errorMessage = error.cause.error.message || errorMessage;
+                     errorDetails = error.cause.error.details ? JSON.stringify(error.cause.error.details) : (error.cause.error.reason ? `Reason: ${error.cause.error.reason}` : '');
+                 } else if (error.cause && typeof error.cause === 'string') {
+                    errorDetails = error.cause;
+                 }
+                 errorMessage += errorDetails ? `\nDetails: ${errorDetails}` : '';
+
+                 // Add hints
+                 if (modelType === 'imagen') {
+                     errorMessage += `\n(Hint: Calling Imagen 3 ('${selectedModelId}') via the standard Gemini endpoint used here is expected to fail. It likely requires Vertex AI API and different setup.)`;
+                 } else if (modelType === 'gemini-image-gen' || selectedModelId.includes('exp')) {
+                     errorMessage += `\n(Hint: Calling specialized or experimental models ('${selectedModelId}') can be unstable or require specific payload structures/permissions. Check API key validity, permissions in Google Cloud Console, and verify the model ID & API method used.)`;
+                 } else {
+                      errorMessage += "\n(Hint: Check API Key validity, network connection, model selection, and browser console (F12) for more details.)";
+                 }
+                 console.error("Displaying error message to user.");
+                displayMessage('System', `⚠️ ${errorTitle}: ${errorMessage}`, 'gemini', true);
+            } finally {
+                console.log("Setting sending state to false.");
+                setSendingState(false); // Always re-enable UI
+            }
+        }
+
+        function getGenerationConfig() {
+            const config = {};
+            const temp = parseFloat(temperatureSlider.value);
+            if (!isNaN(temp)) config.temperature = temp;
+            const topP = parseFloat(topPSlider.value);
+            if (!isNaN(topP)) config.topP = topP;
+            const topK = parseInt(topKSlider.value);
+            if (!isNaN(topK)) config.topK = topK;
+            const maxTokens = parseInt(maxOutputTokensInput.value);
+            if (!isNaN(maxTokens) && maxTokens > 0) config.maxOutputTokens = maxTokens;
+            const stopSequences = stopSequencesInput.value.trim();
+            if (stopSequences) {
+                const sequences = stopSequences.split(',').map(s => s.trim()).filter(s => s.length > 0);
+                if (sequences.length > 0 && sequences.length <= 5) config.stopSequences = sequences;
+                else if (sequences.length > 5) console.warn("Too many stop sequences (max 5). Ignoring.");
+            }
+            return Object.keys(config).length > 0 ? config : undefined;
+        }
+
+        function getSafetySettings() {
+            return [
+                { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_MEDIUM_AND_ABOVE" },
+                { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_MEDIUM_AND_ABOVE" }
+            ];
+        }
+
+        function handleApiResponse(data, modelType) {
+             console.log(`Handling API Response (Model Type: ${modelType}):`, data);
+             let modelResponseContent = null; // To store { role: 'model', parts: [...] } for history
+             let combinedText = "";
+             let generatedImages = []; // Store { base64Data, mimeType }
+             let prefix = ""; // For metadata like finish reason, safety
+
+             try {
+                 // --- Attempt to parse Imagen Response Structure ---
+                 if (modelType === 'imagen') {
+                      console.log("Attempting to parse as Imagen response...");
+                     // Look for common Imagen output fields (names might vary)
+                     const imagesArray = data.generatedImages || data.generated_images || data.images; // Check multiple possibilities
+                     if (imagesArray && Array.isArray(imagesArray) && imagesArray.length > 0) {
+                         console.log(`Found ${imagesArray.length} potential image objects in Imagen response.`);
+                         imagesArray.forEach((imgData, index) => {
+                             // Look for base64 data under common keys
+                              const b64 = imgData.image?.image_bytes || imgData.image?.imageData || imgData.b64_json || imgData.imageBytes || imgData.bytesBase64Encoded;
+                              const mime = imgData.mimeType || 'image/png'; // Assume PNG if not specified
+                              if (b64) {
+                                  console.log(`Found base64 data for image ${index + 1}`);
+                                 generatedImages.push({ base64Data: b64, mimeType: mime });
+                              } else {
+                                  console.warn(`Could not find base64 data in Imagen object ${index + 1}:`, imgData);
+                              }
+                         });
+                         if (generatedImages.length > 0) {
+                             combinedText = `[Generated ${generatedImages.length} image(s) via Imagen attempt]`;
+                         } else {
+                              combinedText = "[Received Imagen response structure, but failed to extract image data]";
+                         }
+                          // Imagen responses don't typically have 'candidates' structure for history
+                          // We won't add an artificial model response to history for Imagen attempts.
+                          modelResponseContent = null;
+                     } else {
+                         console.warn("Imagen response structure detected, but no valid image array found.", data);
+                         combinedText = "[Received response from Imagen endpoint, but structure was unexpected or empty]";
+                          modelResponseContent = null;
+                     }
+                 }
+                 // --- Standard generateContent Response Handling (Gemini Content, Gemini Image Gen) ---
+                 else if (data.candidates && data.candidates.length > 0) {
+                     console.log("Parsing as generateContent response...");
+                     const candidate = data.candidates[0];
+                     prefix = checkResponseMetadata(candidate, data.promptFeedback); // Check metadata
+
+                     if (candidate.content && candidate.content.role === 'model' && candidate.content.parts && Array.isArray(candidate.content.parts)) {
+                         modelResponseContent = candidate.content; // Store valid response for history
+
+                         candidate.content.parts.forEach(part => {
+                             if (part.text) {
+                                 combinedText += part.text;
+                             } else if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith('image/') && part.inlineData.data) {
+                                  console.log(`Found generated inline image part (${part.inlineData.mimeType})`);
+                                 generatedImages.push({
+                                     base64Data: part.inlineData.data,
+                                     mimeType: part.inlineData.mimeType
+                                 });
+                             } else {
+                                 console.log("Ignoring part (not text or recognized inline image):", part);
+                             }
+                         });
+                     } else {
+                          console.warn("Candidate content missing, invalid, or not from 'model':", candidate.content);
+                          // Still check metadata even if content is bad
+                          prefix = checkResponseMetadata(candidate, data.promptFeedback);
+                           combinedText = prefix + "[Received invalid candidate content structure]";
+                           modelResponseContent = null; // Don't add bad content to history
+                     }
+                 }
+                 // --- Handle Blocked Prompt / No Candidates ---
+                 else if (data.promptFeedback?.blockReason) {
+                     const reason = data.promptFeedback.blockReason;
+                     const safetyInfo = data.promptFeedback.safetyRatings?.map(r => `${r.category.replace('HARM_CATEGORY_','')} (${r.probability})`).join(', ');
+                     console.warn(`Request blocked by API. Reason: ${reason}`);
+                     combinedText = `⚠️ Request Blocked. Reason: ${reason}. ${safetyInfo ? `Safety concerns: ${safetyInfo}` : ''}`;
+                      modelResponseContent = null; // Don't add blocked response to history
+                     // Display as error
+                      displayMessage('System', combinedText, 'gemini', true);
+                      return; // Stop processing here for blocked prompt
+                 }
+                 // --- Other Unexpected Responses ---
+                 else {
+                     console.warn("Unexpected API response structure (no candidates, promptFeedback block, or recognized Imagen structure):", data);
+                      combinedText = "⚠️ Received an unexpected or empty response format from the API. Check console.";
+                      modelResponseContent = null; // Don't add to history
+                      // Display as error
+                      displayMessage('System', combinedText, 'gemini', true);
+                      return; // Stop processing here
+                 }
+
+                 // --- Display Combined Result ---
+                 const finalMessage = prefix + combinedText;
+                 const hasVisibleContent = finalMessage.trim() !== "" || generatedImages.length > 0;
+
+                 if (hasVisibleContent) {
+                     console.log("Displaying message:", finalMessage.substring(0,100)+"...", "Images:", generatedImages.length);
+                      const sender = (modelType === 'imagen') ? 'Imagen (Attempt)' : 'Gemini';
+                     displayMessage(sender, finalMessage, 'gemini', false, false, null, generatedImages);
+                 } else {
+                     console.warn("No text or images found in response, and no significant metadata. Not displaying an empty message.");
+                 }
+
+                 // --- Add Model Response to History (Only if valid) ---
+                 if (modelResponseContent) {
+                     chatHistory.push(modelResponseContent);
+                     console.log("Updated chat history (Model):", JSON.stringify(chatHistory));
+                 } else if (modelType !== 'imagen') { // Don't warn if Imagen (no history expected)
+                     console.warn("Did not add model response to history because content was missing, invalid, or blocked.");
+                 }
+
+             } catch (error) {
+                 console.error("Error processing API response data:", error, "Data:", data);
+                 displayMessage('System', `⚠️ Error processing API response: ${error.message}. Check console.`, 'gemini', true);
+             }
+        }
+
+        function checkResponseMetadata(candidate, promptFeedback) {
+            let prefix = "";
+             if (candidate?.finishReason && !['STOP', 'MAX_TOKENS', undefined, null].includes(candidate.finishReason)) {
+                 prefix += `[Finish Reason: ${candidate.finishReason}] `;
+             }
+             const safetyRatings = candidate?.safetyRatings || promptFeedback?.safetyRatings;
+             if (safetyRatings && Array.isArray(safetyRatings)) {
+                 const highRisk = safetyRatings.filter(r => r && r.probability && !['NEGLIGIBLE', 'LOW', 'HARM_PROBABILITY_UNSPECIFIED'].includes(r.probability));
+                 if (highRisk.length > 0) {
+                     const concerns = highRisk.map(r => `${r.category.replace('HARM_CATEGORY_','')} (${r.probability})`).join(', ');
+                     prefix += `[Safety Concerns: ${concerns}] `;
+                 }
+             }
+             return prefix;
+        }
+
+        // --- Display Logic (Mostly unchanged, uses textContent) ---
+        function displayMessage(senderName, messageText, senderType, isError = false, isInfo = false, files = null, generatedImages = null) {
+            console.log(`[displayMessage Start] Sender: ${senderName}, Type: ${senderType}, Error: ${isError}, Info: ${isInfo}, Text: "${messageText?.substring(0,50)}...", Files: ${files?.length}, Images: ${generatedImages?.length}`);
+
+            const messageContainer = document.createElement('div');
+            messageContainer.classList.add('message-container', senderType);
+
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', `${senderType}-message`);
+            if (isError) messageElement.classList.add('error-message');
+            if (isInfo) messageElement.classList.add('info-message');
+
+            // Sender Name
+            if (senderType === 'gemini') {
+                 const senderDiv = document.createElement('div');
+                 senderDiv.classList.add('message-sender');
+                 senderDiv.textContent = senderName;
+                 messageElement.appendChild(senderDiv);
+            }
+
+            // Message Content (Text)
+            if (messageText && messageText.trim() !== "") {
+                const contentDiv = document.createElement('div');
+                contentDiv.classList.add('message-content');
+                contentDiv.textContent = messageText; // Use textContent for reliability
+                messageElement.appendChild(contentDiv);
+                console.log("[displayMessage] Appended text content div using textContent.");
+            } else if (!generatedImages || generatedImages.length === 0) {
+                console.log("[displayMessage] No text content provided and no generated images.");
+            }
+
+            // Attached Files Preview (User messages only)
+           if (senderType === 'user' && files && files.length > 0) {
+               const mediaPreviewDiv = document.createElement('div');
+               mediaPreviewDiv.classList.add('message-media-preview');
+               files.forEach(fileData => {
+                   const info = document.createElement('div');
+                   info.classList.add('media-info');
+                   let icon = '📄';
+                   if (fileData.file.type.startsWith('image/')) icon = '🖼️';
+                   else if (fileData.file.type.startsWith('video/')) icon = '📹';
+                   else if (fileData.file.type.startsWith('audio/')) icon = '🎵';
+                   info.textContent = `Attached: ${icon} ${fileData.file.name} (${(fileData.file.size / 1024 / 1024).toFixed(2)} MB)`;
+                   mediaPreviewDiv.appendChild(info);
+               });
+               messageElement.appendChild(mediaPreviewDiv);
+               console.log("[displayMessage] Appended user file preview div.");
+           }
+
+            // Generated Images Display (Gemini messages only)
+            if (senderType === 'gemini' && generatedImages && generatedImages.length > 0) {
+                console.log("[displayMessage] Attempting to display generated images:", generatedImages.length);
+                const imageContainer = document.createElement('div');
+                imageContainer.classList.add('generated-image-container');
+                let imagesAdded = false;
+
+                generatedImages.forEach((imgData, index) => {
+                    if (imgData && imgData.base64Data && typeof imgData.base64Data === 'string' && imgData.base64Data.trim() !== "") {
+                        try {
+                            const img = document.createElement('img');
+                            const mimeType = imgData.mimeType || 'image/png';
+                            img.src = `data:${mimeType};base64,${imgData.base64Data}`;
+                            img.alt = `Generated Image ${index + 1}`;
+                            img.title = `Generated Image ${index + 1}`;
+                            img.onerror = () => { console.error(`Error loading generated image ${index + 1}`); img.alt = "Error loading image"; img.style.border = '2px dashed red'; };
+                            img.onload = () => { console.log(`Image ${index + 1} loaded.`); };
+                            imageContainer.appendChild(img);
+                            imagesAdded = true;
+                        } catch (e) { console.error(`Error creating image element ${index + 1}:`, e); }
+                    } else { console.warn(`Skipping invalid generated image data ${index + 1}:`, imgData); }
+                });
+
+                if (imagesAdded) {
+                    messageElement.appendChild(imageContainer);
+                    console.log("[displayMessage] Appended image container.");
+                } else if (!messageText || messageText.trim() === "") {
+                    const contentDiv = document.createElement('div');
+                    contentDiv.classList.add('message-content');
+                    contentDiv.textContent = "[Received image data, but failed to display any images]";
+                    const senderDiv = messageElement.querySelector('.message-sender');
+                    if(senderDiv) senderDiv.after(contentDiv); else messageElement.prepend(contentDiv);
+                }
+            }
+
+            // Timestamp
+            const timestampDiv = document.createElement('div');
+            timestampDiv.classList.add('message-timestamp');
+            timestampDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            messageElement.appendChild(timestampDiv);
+
+            // Append to Chat Box
+            try {
+                messageContainer.appendChild(messageElement);
+                chatBox.appendChild(messageContainer);
+                requestAnimationFrame(() => {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                });
+                 console.log("[displayMessage] Successfully appended message.");
+            } catch (error) {
+                console.error("[displayMessage] Error appending message:", error);
+            }
+            console.log(`[displayMessage End] Sender: ${senderName}`);
+       }
+
+        // --- UI State Management ---
+        function setSendingState(sending) {
+            isSending = sending;
+            inputTextArea.disabled = sending;
+            sendButton.disabled = sending;
+            apiKeyInput.disabled = sending;
+            modelSelector.disabled = sending;
+            fileUploadLabel.style.opacity = sending ? 0.5 : 1.0;
+            fileUploadLabel.style.cursor = sending ? 'not-allowed' : 'pointer';
+            fileInput.disabled = sending;
+
+            // Disable parameter controls based on active sections
+             const activeModelType = getModelType(modelSelector.value);
+             const generalParams = [temperatureSlider, topPSlider, topKSlider, maxOutputTokensInput, stopSequencesInput];
+             const imagenParams = [imagenNumImagesSelect, imagenAspectRatioSelect];
+
+             generalParams.forEach(el => el.disabled = sending);
+             // Disable Imagen params only if Imagen section is active AND sending
+             if (paramSections.imagen.classList.contains('active')) {
+                imagenParams.forEach(el => el.disabled = sending);
+             }
+             // System instruction always disabled when sending
+            systemInstructionInput.disabled = sending;
+            clearSystemInstructionBtn.disabled = sending;
+
+
+            if (sending) {
+                sendButton.innerHTML = '<div class="loading-indicator"></div>';
+            } else {
+                sendButton.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-send-fill" viewBox="0 0 16 16"><path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.001.26.41a.5.5 0 0 0 .886-.083l6-15zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471l-.575 2.281z"/></svg>';
+                // Re-enable controls
+                generalParams.forEach(el => el.disabled = false);
+                imagenParams.forEach(el => el.disabled = false); // Re-enable Imagen params regardless of section visibility
+                 systemInstructionInput.disabled = false;
+                 clearSystemInstructionBtn.disabled = false;
+                 apiKeyInput.disabled = false;
+                 modelSelector.disabled = false;
+                 inputTextArea.disabled = false;
+                 fileInput.disabled = false;
+                 fileUploadLabel.style.opacity = 1.0;
+                 fileUploadLabel.style.cursor = 'pointer';
+                inputTextArea.focus();
+            }
+        }
+
+        // --- Utility Functions ---
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) return reject(new Error("File object is null or undefined."));
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => {
+                    const result = reader.result;
+                    if (typeof result === 'string') {
+                        const base64String = result.split(',')[1];
+                        if (base64String === undefined || base64String === null || base64String === "") {
+                           reject(new Error(`Failed to extract Base64 data from file: ${file.name}`));
+                        } else { resolve(base64String); }
+                    } else { reject(new Error(`FileReader result was not a string for file: ${file.name}`)); }
+                };
+                reader.onerror = error => { reject(error); };
+            });
+        }
+
+    </script>
+</body>
+</html>

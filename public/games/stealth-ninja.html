@@ -1,0 +1,970 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"666bf640c753f32d4004f4cf"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stealth Ninja</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Menu Styles */
+        .menu-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            z-index: 100;
+            transition: all 0.5s ease;
+        }
+
+        .menu-container.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .game-title {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(90deg, #f64f59, #c471ed, #12c2e9);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 20px rgba(198, 114, 237, 0.3);
+        }
+
+        .difficulty-options {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .difficulty-btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .difficulty-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-100%) skewX(-15deg);
+            transition: transform 0.4s ease;
+        }
+
+        .difficulty-btn:hover::before {
+            transform: translateX(100%) skewX(-15deg);
+        }
+
+        .easy {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .medium {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .hard {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .start-btn {
+            padding: 1rem 2.5rem;
+            background: linear-gradient(90deg, #12c2e9, #c471ed);
+            border: none;
+            border-radius: 50px;
+            font-size: 1.5rem;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #c471ed, #12c2e9);
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .start-btn:hover::before {
+            opacity: 1;
+        }
+
+        /* Game Container */
+        .game-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            display: none;
+            background-color: #1a1a2e;
+            overflow: hidden;
+        }
+
+        /* Game UI */
+        .game-ui {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 10;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .alert-box {
+            position: absolute;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(244, 67, 54, 0.8);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 20;
+        }
+
+        .alert-box.show {
+            opacity: 1;
+        }
+
+        .stealth-meter {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+        }
+
+        .stealth-icon {
+            color: #4caf50;
+        }
+
+        .stealth-bar {
+            width: 100px;
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .stealth-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            transition: width 0.3s ease;
+        }
+
+        /* Game Elements */
+        .hideable {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #333, #111);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 5;
+            user-select: none;
+        }
+
+        .ninja {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #666, #333);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 5;
+            transition: transform 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .ninja i {
+            font-size: 14px;
+        }
+
+        .ninja.rolling {
+            animation: roll 0.5s linear;
+            transform: scale(0.8);
+        }
+
+        @keyframes roll {
+            0% { transform: rotate(0deg) scale(0.8); }
+            100% { transform: rotate(360deg) scale(0.8); }
+        }
+
+        .ninja.hidden {
+            opacity: 0.5;
+            transform: scale(0.7);
+            background: linear-gradient(135deg, #444, #222);
+        }
+
+        .guard {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, #a83232, #6b1c1c);
+            border-radius: 50%;
+            position: absolute;
+            z-index: 4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+        }
+
+        .guard i {
+            font-size: 14px;
+        }
+
+        .vision-cone {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            background: linear-gradient(90deg, rgba(255, 0, 0, 0.1), rgba(255, 0, 0, 0.3));
+            clip-path: polygon(0 0, 100% 50%, 0 100%);
+            transform-origin: left center;
+            z-index: 3;
+            border-radius: 0 75px 75px 0;
+        }
+
+        .wall {
+            position: absolute;
+            background: linear-gradient(135deg, #3a3a3a, #2a2a2a);
+            z-index: 2;
+            border: 1px solid #555;
+        }
+
+        .exit {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(76, 175, 80, 0.3);
+            border: 2px dashed #4caf50;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #4caf50;
+            z-index: 1;
+        }
+
+        .game-over, .game-won {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            font-size: 2rem;
+            display: none;
+        }
+
+        .restart-btn {
+            margin-top: 2rem;
+            padding: 1rem 2rem;
+            background: linear-gradient(90deg, #c471ed, #12c2e9);
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            color: white;
+            cursor: pointer;
+        }
+
+        .controls {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            text-align: center;
+        }
+
+        .level-indicator {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Menu Screen -->
+    <div class="menu-container">
+        <h1 class="game-title">Stealth Ninja</h1>
+        <div class="difficulty-options">
+            <button class="difficulty-btn easy" data-difficulty="easy">
+                <i class="fas fa-leaf"></i> Easy
+            </button>
+            <button class="difficulty-btn medium" data-difficulty="medium">
+                <i class="fas fa-balance-scale"></i> Medium
+            </button>
+            <button class="difficulty-btn hard" data-difficulty="hard">
+                <i class="fas fa-fire"></i> Hard
+            </button>
+        </div>
+        <button class="start-btn">Start Mission</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div class="game-container">
+        <div class="game-ui">
+            <div class="stealth-meter">
+                <i class="fas fa-user-ninja stealth-icon"></i>
+                <div class="stealth-bar">
+                    <div class="stealth-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert-box">Guard Alerted!</div>
+
+        <div class="level-indicator">Level: <span class="level-value">1</span></div>
+
+        <div class="controls">
+            WASD to move | SPACE to roll | SHIFT to hide | Avoid red vision cones
+        </div>
+
+        <div class="game-over">
+            <h2>Mission Failed</h2>
+            <p>You were detected!</p>
+            <button class="restart-btn">Try Again</button>
+        </div>
+
+        <div class="game-won">
+            <h2>Mission Complete</h2>
+            <p>You escaped undetected!</p>
+            <button class="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        const gameState = {
+            difficulty: 'medium',
+            level: 1,
+            isGameActive: false,
+            ninja: {
+                x: 50,
+                y: 50,
+                speed: 2,
+                isHidden: false,
+                isRolling: false,
+                stealth: 100,
+                lastRollTime: 0,
+                rollCooldown: 1000
+            },
+            guards: [],
+            walls: [],
+            hideSpots: [],
+            exit: null,
+            keysPressed: {
+                w: false,
+                a: false,
+                s: false,
+                d: false,
+                shift: false,
+                space: false
+            },
+            lastTime: 0,
+            detectionLevel: 0,
+            maxDetection: 100
+        };
+
+        // DOM Elements
+        const menuContainer = document.querySelector('.menu-container');
+        const gameContainer = document.querySelector('.game-container');
+        const startBtn = document.querySelector('.start-btn');
+        const difficultyBtns = document.querySelectorAll('.difficulty-btn');
+        const stealthFill = document.querySelector('.stealth-fill');
+        const alertBox = document.querySelector('.alert-box');
+        const gameOverScreen = document.querySelector('.game-over');
+        const gameWonScreen = document.querySelector('.game-won');
+        const restartBtns = document.querySelectorAll('.restart-btn');
+        const levelValue = document.querySelector('.level-value');
+
+        // Initialize Game
+        function initGame() {
+            gameState.isGameActive = true;
+            gameContainer.style.display = 'block';
+            gameState.ninja.stealth = 100;
+            gameState.detectionLevel = 0;
+            updateStealthBar();
+            
+            // Clear previous elements
+            document.querySelectorAll('.hideable, .ninja, .guard, .vision-cone, .wall, .exit').forEach(el => el.remove());
+            gameState.guards = [];
+            gameState.walls = [];
+            gameState.hideSpots = [];
+            
+            createNinja();
+            generateLevel(gameState.level);
+        }
+
+        // Create Ninja Element
+        function createNinja() {
+            const ninja = document.createElement('div');
+            ninja.className = 'ninja';
+            ninja.innerHTML = '<i class="fas fa-user-ninja"></i>';
+            ninja.style.left = `${gameState.ninja.x}px`;
+            ninja.style.top = `${gameState.ninja.y}px`;
+            gameContainer.appendChild(ninja);
+        }
+
+        // Generate Level
+        function generateLevel(level) {
+            levelValue.textContent = level;
+            
+            // Adjust difficulty based on level
+            const difficultyMultiplier = 1 + (level - 1) * 0.2;
+            
+            // Create exit point
+            createExit(800, 450);
+            
+            // Create walls
+            createWalls(level);
+            
+            // Create hide spots
+            createHideSpots(level);
+            
+            // Create guards based on difficulty
+            const guardCount = Math.min(3 + Math.floor(level / 2), 8);
+            for (let i = 0; i < guardCount; i++) {
+                createGuard(level, difficultyMultiplier);
+            }
+        }
+
+        function createExit(x, y) {
+            const exit = document.createElement('div');
+            exit.className = 'exit';
+            exit.innerHTML = '<i class="fas fa-door-open"></i>';
+            exit.style.left = `${x}px`;
+            exit.style.top = `${y}px`;
+            gameContainer.appendChild(exit);
+            gameState.exit = { x, y, element: exit };
+        }
+
+        function createWalls(level) {
+            // Border walls
+            addWall(0, 0, window.innerWidth, 20);
+            addWall(0, 0, 20, window.innerHeight);
+            addWall(0, window.innerHeight - 20, window.innerWidth, 20);
+            addWall(window.innerWidth - 20, 0, 20, window.innerHeight);
+            
+            // Random walls based on level
+            const wallCount = 5 + level;
+            for (let i = 0; i < wallCount; i++) {
+                const width = 50 + Math.random() * 150;
+                const height = 30 + Math.random() * 100;
+                const x = 50 + Math.random() * (window.innerWidth - width - 100);
+                const y = 50 + Math.random() * (window.innerHeight - height - 100);
+                addWall(x, y, width, height);
+            }
+        }
+
+        function addWall(x, y, width, height) {
+            const wall = document.createElement('div');
+            wall.className = 'wall';
+            wall.style.left = `${x}px`;
+            wall.style.top = `${y}px`;
+            wall.style.width = `${width}px`;
+            wall.style.height = `${height}px`;
+            gameContainer.appendChild(wall);
+            gameState.walls.push({ x, y, width, height, element: wall });
+        }
+
+        function createHideSpots(level) {
+            const spotsCount = 3 + level;
+            for (let i = 0; i < spotsCount; i++) {
+                const x = 50 + Math.random() * (window.innerWidth - 100);
+                const y = 50 + Math.random() * (window.innerHeight - 100);
+                
+                // Make sure it's not on a wall
+                if (!isPositionOnWall(x, y)) {
+                    const spot = document.createElement('div');
+                    spot.className = 'hideable';
+                    spot.innerHTML = '<i class="fas fa-mountain"></i>';
+                    spot.style.left = `${x}px`;
+                    spot.style.top = `${y}px`;
+                    gameContainer.appendChild(spot);
+                    gameState.hideSpots.push({ x, y, element: spot });
+                }
+            }
+        }
+
+        function createGuard(level, difficultyMultiplier) {
+            let x, y;
+            do {
+                x = 100 + Math.random() * (window.innerWidth - 200);
+                y = 100 + Math.random() * (window.innerHeight - 200);
+            } while (isPositionOnWall(x, y) || isTooCloseToNinja(x, y));
+            
+            const speed = 0.5 + Math.random() * 0.5 * difficultyMultiplier;
+            const visionRange = 100 + Math.random() * 50;
+            const visionAngle = 60;
+            const patrolDistance = 100 + Math.random() * 100;
+            
+            const guard = {
+                x, y,
+                speed,
+                direction: Math.random() * Math.PI * 2,
+                visionRange,
+                visionAngle,
+                patrolDistance,
+                initialX: x,
+                initialY: y,
+                path: [], // For more complex patrol paths
+                isAlerted: false,
+                alertTimer: 0
+            };
+            
+            // Create guard element
+            const guardEl = document.createElement('div');
+            guardEl.className = 'guard';
+            guardEl.innerHTML = '<i class="fas fa-eye"></i>';
+            guardEl.style.left = `${x}px`;
+            guardEl.style.top = `${y}px`;
+            gameContainer.appendChild(guardEl);
+            guard.element = guardEl;
+            
+            // Create vision cone
+            const cone = document.createElement('div');
+            cone.className = 'vision-cone';
+            cone.style.left = `${x + 15}px`;
+            cone.style.top = `${y - 50}px`;
+            cone.style.width = `${visionRange}px`;
+            cone.style.height = `${visionRange * 2}px`;
+            gameContainer.appendChild(cone);
+            guard.visionCone = cone;
+            
+            gameState.guards.push(guard);
+        }
+
+        // Check if position is on a wall
+        function isPositionOnWall(x, y) {
+            return gameState.walls.some(wall => 
+                x >= wall.x && x <= wall.x + wall.width &&
+                y >= wall.y && y <= wall.y + wall.height
+            );
+        }
+
+        // Check if guard is too close to ninja spawn
+        function isTooCloseToNinja(x, y) {
+            const dx = x - gameState.ninja.x;
+            const dy = y - gameState.ninja.y;
+            return Math.sqrt(dx * dx + dy * dy) < 200;
+        }
+
+        // Update Stealth Meter
+        function updateStealthBar() {
+            const stealthPercentage = gameState.ninja.stealth;
+            stealthFill.style.width = `${stealthPercentage}%`;
+            
+            if (stealthPercentage > 70) {
+                stealthFill.style.background = 'linear-gradient(90deg, #4caf50, #8bc34a)';
+            } else if (stealthPercentage > 30) {
+                stealthFill.style.background = 'linear-gradient(90deg, #ff9800, #ffc107)';
+            } else {
+                stealthFill.style.background = 'linear-gradient(90deg, #f44336, #ff5722)';
+            }
+        }
+
+        // Game Loop
+        function gameLoop(timestamp) {
+            if (!gameState.isGameActive) return;
+            
+            const deltaTime = timestamp - gameState.lastTime;
+            gameState.lastTime = timestamp;
+            
+            updateNinja(deltaTime);
+            updateGuards(deltaTime);
+            checkDetection();
+            checkExit();
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update Ninja Position
+        function updateNinja(deltaTime) {
+            const ninja = gameState.ninja;
+            const ninjaEl = document.querySelector('.ninja');
+            
+            // Reset rolling state if animation finished
+            if (ninja.isRolling && Date.now() - ninja.lastRollTime > 500) {
+                ninja.isRolling = false;
+                ninjaEl.classList.remove('rolling');
+            }
+            
+            // Calculate movement
+            let dx = 0, dy = 0;
+            if (gameState.keysPressed.w) dy -= ninja.speed;
+            if (gameState.keysPressed.s) dy += ninja.speed;
+            if (gameState.keysPressed.a) dx -= ninja.speed;
+            if (gameState.keysPressed.d) dx += ninja.speed;
+            
+            // Rolling modifier
+            if (ninja.isRolling) {
+                dx *= 2;
+                dy *= 2;
+            }
+            
+            // Apply movement if not completely stopped
+            if (dx !== 0 || dy !== 0) {
+                ninja.x += dx;
+                ninja.y += dy;
+                
+                // Stealth drain when moving
+                if (!ninja.isHidden && !ninja.isRolling) {
+                    ninja.stealth = Math.max(0, ninja.stealth - 0.05);
+                    updateStealthBar();
+                }
+            } else {
+                // Stealth recovery when standing still
+                if (!ninja.isRolling) {
+                    ninja.stealth = Math.min(100, ninja.stealth + 0.1);
+                    updateStealthBar();
+                }
+            }
+            
+            // Check wall collisions
+            ninja.x = Math.max(20, Math.min(window.innerWidth - 40, ninja.x));
+            ninja.y = Math.max(20, Math.min(window.innerHeight - 40, ninja.y));
+            
+            // Update DOM element
+            ninjaEl.style.left = `${ninja.x}px`;
+            ninjaEl.style.top = `${ninja.y}px`;
+            
+            // Check hide state
+            const isNearHideSpot = gameState.hideSpots.some(spot => {
+                const dx = spot.x - ninja.x;
+                const dy = spot.y - ninja.y;
+                return Math.sqrt(dx * dx + dy * dy) < 30 && gameState.keysPressed.shift;
+            });
+            
+            // Check wall hiding
+            const isNearWall = gameState.walls.some(wall => {
+                return (Math.abs(ninja.x - wall.x) < 15 || 
+                        Math.abs(ninja.x - (wall.x + wall.width)) < 15) &&
+                       ninja.y > wall.y && ninja.y < wall.y + wall.height &&
+                       gameState.keysPressed.shift;
+            });
+            
+            const shouldBeHidden = isNearHideSpot || isNearWall;
+            
+            if (shouldBeHidden && !ninja.isHidden) {
+                ninja.isHidden = true;
+                ninjaEl.classList.add('hidden');
+                ninja.stealth = Math.min(100, ninja.stealth + 10);
+                updateStealthBar();
+            } else if (!shouldBeHidden && ninja.isHidden) {
+                ninja.isHidden = false;
+                ninjaEl.classList.remove('hidden');
+            }
+            
+            // Roll cooldown
+            if (ninja.isRolling && Date.now() - ninja.lastRollTime > ninja.rollCooldown) {
+                ninja.isRolling = false;
+            }
+        }
+
+        // Update Guards
+        function updateGuards(deltaTime) {
+            gameState.guards.forEach(guard => {
+                // Simple patrol behavior
+                const angle = Date.now() * 0.0005;
+                guard.direction = angle;
+                
+                // Move guard in patrol pattern
+                guard.x = guard.initialX + Math.cos(angle) * guard.patrolDistance;
+                guard.y = guard.initialY + Math.sin(angle) * guard.patrolDistance;
+                
+                // Update guard position
+                guard.element.style.left = `${guard.x}px`;
+                guard.element.style.top = `${guard.y}px`;
+                
+                // Update vision cone
+                guard.visionCone.style.left = `${guard.x + 15}px`;
+                guard.visionCone.style.top = `${guard.y - guard.visionRange * 0.5}px`;
+                guard.visionCone.style.transform = `rotate(${guard.direction}rad)`;
+                
+                // Alert behavior
+                if (guard.isAlerted) {
+                    guard.alertTimer += deltaTime;
+                    if (guard.alertTimer > 3000) {
+                        guard.isAlerted = false;
+                        guard.alertTimer = 0;
+                    }
+                }
+            });
+        }
+
+        // Check Detection
+        function checkDetection() {
+            if (gameState.ninja.isHidden) return;
+            
+            const ninja = gameState.ninja;
+            let isDetected = false;
+            
+            gameState.guards.forEach(guard => {
+                // Calculate distance from guard to ninja
+                const dx = ninja.x - guard.x;
+                const dy = ninja.y - guard.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < guard.visionRange) {
+                    // Calculate angle between guard's direction and ninja
+                    const angleToNinja = Math.atan2(dy, dx);
+                    let angleDiff = Math.abs(guard.direction - angleToNinja);
+                    
+                    // Normalize angle difference
+                    while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                    angleDiff = Math.abs(angleDiff);
+                    
+                    // Check if ninja is in vision cone
+                    if (angleDiff < guard.visionAngle * Math.PI / 360) {
+                        // Check line of sight (no walls in between)
+                        const hasLineOfSight = !gameState.walls.some(wall => {
+                            return lineIntersectsRectangle(
+                                guard.x, guard.y, ninja.x, ninja.y,
+                                wall.x, wall.y, wall.width, wall.height
+                            );
+                        });
+                        
+                        if (hasLineOfSight) {
+                            // Detection based on stealth level
+                            const detectionChance = (1 - gameState.ninja.stealth / 100) * 0.8;
+                            if (Math.random() < detectionChance || distance < 30) {
+                                isDetected = true;
+                                guard.isAlerted = true;
+                                guard.alertTimer = 0;
+                                
+                                // Increase detection level
+                                if (gameState.detectionLevel < gameState.maxDetection) {
+                                    gameState.detectionLevel += 2;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Show/hide alert
+            if (isDetected) {
+                if (!alertBox.classList.contains('show')) {
+                    alertBox.classList.add('show');
+                    setTimeout(() => alertBox.classList.remove('show'), 2000);
+                }
+            }
+            
+            // Game over if fully detected
+            if (gameState.detectionLevel >= gameState.maxDetection) {
+                gameOver();
+            }
+        }
+
+        // Check Exit
+        function checkExit() {
+            const ninja = gameState.ninja;
+            const exit = gameState.exit;
+            
+            const dx = exit.x - ninja.x;
+            const dy = exit.y - ninja.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 30) {
+                levelComplete();
+            }
+        }
+
+        // Helper function for line-rectangle intersection
+        function lineIntersectsRectangle(x1, y1, x2, y2, rx, ry, rw, rh) {
+            // Check if line is inside rectangle
+            if ((x1 >= rx && x1 <= rx + rw && y1 >= ry && y1 <= ry + rh) ||
+                (x2 >= rx && x2 <= rx + rw && y2 >= ry && y2 <= ry + rh)) {
+                return true;
+            }
+            
+            // Check line against each edge of rectangle
+            return (
+                lineIntersectsLine(x1, y1, x2, y2, rx, ry, rx + rw, ry) || // top
+                lineIntersectsLine(x1, y1, x2, y2, rx + rw, ry, rx + rw, ry + rh) || // right
+                lineIntersectsLine(x1, y1, x2, y2, rx, ry + rh, rx + rw, ry + rh) || // bottom
+                lineIntersectsLine(x1, y1, x2, y2, rx, ry, rx, ry + rh) // left
+            );
+        }
+
+        function lineIntersectsLine(x1, y1, x2, y2, x3, y3, x4, y4) {
+            const uA = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / 
+                      ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+            const uB = ((x2 - x1) * (y1 - y3) - (y2 - y1) * (x1 - x3)) / 
+                      ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+            
+            return uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1;
+        }
+
+        // Game Events
+        function gameOver() {
+            gameState.isGameActive = false;
+            gameOverScreen.style.display = 'flex';
+            
+            // Remove all vision cones
+            document.querySelectorAll('.vision-cone').forEach(el => el.remove());
+        }
+
+        function levelComplete() {
+            gameState.isGameActive = false;
+            gameWonScreen.style.display = 'flex';
+            
+            // Remove all vision cones
+            document.querySelectorAll('.vision-cone').forEach(el => el.remove());
+            
+            // Increase level
+            gameState.level++;
+        }
+
+        // Event Listeners
+        difficultyBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                gameState.difficulty = btn.dataset.difficulty;
+                
+                // Update active button
+                difficultyBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        startBtn.addEventListener('click', () => {
+            menuContainer.classList.add('hidden');
+            setTimeout(() => {
+                menuContainer.style.display = 'none';
+                initGame();
+                gameState.lastTime = performance.now();
+                requestAnimationFrame(gameLoop);
+            }, 500);
+        });
+
+        restartBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                gameOverScreen.style.display = 'none';
+                gameWonScreen.style.display = 'none';
+                
+                // Move ninja back to start
+                gameState.ninja.x = 50;
+                gameState.ninja.y = 50;
+                gameState.ninja.isHidden = false;
+                gameState.ninja.isRolling = false;
+                
+                const ninjaEl = document.querySelector('.ninja');
+                if (ninjaEl) {
+                    ninjaEl.classList.remove('hidden', 'rolling');
+                }
+                
+                initGame();
+                gameState.lastTime = performance.now();
+                requestAnimationFrame(gameLoop);
+            });
+        });
+
+        // Keyboard Controls
+        document.addEventListener('keydown', (e) => {
+            if (!gameState.isGameActive) return;
+            
+            switch (e.key.toLowerCase()) {
+                case 'w': gameState.keysPressed.w = true; break;
+                case 'a': gameState.keysPressed.a = true; break;
+                case 's': gameState.keysPressed.s = true; break;
+                case 'd': gameState.keysPressed.d = true; break;
+                case 'shift': gameState.keysPressed.shift = true; break;
+                case ' ': 
+                    if (!gameState.ninja.isRolling && Date.now() - gameState.ninja.lastRollTime > gameState.ninja.rollCooldown) {
+                        gameState.ninja.isRolling = true;
+                        gameState.ninja.lastRollTime = Date.now();
+                        document.querySelector('.ninja').classList.add('rolling');
+                    }
+                    gameState.keysPressed.space = true; 
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch (e.key.toLowerCase()) {
+                case 'w': gameState.keysPressed.w = false; break;
+                case 'a': gameState.keysPressed.a = false; break;
+                case 's': gameState.keysPressed.s = false; break;
+                case 'd': gameState.keysPressed.d = false; break;
+                case 'shift': gameState.keysPressed.shift = false; break;
+                case ' ': gameState.keysPressed.space = false; break;
+            }
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <a href="https://enzostvs-deepsite.hf.space" style="color: #fff;" target="_blank" >DeepSite</a> <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;"></p></body>
+</html>

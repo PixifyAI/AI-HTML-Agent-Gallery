@@ -1,0 +1,569 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"67408814f564ecdd238abb66"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Tic Tac Toe</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --neon-blue: #08f;
+            --neon-pink: #f0f;
+            --neon-purple: #90f;
+            --dark-bg: #111;
+            --cell-bg: #222;
+            --text-light: #eee;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: var(--text-light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(90deg, var(--neon-blue), var(--neon-pink));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 10px rgba(0, 136, 255, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue); }
+            to { text-shadow: 0 0 20px var(--neon-pink), 0 0 30px var(--neon-pink); }
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+            background-color: rgba(34, 34, 34, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 136, 255, 0.2);
+        }
+
+        .player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .player.active {
+            transform: scale(1.1);
+        }
+
+        .player.active .player-icon {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .player-icon {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .player-x .player-icon {
+            color: var(--neon-blue);
+        }
+
+        .player-o .player-icon {
+            color: var(--neon-pink);
+        }
+
+        .score {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            max-width: 400px;
+            aspect-ratio: 1/1;
+            margin-bottom: 20px;
+        }
+
+        .cell {
+            background-color: var(--cell-bg);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 4rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cell::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, transparent 0%, rgba(0, 136, 255, 0.1) 50%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .cell:hover::before {
+            opacity: 1;
+        }
+
+        .cell.x {
+            color: var(--neon-blue);
+            text-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        .cell.o {
+            color: var(--neon-pink);
+            text-shadow: 0 0 15px var(--neon-pink);
+        }
+
+        .cell.winner {
+            animation: winnerFlash 1s infinite;
+        }
+
+        @keyframes winnerFlash {
+            0% { background-color: var(--cell-bg); }
+            50% { background-color: rgba(0, 136, 255, 0.3); }
+            100% { background-color: var(--cell-bg); }
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: var(--cell-bg);
+            color: var(--text-light);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: all 0.5s ease;
+        }
+
+        button:hover::after {
+            left: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 136, 255, 0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .reset-btn {
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--dark-bg);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 80%;
+            border: 1px solid var(--neon-blue);
+            box-shadow: 0 0 30px var(--neon-blue);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal h2 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            color: var(--neon-blue);
+        }
+
+        .winner-message {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .winner-icon {
+            font-size: 2rem;
+        }
+
+        .winner-x .winner-icon {
+            color: var(--neon-blue);
+        }
+
+        .winner-o .winner-icon {
+            color: var(--neon-pink);
+        }
+
+        .draw-message {
+            color: var(--text-light);
+        }
+
+        .modal-btn {
+            background: linear-gradient(45deg, var(--neon-pink), var(--neon-purple));
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .game-board {
+                max-width: 300px;
+            }
+            
+            .cell {
+                font-size: 3rem;
+            }
+            
+            .player-icon {
+                font-size: 1.5rem;
+            }
+            
+            .score {
+                font-size: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <h1>Neon Tic Tac Toe</h1>
+        
+        <div class="game-info">
+            <div class="player player-x active" id="player-x">
+                <div class="player-icon"><i class="fas fa-times"></i></div>
+                <div class="player-name">Player X</div>
+                <div class="score" id="score-x">0</div>
+            </div>
+            
+            <div class="player player-o" id="player-o">
+                <div class="player-icon"><i class="far fa-circle"></i></div>
+                <div class="player-name">Player O</div>
+                <div class="score" id="score-o">0</div>
+            </div>
+        </div>
+        
+        <div class="game-board" id="game-board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        
+        <div class="controls">
+            <button class="reset-btn" id="reset-btn">
+                <i class="fas fa-sync-alt"></i> Reset Game
+            </button>
+        </div>
+    </div>
+    
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <div class="winner-message" id="winner-message">
+                <!-- Filled by JavaScript -->
+            </div>
+            <button class="modal-btn" id="modal-btn">
+                <i class="fas fa-play"></i> Play Again
+            </button>
+        </div>
+    </div>
+    
+    <audio id="click-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-arcade-game-jump-coin-216.mp3"></audio>
+    <audio id="win-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"></audio>
+    <audio id="draw-sound" src="https://assets.mixkit.co/sfx/preview/mixkit-retro-arcade-casino-notification-267.mp3"></audio>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Create stars for background
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.width = `${Math.random() * 3}px`;
+                star.style.height = star.style.width;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                starsContainer.appendChild(star);
+            }
+
+            // Game state
+            let board = ['', '', '', '', '', '', '', '', ''];
+            let currentPlayer = 'x';
+            let gameActive = true;
+            let scores = { x: 0, o: 0 };
+            
+            // DOM elements
+            const cells = document.querySelectorAll('.cell');
+            const playerX = document.getElementById('player-x');
+            const playerO = document.getElementById('player-o');
+            const scoreX = document.getElementById('score-x');
+            const scoreO = document.getElementById('score-o');
+            const resetBtn = document.getElementById('reset-btn');
+            const modal = document.getElementById('modal');
+            const winnerMessage = document.getElementById('winner-message');
+            const modalBtn = document.getElementById('modal-btn');
+            
+            // Audio elements
+            const clickSound = document.getElementById('click-sound');
+            const winSound = document.getElementById('win-sound');
+            const drawSound = document.getElementById('draw-sound');
+            
+            // Winning combinations
+            const winConditions = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]             // diagonals
+            ];
+            
+            // Initialize game
+            function initGame() {
+                board = ['', '', '', '', '', '', '', '', ''];
+                gameActive = true;
+                currentPlayer = 'x';
+                
+                // Update UI
+                cells.forEach(cell => {
+                    cell.textContent = '';
+                    cell.classList.remove('x', 'o', 'winner');
+                });
+                
+                // Set active player
+                playerX.classList.add('active');
+                playerO.classList.remove('active');
+            }
+            
+            // Handle cell click
+            function handleCellClick(e) {
+                const clickedCell = e.target;
+                const clickedCellIndex = parseInt(clickedCell.getAttribute('data-index'));
+                
+                // If cell already has content or game is not active, ignore
+                if (board[clickedCellIndex] !== '' || !gameActive) return;
+                
+                // Play sound
+                clickSound.currentTime = 0;
+                clickSound.play();
+                
+                // Update board and UI
+                board[clickedCellIndex] = currentPlayer;
+                clickedCell.textContent = currentPlayer === 'x' ? '×' : '○';
+                clickedCell.classList.add(currentPlayer);
+                
+                // Check for win or draw
+                checkResult();
+            }
+            
+            // Check game result
+            function checkResult() {
+                let roundWon = false;
+                
+                // Check win conditions
+                for (let i = 0; i < winConditions.length; i++) {
+                    const [a, b, c] = winConditions[i];
+                    
+                    if (board[a] === '' || board[b] === '' || board[c] === '') continue;
+                    
+                    if (board[a] === board[b] && board[b] === board[c]) {
+                        roundWon = true;
+                        
+                        // Highlight winning cells
+                        cells[a].classList.add('winner');
+                        cells[b].classList.add('winner');
+                        cells[c].classList.add('winner');
+                        break;
+                    }
+                }
+                
+                // If won
+                if (roundWon) {
+                    winSound.play();
+                    gameActive = false;
+                    scores[currentPlayer]++;
+                    updateScores();
+                    
+                    // Show winner modal
+                    showWinnerModal(currentPlayer);
+                    return;
+                }
+                
+                // If draw
+                if (!board.includes('')) {
+                    drawSound.play();
+                    gameActive = false;
+                    showDrawModal();
+                    return;
+                }
+                
+                // Switch player
+                changePlayer();
+            }
+            
+            // Change current player
+            function changePlayer() {
+                currentPlayer = currentPlayer === 'x' ? 'o' : 'x';
+                
+                // Update UI
+                playerX.classList.toggle('active');
+                playerO.classList.toggle('active');
+            }
+            
+            // Update score display
+            function updateScores() {
+                scoreX.textContent = scores.x;
+                scoreO.textContent = scores.o;
+            }
+            
+            // Show winner modal
+            function showWinnerModal(winner) {
+                winnerMessage.innerHTML = `
+                    <span class="winner-icon ${winner === 'x' ? 'winner-x' : 'winner-o'}">
+                        <i class="fas ${winner === 'x' ? 'fa-times' : 'fa-circle'}"></i>
+                    </span>
+                    <span>Player ${winner.toUpperCase()} wins!</span>
+                `;
+                modal.classList.add('show');
+            }
+            
+            // Show draw modal
+            function showDrawModal() {
+                winnerMessage.innerHTML = `
+                    <span class="draw-message">It's a draw!</span>
+                `;
+                modal.classList.add('show');
+            }
+            
+            // Event listeners
+            cells.forEach(cell => cell.addEventListener('click', handleCellClick));
+            resetBtn.addEventListener('click', initGame);
+            modalBtn.addEventListener('click', () => {
+                modal.classList.remove('show');
+                initGame();
+            });
+            
+            // Initialize game on load
+            initGame();
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <a href="https://enzostvs-deepsite.hf.space" style="color: #fff;" target="_blank" >DeepSite</a> <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;"></p></body>
+</html>

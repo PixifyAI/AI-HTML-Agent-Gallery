@@ -1,0 +1,458 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"637e12eaf09bf2498c53ea89"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Synth Keyboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+        .key {
+            transition: all 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .white-key {
+            background-color: white;
+            border: 1px solid #ccc;
+            z-index: 1;
+        }
+        
+        .black-key {
+            background-color: #222;
+            height: 60%;
+            width: 60%;
+            z-index: 2;
+        }
+        
+        .active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.2);
+        }
+        
+        .white-key.active {
+            background-color: #f1f1f1;
+        }
+        
+        .black-key.active {
+            background-color: #444;
+        }
+        
+        #keyboard {
+            position: relative;
+            width: 100%;
+            height: 200px;
+            display: flex;
+            margin-top: 0;
+        }
+        
+        .key-container {
+            position: relative;
+            height: 100%;
+        }
+        
+        .white-key {
+            width: 3.5rem;
+            height: 100%;
+        }
+        
+        .black-key {
+            position: absolute;
+            top: 0;
+            margin-left: -1.05rem;
+            z-index: 10;
+        }
+        
+        .key-label {
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        .white-key-label {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: #555;
+        }
+        
+        .black-key-label {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center py-8">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold text-center mb-2 text-purple-400">Synth<span class="text-pink-400">Keys</span></h1>
+        <p class="text-center text-gray-400 mb-8">Interactive Keyboard Synthesizer</p>
+        
+        <div class="bg-gray-800 rounded-xl p-6 shadow-xl mb-8">
+            <div class="flex flex-wrap justify-center gap-2 mb-6">
+                <button id="sine" class="btn-wave px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 focus:outline-none">Sine</button>
+                <button id="square" class="btn-wave px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 focus:outline-none">Square</button>
+                <button id="sawtooth" class="btn-wave px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 focus:outline-none">Sawtooth</button>
+                <button id="triangle" class="btn-wave px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 focus:outline-none">Triangle</button>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block mb-2 text-gray-300">Volume</label>
+                <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5" class="w-full h-2 bg-purple-600 rounded-lg appearance-none cursor-pointer">
+            </div>
+            
+            <div class="mb-6">
+                <label class="block mb-2 text-gray-300">ADSR Envelope</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Attack</label>
+                        <input type="range" id="attack" min="0" max="1" step="0.01" value="0.05" class="w-full h-2 bg-pink-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Decay</label>
+                        <input type="range" id="decay" min="0" max="1" step="0.01" value="0.2" class="w-full h-2 bg-pink-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Sustain</label>
+                        <input type="range" id="sustain" min="0" max="1" step="0.01" value="0.5" class="w-full h-2 bg-pink-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Release</label>
+                        <input type="range" id="release" min="0" max="1" step="0.01" value="0.3" class="w-full h-2 bg-pink-600 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="my-4 p-4 bg-gray-700 rounded-lg">
+                <h3 class="text-lg font-semibold mb-2">Computer Keyboard Mapping:</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">A</span> - C
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">W</span> - C#
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">S</span> - D
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">E</span> - D#
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">D</span> - E
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">F</span> - F
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">T</span> - F#
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">G</span> - G
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">Y</span> - G#
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">H</span> - A
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">U</span> - A#
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">J</span> - B
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">K</span> - C
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">O</span> - C#
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">L</span> - D
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">P</span> - D#
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">;</span> - E
+                    </div>
+                    <div class="bg-gray-600 p-2 rounded">
+                        <span class="font-bold">'</span> - F
+                    </div>
+                </div>
+                <div class="mt-2 text-sm text-gray-400">First row (A-J) and second row (K-') for two octaves</div>
+            </div>
+        </div>
+        
+        <div id="keyboard" class="w-full mx-auto h-64 mb-12">
+            <!-- Keyboard will be generated here -->
+        </div>
+        
+        <div class="bg-gray-800 rounded-xl p-6 shadow-xl">
+            <div class="flex items-center justify-center">
+                <div class="w-4 h-4 rounded-full bg-pink-500 mr-2 animate-pulse hidden" id="sound-indicator"></div>
+                <span id="active-note" class="font-mono text-lg">Play a note!</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Audio context initialization
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const audioContext = new AudioContext();
+            
+            // Global variables
+            let oscillatorType = 'sine';
+            let volume = 0.5;
+            let attack = 0.05;
+            let decay = 0.2;
+            let sustain = 0.5;
+            let release = 0.3;
+            let activeNotes = {};
+            
+            // DOM elements
+            const keyboardEl = document.getElementById('keyboard');
+            const activeNoteEl = document.getElementById('active-note');
+            const soundIndicator = document.getElementById('sound-indicator');
+            
+            // Create gain node
+            const globalGain = audioContext.createGain();
+            globalGain.gain.value = volume;
+            globalGain.connect(audioContext.destination);
+            
+            // Initialize keyboard
+            createKeyboard();
+            
+            // Create piano keyboard
+            function createKeyboard() {
+                const notes = [
+                    // First octave
+                    { note: 'C', key: 'A', octave: 4, isBlack: false, freq: 261.63 },
+                    { note: 'C#', key: 'W', octave: 4, isBlack: true, freq: 277.18 },
+                    { note: 'D', key: 'S', octave: 4, isBlack: false, freq: 293.66 },
+                    { note: 'D#', key: 'E', octave: 4, isBlack: true, freq: 311.13 },
+                    { note: 'E', key: 'D', octave: 4, isBlack: false, freq: 329.63 },
+                    { note: 'F', key: 'F', octave: 4, isBlack: false, freq: 349.23 },
+                    { note: 'F#', key: 'T', octave: 4, isBlack: true, freq: 369.99 },
+                    { note: 'G', key: 'G', octave: 4, isBlack: false, freq: 392.00 },
+                    { note: 'G#', key: 'Y', octave: 4, isBlack: true, freq: 415.30 },
+                    { note: 'A', key: 'H', octave: 4, isBlack: false, freq: 440.00 },
+                    { note: 'A#', key: 'U', octave: 4, isBlack: true, freq: 466.16 },
+                    { note: 'B', key: 'J', octave: 4, isBlack: false, freq: 493.88 },
+                    // Second octave
+                    { note: 'C', key: 'K', octave: 5, isBlack: false, freq: 523.25 },
+                    { note: 'C#', key: 'O', octave: 5, isBlack: true, freq: 554.37 },
+                    { note: 'D', key: 'L', octave: 5, isBlack: false, freq: 587.33 },
+                    { note: 'D#', key: 'P', octave: 5, isBlack: true, freq: 622.25 },
+                    { note: 'E', key: ';', octave: 5, isBlack: false, freq: 659.25 },
+                    { note: 'F', key: "'", octave: 5, isBlack: false, freq: 698.46 },
+                ];
+                
+                notes.forEach((note) => {
+                    const keyContainer = document.createElement('div');
+                    keyContainer.className = `key-container ${note.isBlack ? '' : 'flex-grow'} inline-block h-full relative`;
+                    
+                    const key = document.createElement('div');
+                    key.className = `key ${note.isBlack ? 'black-key' : 'white-key'} relative h-full select-none cursor-pointer`;
+                    key.dataset.note = note.note;
+                    key.dataset.freq = note.freq;
+                    key.dataset.key = note.key;
+                    
+                    // Add label
+                    const label = document.createElement('div');
+                    label.className = note.isBlack ? 'black-key-label' : 'white-key-label';
+                    label.textContent = `${note.note}${note.octave}`;
+                    
+                    // Add computer key label
+                    const keyLabel = document.createElement('div');
+                    keyLabel.className = note.isBlack ? 'black-key-label text-xs mt-4' : 'white-key-label text-xs mt-4';
+                    keyLabel.textContent = `[${note.key}]`;
+                    
+                    // Mouse events
+                    key.addEventListener('mousedown', () => playNote(note.note, note.freq, note.octave));
+                    key.addEventListener('mouseup', () => stopNote(note.note));
+                    key.addEventListener('mouseleave', () => {
+                        if (key.classList.contains('active')) {
+                            stopNote(note.note);
+                        }
+                    });
+                    
+                    // Add elements
+                    key.appendChild(label);
+                    key.appendChild(keyLabel);
+                    
+                    if (note.isBlack) {
+                        keyContainer.appendChild(key);
+                        // Find previous white key container to position relative to it
+                        const prevWhiteKey = keyboardEl.lastChild;
+                        keyContainer.style.position = 'absolute';
+                        keyContainer.style.left = 'calc(66% + 2.45rem)'; // Positioning between white keys
+                        keyContainer.style.height = '60%';
+                        prevWhiteKey.appendChild(keyContainer);
+                    } else {
+                        keyContainer.appendChild(key);
+                        keyboardEl.appendChild(keyContainer);
+                    }
+                });
+            }
+            
+            // Play note function
+            function playNote(note, freq, octave) {
+                // If note is already playing, return
+                if (activeNotes[note]) return;
+                
+                // Create audio nodes
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                // Set oscillator type and frequency
+                oscillator.type = oscillatorType;
+                oscillator.frequency.value = freq;
+                
+                // Connect nodes
+                oscillator.connect(gainNode);
+                gainNode.connect(globalGain);
+                
+                // Apply ADSR envelope
+                const now = audioContext.currentTime;
+                gainNode.gain.setValueAtTime(0, now);
+                gainNode.gain.linearRampToValueAtTime(1, now + attack);  // Attack
+                gainNode.gain.linearRampToValueAtTime(sustain, now + attack + decay);  // Decay to sustain
+                
+                // Start oscillator
+                oscillator.start();
+                
+                // Store reference to stop later
+                activeNotes[note] = { oscillator, gainNode };
+                
+                // UI updates
+                document.querySelector(`.key[data-note="${note}"]`).classList.add('active');
+                activeNoteEl.textContent = `${note}${octave} (${freq.toFixed(2)}Hz)`;
+                soundIndicator.classList.remove('hidden');
+                
+                // Oscillator stopped (for cleanup)
+                oscillator.onended = () => {
+                    soundIndicator.classList.add('hidden');
+                };
+            }
+            
+            // Stop note function
+            function stopNote(note) {
+                if (!activeNotes[note]) return;
+                
+                const { oscillator, gainNode } = activeNotes[note];
+                const now = audioContext.currentTime;
+                
+                // Release phase
+                gainNode.gain.cancelScheduledValues(now);
+                gainNode.gain.setValueAtTime(gainNode.gain.value, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + release);
+                
+                // Stop oscillator after release
+                oscillator.stop(now + release);
+                
+                // Remove from active notes
+                delete activeNotes[note];
+                
+                // UI updates
+                document.querySelector(`.key[data-note="${note}"]`).classList.remove('active');
+                
+                // If no notes are playing, clear display
+                if (Object.keys(activeNotes).length === 0) {
+                    activeNoteEl.textContent = 'Play a note!';
+                    soundIndicator.classList.add('hidden');
+                }
+            }
+            
+            // Keyboard events
+            document.addEventListener('keydown', (e) => {
+                const key = e.key.toUpperCase();
+                const keyEl = document.querySelector(`.key[data-key="${key}"]`);
+                
+                if (keyEl && !e.repeat) {
+                    const note = keyEl.dataset.note;
+                    const freq = parseFloat(keyEl.dataset.freq);
+                    const octave = keyEl.querySelector('.key-label').textContent.match(/\d+/)[0];
+                    playNote(note, freq, octave);
+                }
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                const key = e.key.toUpperCase();
+                const keyEl = document.querySelector(`.key[data-key="${key}"]`);
+                
+                if (keyEl) {
+                    const note = keyEl.dataset.note;
+                    stopNote(note);
+                }
+            });
+            
+            // UI control handlers
+            document.querySelectorAll('.btn-wave').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    oscillatorType = this.id;
+                    document.querySelectorAll('.btn-wave').forEach(b => {
+                        b.classList.remove('bg-purple-700');
+                        b.classList.add('bg-purple-600');
+                    });
+                    this.classList.remove('bg-purple-600');
+                    this.classList.add('bg-purple-700');
+                });
+            });
+            
+            document.getElementById('volume').addEventListener('input', function() {
+                volume = parseFloat(this.value);
+                globalGain.gain.setTargetAtTime(volume, audioContext.currentTime, 0.01);
+            });
+            
+            document.getElementById('attack').addEventListener('input', function() {
+                attack = parseFloat(this.value);
+            });
+            
+            document.getElementById('decay').addEventListener('input', function() {
+                decay = parseFloat(this.value);
+            });
+            
+            document.getElementById('sustain').addEventListener('input', function() {
+                sustain = parseFloat(this.value);
+            });
+            
+            document.getElementById('release').addEventListener('input', function() {
+                release = parseFloat(this.value);
+            });
+            
+            // Touch support for mobile
+            document.addEventListener('touchstart', function(e) {
+                if (e.target.classList.contains('key')) {
+                    e.preventDefault();
+                    const note = e.target.dataset.note;
+                    const freq = parseFloat(e.target.dataset.freq);
+                    const octave = e.target.querySelector('.key-label').textContent.match(/\d+/)[0];
+                    playNote(note, freq, octave);
+                }
+            }, { passive: false });
+            
+            document.addEventListener('touchend', function(e) {
+                if (e.target.classList.contains('key')) {
+                    e.preventDefault();
+                    const note = e.target.dataset.note;
+                    stopNote(note);
+                }
+            }, { passive: false });
+            
+            // Prevent context menu on keyboard
+            keyboardEl.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+            });
+            
+            // Initialize with sine wave selected
+            document.getElementById('sine').click();
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <a href="https://enzostvs-deepsite.hf.space" style="color: #fff;" target="_blank" >DeepSite</a> <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;"></p></body>
+</html>

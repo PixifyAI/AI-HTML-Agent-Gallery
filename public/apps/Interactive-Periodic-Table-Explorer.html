@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Periodic Table Explorer</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --text-primary: #e6e6e6;
+            --text-secondary: #b8b8b8;
+            --accent: #4cc9f0;
+            --transition: all 0.3s ease;
+            --element-size: 4rem;
+            --element-gap: 0.3rem;
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #f8f9fa;
+            --bg-secondary: #e9ecef;
+            --text-primary: #212529;
+            --text-secondary: #495057;
+            --accent: #4361ee;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: var(--transition);
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+        
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        h1 {
+            font-size: 2rem;
+            color: var(--accent);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        button, select, input {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 0.25rem;
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        button:hover, select:hover {
+            background-color: var(--accent);
+            color: white;
+        }
+        
+        .search-container {
+            position: relative;
+        }
+        
+        .search-container input {
+            padding-right: 2rem;
+            width: 200px;
+        }
+        
+        .search-container::after {
+            content: "🔍";
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+        
+        .periodic-table {
+            display: grid;
+            grid-template-columns: repeat(18, var(--element-size));
+            grid-template-rows: repeat(10, var(--element-size)); /* Increased rows to accommodate La/Ac series*/
+            gap: var(--element-gap);
+            margin: 2rem auto;
+            max-width: calc(18 * (var(--element-size) + var(--element-gap)));
+            position: relative;
+        }
+        
+        .element {
+            position: relative;
+            background-color: var(--bg-secondary);
+            border-radius: 0.25rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-size: 0.9em; /* Adjusted base font size for elements */
+        }
+        
+        .element:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+        
+        .element-number {
+            position: absolute;
+            top: 0.25rem;
+            left: 0.25rem;
+            font-size: 0.6em; /* Adjusted relative to parent */
+            opacity: 0.8;
+        }
+        
+        .element-symbol {
+            font-size: 1.3em; /* Adjusted relative to parent */
+            font-weight: bold;
+            margin-bottom: 0.2rem;
+        }
+        
+        .element-name {
+            font-size: 0.55em; /* Adjusted relative to parent */
+            text-align: center;
+            opacity: 0.8;
+            padding: 0 0.1em;
+        }
+        
+        .element-detail {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: var(--bg-secondary);
+            padding: 2rem;
+            border-radius: 1rem;
+            max-width: 90vw;
+            width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            z-index: 100;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none;
+        }
+        
+        .element-detail.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -40%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        
+        .detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--text-secondary);
+        }
+        
+        .detail-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .detail-symbol {
+            font-size: 2rem;
+            font-weight: bold;
+            background-color: var(--accent);
+            color: white;
+            width: 3rem;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .detail-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+        
+        .detail-close:hover {
+            color: var(--accent);
+        }
+        
+        .detail-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .detail-section {
+            margin-bottom: 1rem;
+        }
+        
+        .detail-section h3 {
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+        }
+        
+        .property-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        
+        .property {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .property-name {
+            font-weight: bold;
+        }
+        
+        .electron-config {
+            margin-top: 1rem;
+        }
+        
+        .electron-shells {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .shell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .shell-label {
+            font-size: 0.8rem;
+            margin-bottom: 0.2rem;
+        }
+        
+        .orbitals {
+            display: flex;
+            gap: 0.2rem;
+        }
+        
+        .orbital {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            background-color: var(--bg-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            position: relative;
+        }
+        
+        .orbital::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 1px dashed var(--text-secondary);
+            border-radius: 50%;
+        }
+        
+        .orbital.filled {
+            background-color: var(--accent);
+            color: white;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            z-index: 99;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Element category colors */
+        .alkali-metal { background-color: #ff9e80; color: black; }
+        .alkaline-earth { background-color: #ffcc80; color: black; }
+        .transition-metal { background-color: #ffab91; color: black; }
+        .post-transition { background-color: #b39ddb; color: black; }
+        .metalloid { background-color: #80deea; color: black; }
+        .nonmetal { background-color: #a5d6a7; color: black; }
+        .halogen { background-color: #ce93d8; color: black; }
+        .noble-gas { background-color: #90caf9; color: black; }
+        .lanthanide { background-color: #ef9a9a; color: black; }
+        .actinide { background-color: #f48fb1; color: black; }
+        
+        /* Responsive adjustments */
+        @media (max-width: 1200px) {
+            :root {
+                --element-size: 3.5rem;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            :root {
+                --element-size: 3rem;
+            }
+            
+            .detail-content {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            :root {
+                --element-size: 2.5rem; /* Further reduced for very small screens */
+            }
+             .periodic-table {
+                /* Ensure the grid can scroll if it overflows */
+                overflow-x: auto;
+                padding-bottom: 1rem; /* Space for scrollbar */
+                /* The explicit grid width might need to be adjusted or removed if using auto-fit/fill */
+                 max-width: 100%; /* Allow it to be smaller than calc(...) */
+            }
+            
+            .element-name {
+                display: none; /* Hide name on smaller elements */
+            }
+             .element-symbol {
+                font-size: 1.1em;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            :root {
+                 /* Smallest element size, might require hiding name or number */
+                --element-size: calc(100vw / 19); /* Dynamic size based on viewport width for ~18 cols*/
+            }
+             h1 { font-size: 1.5rem; }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .controls {
+                width: 100%;
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-container input {
+                width: 100%;
+            }
+            select { width: 100%; }
+            button { width: 100%; }
+
+            .element-symbol { font-size: 0.9em; }
+            .element-number { font-size: 0.5em; }
+
+        }
+         @media (max-width: 450px) {
+             :root {
+                --element-size: calc(100vw / 12); /* Show fewer columns effectively */
+             }
+             .periodic-table {
+                grid-template-columns: repeat(18, var(--element-size)); /* Keep 18 for structure, rely on scroll */
+             }
+             .element-name { display: none; }
+             .element-number { display: none; } /* Hide number on very smallest */
+             .element-symbol { font-size: 1em; margin-bottom: 0;}
+         }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Interactive Periodic Table Explorer</h1>
+        <div class="controls">
+            <div class="search-container">
+                <input type="text" id="search" placeholder="Search elements..." autocomplete="off">
+            </div>
+            <select id="category-filter">
+                <option value="all">All Elements</option>
+                <option value="alkali-metal">Alkali Metals</option>
+                <option value="alkaline-earth">Alkaline Earth</option>
+                <option value="transition-metal">Transition Metals</option>
+                <option value="post-transition">Post-Transition Metals</option>
+                <option value="metalloid">Metalloids</option>
+                <option value="nonmetal">Nonmetals</option>
+                <option value="halogen">Halogens</option>
+                <option value="noble-gas">Noble Gases</option>
+                <option value="lanthanide">Lanthanides</option>
+                <option value="actinide">Actinides</option>
+            </select>
+            <button id="theme-toggle">🌓 Toggle Theme</button>
+        </div>
+    </header>
+    
+    <div class="periodic-table" id="periodic-table"></div>
+    
+    <div class="overlay" id="overlay"></div>
+    
+    <div class="element-detail" id="element-detail">
+        <div class="detail-header">
+            <div class="detail-title">
+                <div class="detail-symbol" id="detail-symbol"></div>
+                <div>
+                    <h2 id="detail-name"></h2>
+                    <div id="detail-category"></div>
+                </div>
+            </div>
+            <button class="detail-close" id="detail-close">×</button>
+        </div>
+        <div class="detail-content">
+            <div class="detail-section">
+                <h3>Basic Information</h3>
+                <div class="property-grid">
+                    <div class="property">
+                        <span class="property-name">Atomic Number:</span>
+                        <span id="detail-number"></span>
+                    </div>
+                    <div class="property">
+                        <span class="property-name">Atomic Weight:</span>
+                        <span id="detail-weight"></span>
+                    </div>
+                    <div class="property">
+                        <span class="property-name">Density:</span>
+                        <span id="detail-density"></span>
+                    </div>
+                    <div class="property">
+                        <span class="property-name">Melting Point:</span>
+                        <span id="detail-melting"></span>
+                    </div>
+                    <div class="property">
+                        <span class="property-name">Boiling Point:</span>
+                        <span id="detail-boiling"></span>
+                    </div>
+                    <div class="property">
+                        <span class="property-name">Phase at STP:</span>
+                        <span id="detail-phase"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <h3>Discovery</h3>
+                <div class="property-grid">
+                    <div class="property">
+                        <span class="property-name">Discovered By:</span>
+                        <span id="detail-discoverer"></span>
+                    </div>
+                    <div class="property">
+                        <span class="property-name">Year:</span>
+                        <span id="detail-year"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="detail-section">
+                <h3>Electron Configuration</h3>
+                <div id="detail-config"></div>
+                <div class="electron-config">
+                    <div id="detail-shells-text"></div> <!-- Renamed from detail-shells to avoid conflict -->
+                    <div class="electron-shells" id="electron-shells-viz"></div> <!-- Renamed from electron-shells -->
+                </div>
+            </div>
+            <div class="detail-section">
+                <h3>Properties</h3>
+                <div id="detail-properties"></div>
+            </div>
+            <div class="detail-section">
+                <h3>Uses</h3>
+                <div id="detail-uses"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Element data (1-118)
+        const elements = [
+            // Period 1
+            { number: 1, symbol: 'H', name: 'Hydrogen', category: 'nonmetal', weight: '1.008', density: '0.00008988', melting: '-259.14', boiling: '-252.87', phase: 'Gas', discoverer: 'Henry Cavendish', year: '1766', config: '1s¹', shells: [1], properties: 'Lightest element, most abundant. Diatomic gas. Highly flammable.', uses: 'Ammonia production, fuel cells, hydrogenation of oils.' },
+            { number: 2, symbol: 'He', name: 'Helium', category: 'noble-gas', weight: '4.002602(2)', density: '0.0001786', melting: '-272.20 (at 2.5 MPa)', boiling: '-268.93', phase: 'Gas', discoverer: 'Pierre Janssen & Norman Lockyer', year: '1868', config: '1s²', shells: [2], properties: 'Second lightest element. Chemically inert. Lowest boiling point.', uses: 'Cryogenics, balloons, welding, MRI scanners.' },
+            // Period 2
+            { number: 3, symbol: 'Li', name: 'Lithium', category: 'alkali-metal', weight: '6.94', density: '0.534', melting: '180.50', boiling: '1330', phase: 'Solid', discoverer: 'Johan August Arfwedson', year: '1817', config: '[He] 2s¹', shells: [2, 1], properties: 'Lightest metal, soft, highly reactive. Low density.', uses: 'Batteries, ceramics, lubricants, mood stabilizer.' },
+            { number: 4, symbol: 'Be', name: 'Beryllium', category: 'alkaline-earth', weight: '9.0121831(5)', density: '1.85', melting: '1287', boiling: '2471', phase: 'Solid', discoverer: 'Louis Nicolas Vauquelin', year: '1798', config: '[He] 2s²', shells: [2, 2], properties: 'Lightweight, high melting point, high stiffness. Toxic.', uses: 'Aerospace components, X-ray windows, nuclear reactors.' },
+            { number: 5, symbol: 'B', name: 'Boron', category: 'metalloid', weight: '10.81', density: '2.34', melting: '2076', boiling: '4000', phase: 'Solid', discoverer: 'Joseph Louis Gay-Lussac & Louis Jacques Thénard', year: '1808', config: '[He] 2s² 2p¹', shells: [2, 3], properties: 'Hard, black metalloid. Semiconductor at high temps.', uses: 'Fiberglass, borosilicate glass, detergents, control rods in nuclear reactors.' },
+            { number: 6, symbol: 'C', name: 'Carbon', category: 'nonmetal', weight: '12.011', density: '2.267 (graphite)', melting: '3550 (sublimes)', boiling: '4827', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[He] 2s² 2p²', shells: [2, 4], properties: 'Forms vast number of compounds. Allotropes: diamond, graphite, fullerenes.', uses: 'Basis of organic chemistry, fuels, steel, plastics, diamonds.' },
+            { number: 7, symbol: 'N', name: 'Nitrogen', category: 'nonmetal', weight: '14.007', density: '0.001251', melting: '-210.00', boiling: '-195.79', phase: 'Gas', discoverer: 'Daniel Rutherford', year: '1772', config: '[He] 2s² 2p³', shells: [2, 5], properties: 'Colorless, odorless, diatomic gas. Makes up 78% of Earth\'s atmosphere.', uses: 'Ammonia production, fertilizers, cryogenics, inert atmosphere.' },
+            { number: 8, symbol: 'O', name: 'Oxygen', category: 'nonmetal', weight: '15.999', density: '0.001429', melting: '-218.79', boiling: '-182.95', phase: 'Gas', discoverer: 'Carl Wilhelm Scheele & Joseph Priestley', year: '1774', config: '[He] 2s² 2p⁴', shells: [2, 6], properties: 'Highly reactive nonmetal. Essential for respiration. Supports combustion.', uses: 'Respiration, steel production, welding, water treatment.' },
+            { number: 9, symbol: 'F', name: 'Fluorine', category: 'halogen', weight: '18.998403163(6)', density: '0.001696', melting: '-219.67', boiling: '-188.11', phase: 'Gas', discoverer: 'Henri Moissan', year: '1886', config: '[He] 2s² 2p⁵', shells: [2, 7], properties: 'Pale yellow-green gas. Most electronegative and reactive element.', uses: 'Toothpaste, Teflon, refrigerants, uranium processing.' },
+            { number: 10, symbol: 'Ne', name: 'Neon', category: 'noble-gas', weight: '20.1797(6)', density: '0.0009002', melting: '-248.59', boiling: '-246.08', phase: 'Gas', discoverer: 'William Ramsay & Morris Travers', year: '1898', config: '[He] 2s² 2p⁶', shells: [2, 8], properties: 'Inert gas. Glows reddish-orange in vacuum discharge tube.', uses: 'Neon signs, lasers, cryogenic refrigerant.' },
+            // Period 3
+            { number: 11, symbol: 'Na', name: 'Sodium', category: 'alkali-metal', weight: '22.98976928(2)', density: '0.971', melting: '97.80', boiling: '883', phase: 'Solid', discoverer: 'Humphry Davy', year: '1807', config: '[Ne] 3s¹', shells: [2, 8, 1], properties: 'Soft, silvery-white, highly reactive metal. Reacts violently with water.', uses: 'Table salt (NaCl), streetlights, chemical manufacturing, nuclear reactors.' },
+            { number: 12, symbol: 'Mg', name: 'Magnesium', category: 'alkaline-earth', weight: '24.305', density: '1.738', melting: '650', boiling: '1091', phase: 'Solid', discoverer: 'Joseph Black & Humphry Davy', year: '1755 (recognized)/1808 (isolated)', config: '[Ne] 3s²', shells: [2, 8, 2], properties: 'Lightweight, silvery-white metal. Burns with a bright white light.', uses: 'Alloys (aerospace, automotive), flares, antacids, chlorophyll.' },
+            { number: 13, symbol: 'Al', name: 'Aluminum', category: 'post-transition', weight: '26.9815385(7)', density: '2.70', melting: '660.32', boiling: '2519', phase: 'Solid', discoverer: 'Hans Christian Ørsted', year: '1825', config: '[Ne] 3s² 3p¹', shells: [2, 8, 3], properties: 'Silvery-white, lightweight, corrosion-resistant. Ductile and malleable.', uses: 'Aircraft, cans, construction, electrical wiring.' },
+            { number: 14, symbol: 'Si', name: 'Silicon', category: 'metalloid', weight: '28.085', density: '2.3290', melting: '1414', boiling: '3265', phase: 'Solid', discoverer: 'Jöns Jacob Berzelius', year: '1823', config: '[Ne] 3s² 3p²', shells: [2, 8, 4], properties: 'Hard, brittle crystalline solid. Semiconductor.', uses: 'Semiconductors (electronics), glass, cement, silicones.' },
+            { number: 15, symbol: 'P', name: 'Phosphorus', category: 'nonmetal', weight: '30.973761998(5)', density: '1.823 (white)', melting: '44.15 (white)', boiling: '280.5 (white)', phase: 'Solid', discoverer: 'Hennig Brand', year: '1669', config: '[Ne] 3s² 3p³', shells: [2, 8, 5], properties: 'Exists in several allotropes (white, red, black). Highly reactive.', uses: 'Fertilizers, detergents, matches, DNA/RNA component.' },
+            { number: 16, symbol: 'S', name: 'Sulfur', category: 'nonmetal', weight: '32.06', density: '2.07', melting: '115.21', boiling: '444.6', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Ne] 3s² 3p⁴', shells: [2, 8, 6], properties: 'Yellow, brittle solid. Exists in many allotropes.', uses: 'Sulfuric acid production, gunpowder, rubber vulcanization, fungicides.' },
+            { number: 17, symbol: 'Cl', name: 'Chlorine', category: 'halogen', weight: '35.45', density: '0.0032', melting: '-101.5', boiling: '-34.04', phase: 'Gas', discoverer: 'Carl Wilhelm Scheele', year: '1774', config: '[Ne] 3s² 3p⁵', shells: [2, 8, 7], properties: 'Greenish-yellow gas. Strong oxidizing agent. Toxic.', uses: 'Water disinfection, bleach, PVC production, solvents.' },
+            { number: 18, symbol: 'Ar', name: 'Argon', category: 'noble-gas', weight: '39.948(1)', density: '0.001784', melting: '-189.34', boiling: '-185.85', phase: 'Gas', discoverer: 'Lord Rayleigh & William Ramsay', year: '1894', config: '[Ne] 3s² 3p⁶', shells: [2, 8, 8], properties: 'Colorless, odorless, inert gas. Third most abundant gas in Earth\'s atmosphere.', uses: 'Welding, lighting (incandescent bulbs), inert atmosphere.' },
+            // Period 4
+            { number: 19, symbol: 'K', name: 'Potassium', category: 'alkali-metal', weight: '39.0983(1)', density: '0.862', melting: '63.38', boiling: '759', phase: 'Solid', discoverer: 'Humphry Davy', year: '1807', config: '[Ar] 4s¹', shells: [2, 8, 8, 1], properties: 'Soft, silvery-white metal. Highly reactive, oxidizes rapidly in air.', uses: 'Fertilizers, soaps, glass, electrolyte in human body.' },
+            { number: 20, symbol: 'Ca', name: 'Calcium', category: 'alkaline-earth', weight: '40.078(4)', density: '1.55', melting: '842', boiling: '1484', phase: 'Solid', discoverer: 'Humphry Davy', year: '1808', config: '[Ar] 4s²', shells: [2, 8, 8, 2], properties: 'Silvery-grey metal. Essential for bones and teeth.', uses: 'Cement, plaster, dietary supplement, reducing agent.' },
+            { number: 21, symbol: 'Sc', name: 'Scandium', category: 'transition-metal', weight: '44.955908(5)', density: '2.985', melting: '1541', boiling: '2836', phase: 'Solid', discoverer: 'Lars Fredrik Nilson', year: '1879', config: '[Ar] 3d¹ 4s²', shells: [2, 8, 9, 2], properties: 'Silvery-white, moderately soft metal. Tarnishes in air.', uses: 'Alloys (aerospace), high-intensity lights, radioactive tracer.' },
+            { number: 22, symbol: 'Ti', name: 'Titanium', category: 'transition-metal', weight: '47.867(1)', density: '4.506', melting: '1668', boiling: '3287', phase: 'Solid', discoverer: 'William Gregor', year: '1791', config: '[Ar] 3d² 4s²', shells: [2, 8, 10, 2], properties: 'High strength-to-weight ratio, corrosion resistant. Lustrous white metal.', uses: 'Aerospace, medical implants, pigments (TiO₂), sporting goods.' },
+            { number: 23, symbol: 'V', name: 'Vanadium', category: 'transition-metal', weight: '50.9415(1)', density: '6.11', melting: '1910', boiling: '3407', phase: 'Solid', discoverer: 'Andrés Manuel del Río', year: '1801', config: '[Ar] 3d³ 4s²', shells: [2, 8, 11, 2], properties: 'Hard, silvery-grey, ductile metal. Good corrosion resistance.', uses: 'Steel alloys (tools, springs), catalyst, nuclear reactors.' },
+            { number: 24, symbol: 'Cr', name: 'Chromium', category: 'transition-metal', weight: '51.9961(6)', density: '7.19', melting: '1907', boiling: '2671', phase: 'Solid', discoverer: 'Louis Nicolas Vauquelin', year: '1797', config: '[Ar] 3d⁵ 4s¹', shells: [2, 8, 13, 1], properties: 'Hard, brittle, lustrous metal. Highly resistant to corrosion (stainless steel).', uses: 'Stainless steel, chrome plating, pigments, catalysts.' },
+            { number: 25, symbol: 'Mn', name: 'Manganese', category: 'transition-metal', weight: '54.938044(3)', density: '7.21', melting: '1246', boiling: '2061', phase: 'Solid', discoverer: 'Johan Gottlieb Gahn', year: '1774', config: '[Ar] 3d⁵ 4s²', shells: [2, 8, 13, 2], properties: 'Hard, brittle, silvery metal. Important in steel production.', uses: 'Steel alloys (strength, hardness), batteries, fertilizers, pigments.' },
+            { number: 26, symbol: 'Fe', name: 'Iron', category: 'transition-metal', weight: '55.845(2)', density: '7.874', melting: '1538', boiling: '2862', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Ar] 3d⁶ 4s²', shells: [2, 8, 14, 2], properties: 'Lustrous, silvery, ductile metal. Most common element by mass on Earth. Rusts easily.', uses: 'Steel production, construction, machinery, hemoglobin.' },
+            { number: 27, symbol: 'Co', name: 'Cobalt', category: 'transition-metal', weight: '58.933194(4)', density: '8.90', melting: '1495', boiling: '2927', phase: 'Solid', discoverer: 'Georg Brandt', year: '1735', config: '[Ar] 3d⁷ 4s²', shells: [2, 8, 15, 2], properties: 'Hard, brittle, silvery-blue metal. Ferromagnetic.', uses: 'Alloys (magnets, high-speed steel), pigments (cobalt blue), vitamin B12.' },
+            { number: 28, symbol: 'Ni', name: 'Nickel', category: 'transition-metal', weight: '58.6934(4)', density: '8.908', melting: '1455', boiling: '2913', phase: 'Solid', discoverer: 'Axel Fredrik Cronstedt', year: '1751', config: '[Ar] 3d⁸ 4s²', shells: [2, 8, 16, 2], properties: 'Silvery-white, hard, ductile metal. Corrosion resistant.', uses: 'Stainless steel, alloys (Monel), plating, batteries, coins.' },
+            { number: 29, symbol: 'Cu', name: 'Copper', category: 'transition-metal', weight: '63.546(3)', density: '8.96', melting: '1084.62', boiling: '2562', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Ar] 3d¹⁰ 4s¹', shells: [2, 8, 18, 1], properties: 'Reddish-orange, ductile, malleable metal. Excellent electrical and thermal conductor.', uses: 'Electrical wiring, plumbing, coins, alloys (brass, bronze).' },
+            { number: 30, symbol: 'Zn', name: 'Zinc', category: 'post-transition', weight: '65.38(2)', density: '7.14', melting: '419.53', boiling: '907', phase: 'Solid', discoverer: 'Andreas Sigismund Marggraf', year: '1746', config: '[Ar] 3d¹⁰ 4s²', shells: [2, 8, 18, 2], properties: 'Bluish-white, brittle metal at room temp, malleable when heated. Corrosion resistant.', uses: 'Galvanizing steel, alloys (brass), batteries, dietary supplement.' },
+            { number: 31, symbol: 'Ga', name: 'Gallium', category: 'post-transition', weight: '69.723(1)', density: '5.91', melting: '29.76', boiling: '2204', phase: 'Solid (melts in hand)', discoverer: 'Lecoq de Boisbaudran', year: '1875', config: '[Ar] 3d¹⁰ 4s² 4p¹', shells: [2, 8, 18, 3], properties: 'Soft, silvery metal. Low melting point, high boiling point. Expands upon solidifying.', uses: 'Semiconductors (LEDs, solar cells), thermometers, alloys.' },
+            { number: 32, symbol: 'Ge', name: 'Germanium', category: 'metalloid', weight: '72.630(8)', density: '5.323', melting: '938.25', boiling: '2833', phase: 'Solid', discoverer: 'Clemens Winkler', year: '1886', config: '[Ar] 3d¹⁰ 4s² 4p²', shells: [2, 8, 18, 4], properties: 'Brittle, silvery-white metalloid. Semiconductor.', uses: 'Semiconductors (transistors), fiber optics, infrared optics, solar cells.' },
+            { number: 33, symbol: 'As', name: 'Arsenic', category: 'metalloid', weight: '74.921595(6)', density: '5.727 (gray)', melting: '817 (at 2.8 MPa, sublimes)', boiling: '614 (sublimes)', phase: 'Solid', discoverer: 'Albertus Magnus (possibly)', year: 'c. 1250', config: '[Ar] 3d¹⁰ 4s² 4p³', shells: [2, 8, 18, 5], properties: 'Exists in several allotropes (gray, yellow, black). Toxic.', uses: 'Semiconductors (gallium arsenide), pesticides, wood preservatives (historical).' },
+            { number: 34, symbol: 'Se', name: 'Selenium', category: 'nonmetal', weight: '78.971(8)', density: '4.81 (gray)', melting: '221', boiling: '685', phase: 'Solid', discoverer: 'Jöns Jacob Berzelius', year: '1817', config: '[Ar] 3d¹⁰ 4s² 4p⁴', shells: [2, 8, 18, 6], properties: 'Photoconductive (conductivity increases with light). Exists in several allotropes.', uses: 'Photocopiers, solar cells, glass manufacturing (decolorizer), dietary supplement.' },
+            { number: 35, symbol: 'Br', name: 'Bromine', category: 'halogen', weight: '79.904(1)', density: '3.1028 (liquid)', melting: '-7.2', boiling: '58.8', phase: 'Liquid', discoverer: 'Antoine Jérôme Balard & Carl Jacob Löwig', year: '1825-1826', config: '[Ar] 3d¹⁰ 4s² 4p⁵', shells: [2, 8, 18, 7], properties: 'Reddish-brown fuming liquid. Corrosive and toxic.', uses: 'Flame retardants, water purification, pesticides, photographic chemicals.' },
+            { number: 36, symbol: 'Kr', name: 'Krypton', category: 'noble-gas', weight: '83.798(2)', density: '0.003749', melting: '-157.37', boiling: '-153.415', phase: 'Gas', discoverer: 'William Ramsay & Morris Travers', year: '1898', config: '[Ar] 3d¹⁰ 4s² 4p⁶', shells: [2, 8, 18, 8], properties: 'Colorless, odorless, inert gas. Emits several spectral lines, green and yellow are strongest.', uses: 'Lighting (lasers, airport runways), photography, window insulation.' },
+            // Period 5
+            { number: 37, symbol: 'Rb', name: 'Rubidium', category: 'alkali-metal', weight: '85.4678(3)', density: '1.532', melting: '39.30', boiling: '688', phase: 'Solid', discoverer: 'Robert Bunsen & Gustav Kirchhoff', year: '1861', config: '[Kr] 5s¹', shells: [2, 8, 18, 8, 1], properties: 'Soft, silvery-white metal. Highly reactive, ignites spontaneously in air.', uses: 'Atomic clocks, specialized glass, research.' },
+            { number: 38, symbol: 'Sr', name: 'Strontium', category: 'alkaline-earth', weight: '87.62(1)', density: '2.64', melting: '777', boiling: '1382', phase: 'Solid', discoverer: 'Adair Crawford & William Cruickshank', year: '1790', config: '[Kr] 5s²', shells: [2, 8, 18, 8, 2], properties: 'Soft, silvery-yellowish metal. Reacts with air and water.', uses: 'Fireworks (red color), cathode ray tubes (historical), ferrite magnets.' },
+            { number: 39, symbol: 'Y', name: 'Yttrium', category: 'transition-metal', weight: '88.90584(1)', density: '4.472', melting: '1526', boiling: '3336', phase: 'Solid', discoverer: 'Johan Gadolin', year: '1794', config: '[Kr] 4d¹ 5s²', shells: [2, 8, 18, 9, 2], properties: 'Silvery-white metal. Chemically similar to lanthanides.', uses: 'Phosphors (LEDs, TVs), lasers, alloys, superconductors.' },
+            { number: 40, symbol: 'Zr', name: 'Zirconium', category: 'transition-metal', weight: '91.224(2)', density: '6.52', melting: '1855', boiling: '4409', phase: 'Solid', discoverer: 'Martin Heinrich Klaproth', year: '1789', config: '[Kr] 4d² 5s²', shells: [2, 8, 18, 10, 2], properties: 'Lustrous, greyish-white metal. Highly corrosion resistant.', uses: 'Nuclear reactors (low neutron absorption), alloys, ceramics, abrasives.' },
+            { number: 41, symbol: 'Nb', name: 'Niobium', category: 'transition-metal', weight: '92.90637(1)', density: '8.57', melting: '2477', boiling: '4744', phase: 'Solid', discoverer: 'Charles Hatchett', year: '1801', config: '[Kr] 4d⁴ 5s¹', shells: [2, 8, 18, 12, 1], properties: 'Grey, ductile metal. Superconductive at low temperatures.', uses: 'Superalloys (jet engines), superconducting magnets (MRI), steel alloys.' },
+            { number: 42, symbol: 'Mo', name: 'Molybdenum', category: 'transition-metal', weight: '95.96(2)', density: '10.28', melting: '2623', boiling: '4639', phase: 'Solid', discoverer: 'Carl Wilhelm Scheele', year: '1778', config: '[Kr] 4d⁵ 5s¹', shells: [2, 8, 18, 13, 1], properties: 'Silvery-grey metal. Very high melting point. Essential trace element.', uses: 'Steel alloys (strength, hardness), catalysts, lubricants, pigments.' },
+            { number: 43, symbol: 'Tc', name: 'Technetium', category: 'transition-metal', weight: '[98]', density: '11.5', melting: '2157', boiling: '4265', phase: 'Solid', discoverer: 'Carlo Perrier & Emilio Segrè', year: '1937', config: '[Kr] 4d⁵ 5s²', shells: [2, 8, 18, 13, 2], properties: 'Silvery-grey radioactive metal. Lightest element with no stable isotopes.', uses: 'Medical diagnostic imaging (Tc-99m), corrosion inhibitor.' },
+            { number: 44, symbol: 'Ru', name: 'Ruthenium', category: 'transition-metal', weight: '101.07(2)', density: '12.45', melting: '2334', boiling: '4150', phase: 'Solid', discoverer: 'Karl Ernst Claus', year: '1844', config: '[Kr] 4d⁷ 5s¹', shells: [2, 8, 18, 15, 1], properties: 'Hard, white, rare transition metal. Member of platinum group.', uses: 'Electrical contacts, catalysts, hard disk drives, alloys.' },
+            { number: 45, symbol: 'Rh', name: 'Rhodium', category: 'transition-metal', weight: '102.90550(2)', density: '12.41', melting: '1964', boiling: '3695', phase: 'Solid', discoverer: 'William Hyde Wollaston', year: '1803', config: '[Kr] 4d⁸ 5s¹', shells: [2, 8, 18, 16, 1], properties: 'Silvery-white, hard, corrosion-resistant noble metal. Extremely rare and valuable.', uses: 'Catalytic converters, jewelry plating, electrical contacts.' },
+            { number: 46, symbol: 'Pd', name: 'Palladium', category: 'transition-metal', weight: '106.42(1)', density: '12.023', melting: '1554.9', boiling: '2963', phase: 'Solid', discoverer: 'William Hyde Wollaston', year: '1803', config: '[Kr] 4d¹⁰', shells: [2, 8, 18, 18, 0], properties: 'Lustrous silvery-white metal. Can absorb large amounts of hydrogen.', uses: 'Catalytic converters, jewelry, electronics, dentistry.' },
+            { number: 47, symbol: 'Ag', name: 'Silver', category: 'transition-metal', weight: '107.8682(2)', density: '10.49', melting: '961.78', boiling: '2162', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Kr] 4d¹⁰ 5s¹', shells: [2, 8, 18, 18, 1], properties: 'Soft, white, lustrous metal. Highest electrical and thermal conductivity of all metals.', uses: 'Jewelry, currency, photography, electronics, mirrors.' },
+            { number: 48, symbol: 'Cd', name: 'Cadmium', category: 'post-transition', weight: '112.414(4)', density: '8.65', melting: '321.07', boiling: '767', phase: 'Solid', discoverer: 'Karl Samuel Leberecht Hermann & Friedrich Stromeyer', year: '1817', config: '[Kr] 4d¹⁰ 5s²', shells: [2, 8, 18, 18, 2], properties: 'Soft, bluish-white metal. Toxic heavy metal.', uses: 'Batteries (Ni-Cd), pigments, coatings, nuclear reactor control rods.' },
+            { number: 49, symbol: 'In', name: 'Indium', category: 'post-transition', weight: '114.818(1)', density: '7.31', melting: '156.5985', boiling: '2072', phase: 'Solid', discoverer: 'Ferdinand Reich & Hieronymous Theodor Richter', year: '1863', config: '[Kr] 4d¹⁰ 5s² 5p¹', shells: [2, 8, 18, 18, 3], properties: 'Soft, silvery-white metal. Malleable. Emits a high-pitched "cry" when bent.', uses: 'LCD screens (ITO), solders, semiconductors, coatings.' },
+            { number: 50, symbol: 'Sn', name: 'Tin', category: 'post-transition', weight: '118.710(7)', density: '7.265 (white tin)', melting: '231.93', boiling: '2602', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Kr] 4d¹⁰ 5s² 5p²', shells: [2, 8, 18, 18, 4], properties: 'Malleable, ductile, silvery-white metal. Resistant to corrosion.', uses: 'Solder, tin plating, alloys (bronze, pewter), organotin compounds.' },
+            { number: 51, symbol: 'Sb', name: 'Antimony', category: 'metalloid', weight: '121.760(1)', density: '6.697 (gray)', melting: '630.63', boiling: '1587', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Kr] 4d¹⁰ 5s² 5p³', shells: [2, 8, 18, 18, 5], properties: 'Brittle, silvery-white metalloid. Poor conductor of heat and electricity.', uses: 'Flame retardants, alloys (lead-acid batteries), semiconductors, pewter.' },
+            { number: 52, symbol: 'Te', name: 'Tellurium', category: 'metalloid', weight: '127.60(3)', density: '6.24', melting: '449.51', boiling: '988', phase: 'Solid', discoverer: 'Franz-Joseph Müller von Reichenstein', year: '1782', config: '[Kr] 4d¹⁰ 5s² 5p⁴', shells: [2, 8, 18, 18, 6], properties: 'Brittle, silvery-white metalloid. Semiconductor.', uses: 'Alloys (steel, copper), solar cells, thermoelectric devices, rubber vulcanization.' },
+            { number: 53, symbol: 'I', name: 'Iodine', category: 'halogen', weight: '126.90447(3)', density: '4.933', melting: '113.7', boiling: '184.3', phase: 'Solid (sublimes to purple gas)', discoverer: 'Bernard Courtois', year: '1811', config: '[Kr] 4d¹⁰ 5s² 5p⁵', shells: [2, 8, 18, 18, 7], properties: 'Lustrous, purple-black nonmetallic solid. Sublimes easily. Essential trace element.', uses: 'Antiseptics, dietary supplement, catalysts, LCD screens.' },
+            { number: 54, symbol: 'Xe', name: 'Xenon', category: 'noble-gas', weight: '131.293(6)', density: '0.005894', melting: '-111.75', boiling: '-108.099', phase: 'Gas', discoverer: 'William Ramsay & Morris Travers', year: '1898', config: '[Kr] 4d¹⁰ 5s² 5p⁶', shells: [2, 8, 18, 18, 8], properties: 'Heavy, colorless, odorless, inert gas. Forms some compounds with fluorine and oxygen.', uses: 'Lighting (high-intensity lamps, flash lamps), lasers, anesthetic, ion propulsion.' },
+            // Period 6
+            { number: 55, symbol: 'Cs', name: 'Caesium', category: 'alkali-metal', weight: '132.90545196(6)', density: '1.879', melting: '28.44', boiling: '671', phase: 'Solid (melts slightly above room temp)', discoverer: 'Robert Bunsen & Gustav Kirchhoff', year: '1860', config: '[Xe] 6s¹', shells: [2, 8, 18, 18, 8, 1], properties: 'Soft, silvery-gold alkali metal. Extremely reactive, ignites spontaneously in air. Liquid near room temp.', uses: 'Atomic clocks, drilling fluids, photoelectric cells, catalyst promoter.' },
+            { number: 56, symbol: 'Ba', name: 'Barium', category: 'alkaline-earth', weight: '137.327(7)', density: '3.51', melting: '727', boiling: '1897', phase: 'Solid', discoverer: 'Carl Wilhelm Scheele & Humphry Davy', year: '1774 (recognized)/1808 (isolated)', config: '[Xe] 6s²', shells: [2, 8, 18, 18, 8, 2], properties: 'Soft, silvery-white metal. Reacts with air and water.', uses: 'X-ray contrast agent (barium sulfate), fireworks (green color), paints, glass.' },
+            // Lanthanides (Period 6, f-block)
+            { number: 57, symbol: 'La', name: 'Lanthanum', category: 'lanthanide', weight: '138.90547(7)', density: '6.162', melting: '920', boiling: '3464', phase: 'Solid', discoverer: 'Carl Gustaf Mosander', year: '1839', config: '[Xe] 5d¹ 6s²', shells: [2, 8, 18, 18, 9, 2], properties: 'Soft, silvery-white metal. Tarnishes rapidly in air.', uses: 'Catalysts, carbon arc lighting, lighter flints, optical glass.' },
+            { number: 58, symbol: 'Ce', name: 'Cerium', category: 'lanthanide', weight: '140.116(1)', density: '6.770', melting: '795', boiling: '3443', phase: 'Solid', discoverer: 'Jöns Jacob Berzelius, Wilhelm Hisinger & Martin Klaproth', year: '1803', config: '[Xe] 4f¹ 5d¹ 6s²', shells: [2, 8, 18, 19, 9, 2], properties: 'Silvery-white metal. Most abundant rare-earth element. Pyrophoric.', uses: 'Catalytic converters, polishing powder, lighter flints, glass additives.' },
+            { number: 59, symbol: 'Pr', name: 'Praseodymium', category: 'lanthanide', weight: '140.90766(1)', density: '6.77', melting: '931', boiling: '3520', phase: 'Solid', discoverer: 'Carl Auer von Welsbach', year: '1885', config: '[Xe] 4f³ 6s²', shells: [2, 8, 18, 21, 8, 2], properties: 'Soft, silvery-yellowish metal. Forms green oxide.', uses: 'Magnets, lasers, carbon arc lights, coloring glass and enamels (yellow-green).' },
+            { number: 60, symbol: 'Nd', name: 'Neodymium', category: 'lanthanide', weight: '144.242(3)', density: '7.01', melting: '1024', boiling: '3074', phase: 'Solid', discoverer: 'Carl Auer von Welsbach', year: '1885', config: '[Xe] 4f⁴ 6s²', shells: [2, 8, 18, 22, 8, 2], properties: 'Silvery-white metal. Tarnishes in air.', uses: 'Powerful magnets (NdFeB), lasers, coloring glass (lilac), capacitors.' },
+            { number: 61, symbol: 'Pm', name: 'Promethium', category: 'lanthanide', weight: '[145]', density: '7.26', melting: '1042', boiling: '3000', phase: 'Solid', discoverer: 'J. A. Marinsky, L. E. Glendenin & C. D. Coryell', year: '1945', config: '[Xe] 4f⁵ 6s²', shells: [2, 8, 18, 23, 8, 2], properties: 'Radioactive lanthanide. All isotopes are radioactive.', uses: 'Luminous paint (historical), atomic batteries, thickness gauges.' },
+            { number: 62, symbol: 'Sm', name: 'Samarium', category: 'lanthanide', weight: '150.36(2)', density: '7.52', melting: '1072', boiling: '1794', phase: 'Solid', discoverer: 'Lecoq de Boisbaudran', year: '1879', config: '[Xe] 4f⁶ 6s²', shells: [2, 8, 18, 24, 8, 2], properties: 'Silvery-white metal. Stable in air at room temperature.', uses: 'Magnets (SmCo), lasers, neutron absorber in nuclear reactors, catalysts.' },
+            { number: 63, symbol: 'Eu', name: 'Europium', category: 'lanthanide', weight: '151.964(1)', density: '5.264', melting: '822', boiling: '1529', phase: 'Solid', discoverer: 'Eugène-Anatole Demarçay', year: '1901', config: '[Xe] 4f⁷ 6s²', shells: [2, 8, 18, 25, 8, 2], properties: 'Soft, silvery metal. Most reactive lanthanide.', uses: 'Phosphors (red and blue in TVs, LEDs), lasers, neutron absorber.' },
+            { number: 64, symbol: 'Gd', name: 'Gadolinium', category: 'lanthanide', weight: '157.25(3)', density: '7.90', melting: '1313', boiling: '3273', phase: 'Solid', discoverer: 'Jean Charles Galissard de Marignac', year: '1880', config: '[Xe] 4f⁷ 5d¹ 6s²', shells: [2, 8, 18, 25, 9, 2], properties: 'Silvery-white metal. Ferromagnetic below 20 °C. High neutron absorption cross-section.', uses: 'MRI contrast agent, neutron absorber, phosphors, magnets.' },
+            { number: 65, symbol: 'Tb', name: 'Terbium', category: 'lanthanide', weight: '158.92535(2)', density: '8.23', melting: '1356', boiling: '3230', phase: 'Solid', discoverer: 'Carl Gustaf Mosander', year: '1843', config: '[Xe] 4f⁹ 6s²', shells: [2, 8, 18, 27, 8, 2], properties: 'Silvery-white metal. Malleable, ductile, soft enough to be cut with a knife.', uses: 'Phosphors (green in TVs, LEDs), lasers, magnets, fuel cells.' },
+            { number: 66, symbol: 'Dy', name: 'Dysprosium', category: 'lanthanide', weight: '162.500(1)', density: '8.540', melting: '1412', boiling: '2567', phase: 'Solid', discoverer: 'Lecoq de Boisbaudran', year: '1886', config: '[Xe] 4f¹⁰ 6s²', shells: [2, 8, 18, 28, 8, 2], properties: 'Bright, silvery metallic luster. Relatively stable in air.', uses: 'Magnets (high-performance), lasers, nuclear reactor control rods, data storage.' },
+            { number: 67, symbol: 'Ho', name: 'Holmium', category: 'lanthanide', weight: '164.93033(2)', density: '8.79', melting: '1474', boiling: '2700', phase: 'Solid', discoverer: 'Marc Delafontaine & Jacques-Louis Soret / Per Teodor Cleve', year: '1878', config: '[Xe] 4f¹¹ 6s²', shells: [2, 8, 18, 29, 8, 2], properties: 'Soft, malleable, silvery-white metal. Highest magnetic moment of any element.', uses: 'Magnets, lasers, nuclear reactor control rods, coloring glass (yellow/red).' },
+            { number: 68, symbol: 'Er', name: 'Erbium', category: 'lanthanide', weight: '167.259(3)', density: '9.066', melting: '1529', boiling: '2868', phase: 'Solid', discoverer: 'Carl Gustaf Mosander', year: '1843', config: '[Xe] 4f¹² 6s²', shells: [2, 8, 18, 30, 8, 2], properties: 'Soft, malleable, silvery-white metal. Stable in air.', uses: 'Fiber optic amplifiers, lasers, coloring glass (pink), alloys.' },
+            { number: 69, symbol: 'Tm', name: 'Thulium', category: 'lanthanide', weight: '168.93422(2)', density: '9.32', melting: '1545', boiling: '1950', phase: 'Solid', discoverer: 'Per Teodor Cleve', year: '1879', config: '[Xe] 4f¹³ 6s²', shells: [2, 8, 18, 31, 8, 2], properties: 'Bright, silvery-gray metal. Soft, malleable, ductile. Rarest stable lanthanide.', uses: 'Portable X-ray devices, lasers, ceramic magnetic materials.' },
+            { number: 70, symbol: 'Yb', name: 'Ytterbium', category: 'lanthanide', weight: '173.054(5)', density: '6.90', melting: '824', boiling: '1196', phase: 'Solid', discoverer: 'Jean Charles Galissard de Marignac', year: '1878', config: '[Xe] 4f¹⁴ 6s²', shells: [2, 8, 18, 32, 8, 2], properties: 'Soft, silvery metal. Reacts slowly with water and air.', uses: 'Stainless steel alloys, lasers, atomic clocks, stress gauges.' },
+            { number: 71, symbol: 'Lu', name: 'Lutetium', category: 'lanthanide', weight: '174.9668(1)', density: '9.841', melting: '1663', boiling: '3402', phase: 'Solid', discoverer: 'Georges Urbain, Carl Auer von Welsbach & Charles James', year: '1907', config: '[Xe] 4f¹⁴ 5d¹ 6s²', shells: [2, 8, 18, 32, 9, 2], properties: 'Silvery-white metal. Hardest and densest lanthanide. Corrosion resistant.', uses: 'Catalysts in petroleum cracking, medical imaging (PET scans), high-refractive-index glass.' },
+            // Back to Period 6, d-block
+            { number: 72, symbol: 'Hf', name: 'Hafnium', category: 'transition-metal', weight: '178.49(2)', density: '13.31', melting: '2233', boiling: '4603', phase: 'Solid', discoverer: 'Dirk Coster & George de Hevesy', year: '1923', config: '[Xe] 4f¹⁴ 5d² 6s²', shells: [2, 8, 18, 32, 10, 2], properties: 'Lustrous, silvery, ductile metal. Chemically similar to zirconium. Corrosion resistant.', uses: 'Nuclear reactor control rods, alloys, microprocessors.' },
+            { number: 73, symbol: 'Ta', name: 'Tantalum', category: 'transition-metal', weight: '180.94788(2)', density: '16.69', melting: '3017', boiling: '5458', phase: 'Solid', discoverer: 'Anders Gustaf Ekeberg', year: '1802', config: '[Xe] 4f¹⁴ 5d³ 6s²', shells: [2, 8, 18, 32, 11, 2], properties: 'Hard, blue-gray, lustrous metal. Highly corrosion resistant. High melting point.', uses: 'Capacitors (electronics), surgical implants, alloys, vacuum furnace parts.' },
+            { number: 74, symbol: 'W', name: 'Tungsten', category: 'transition-metal', weight: '183.84(1)', density: '19.3', melting: '3422', boiling: '5930', phase: 'Solid', discoverer: 'Fausto & Juan José Elhuyar', year: '1783', config: '[Xe] 4f¹⁴ 5d⁴ 6s²', shells: [2, 8, 18, 32, 12, 2], properties: 'Hard, steel-gray metal. Highest melting point of all elements. High density.', uses: 'Filaments (light bulbs), electrodes, alloys (high-speed steel), counterweights.' },
+            { number: 75, symbol: 'Re', name: 'Rhenium', category: 'transition-metal', weight: '186.207(1)', density: '21.02', melting: '3186', boiling: '5596', phase: 'Solid', discoverer: 'Walter Noddack, Ida Tacke & Otto Berg', year: '1925', config: '[Xe] 4f¹⁴ 5d⁵ 6s²', shells: [2, 8, 18, 32, 13, 2], properties: 'Silvery-white, heavy metal. Third-highest melting point. Very rare.', uses: 'Superalloys (jet engines), catalysts, filaments, thermocouples.' },
+            { number: 76, symbol: 'Os', name: 'Osmium', category: 'transition-metal', weight: '190.23(3)', density: '22.59', melting: '3033', boiling: '5012', phase: 'Solid', discoverer: 'Smithson Tennant', year: '1803', config: '[Xe] 4f¹⁴ 5d⁶ 6s²', shells: [2, 8, 18, 32, 14, 2], properties: 'Hard, brittle, bluish-white metal. Densest naturally occurring element. Forms toxic OsO₄.', uses: 'Alloys (fountain pen tips, electrical contacts), catalysts, staining biological samples.' },
+            { number: 77, symbol: 'Ir', name: 'Iridium', category: 'transition-metal', weight: '192.217(2)', density: '22.56', melting: '2446', boiling: '4428', phase: 'Solid', discoverer: 'Smithson Tennant', year: '1803', config: '[Xe] 4f¹⁴ 5d⁷ 6s²', shells: [2, 8, 18, 32, 15, 2], properties: 'Hard, brittle, silvery-white metal. Second-densest element. Most corrosion-resistant metal.', uses: 'Spark plugs, crucibles, electrical contacts, alloys.' },
+            { number: 78, symbol: 'Pt', name: 'Platinum', category: 'transition-metal', weight: '195.084(9)', density: '21.45', melting: '1768.3', boiling: '3825', phase: 'Solid', discoverer: 'Antonio de Ulloa (European discovery)', year: '1735', config: '[Xe] 4f¹⁴ 5d⁹ 6s¹', shells: [2, 8, 18, 32, 17, 1], properties: 'Dense, malleable, ductile, silvery-white noble metal. Highly unreactive.', uses: 'Catalytic converters, jewelry, laboratory equipment, electrodes, cancer drugs.' },
+            { number: 79, symbol: 'Au', name: 'Gold', category: 'transition-metal', weight: '196.966569(5)', density: '19.30', melting: '1064.18', boiling: '2856', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Xe] 4f¹⁴ 5d¹⁰ 6s¹', shells: [2, 8, 18, 32, 18, 1], properties: 'Soft, dense, yellow, malleable, ductile noble metal. Excellent conductor.', uses: 'Jewelry, currency, electronics, dentistry, reflective coatings.' },
+            { number: 80, symbol: 'Hg', name: 'Mercury', category: 'post-transition', weight: '200.592(3)', density: '13.5336 (liquid)', melting: '-38.83', boiling: '356.73', phase: 'Liquid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Xe] 4f¹⁴ 5d¹⁰ 6s²', shells: [2, 8, 18, 32, 18, 2], properties: 'Heavy, silvery liquid metal. Only metal liquid at standard conditions. Toxic.', uses: 'Thermometers (historical), barometers, fluorescent lamps, dental amalgams (historical).' },
+            { number: 81, symbol: 'Tl', name: 'Thallium', category: 'post-transition', weight: '204.38', density: '11.85', melting: '304', boiling: '1473', phase: 'Solid', discoverer: 'William Crookes & Claude Auguste Lamy', year: '1861', config: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹', shells: [2, 8, 18, 32, 18, 3], properties: 'Soft, grayish-white metal. Resembles tin but discolors on exposure to air. Highly toxic.', uses: 'Rat poison (historical), specialized glass, infrared detectors, research.' },
+            { number: 82, symbol: 'Pb', name: 'Lead', category: 'post-transition', weight: '207.2(1)', density: '11.34', melting: '327.46', boiling: '1749', phase: 'Solid', discoverer: 'Ancient civilizations', year: 'Known since antiquity', config: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²', shells: [2, 8, 18, 32, 18, 4], properties: 'Heavy, soft, malleable, bluish-white metal. Poor conductor. Toxic.', uses: 'Batteries, radiation shielding, solder, weights, ammunition.' },
+            { number: 83, symbol: 'Bi', name: 'Bismuth', category: 'post-transition', weight: '208.98040(1)', density: '9.78', melting: '271.4', boiling: '1564', phase: 'Solid', discoverer: 'Claude François Geoffroy', year: '1753', config: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³', shells: [2, 8, 18, 32, 18, 5], properties: 'Brittle, crystalline, white metal with a pinkish tinge. Diamagnetic. Expands on solidifying. Low toxicity.', uses: 'Pepto-Bismol, low-melting alloys (fusible alloys), cosmetics, pigments.' },
+            { number: 84, symbol: 'Po', name: 'Polonium', category: 'metalloid', weight: '[209]', density: '9.196 (alpha)', melting: '254', boiling: '962', phase: 'Solid', discoverer: 'Marie & Pierre Curie', year: '1898', config: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴', shells: [2, 8, 18, 32, 18, 6], properties: 'Rare, highly radioactive metalloid. All isotopes are radioactive.', uses: 'Anti-static devices, neutron sources, heat source for space probes (historical).' },
+            { number: 85, symbol: 'At', name: 'Astatine', category: 'halogen', weight: '[210]', density: 'N/A (estimated ~7 g/cm³)', melting: '302', boiling: '337 (estimated)', phase: 'Solid (presumed)', discoverer: 'Dale R. Corson, Kenneth Ross MacKenzie & Emilio Segrè', year: '1940', config: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵', shells: [2, 8, 18, 32, 18, 7], properties: 'Extremely rare and radioactive. Heaviest known halogen. Properties largely inferred.', uses: 'Scientific research, potential use in radiotherapy.' },
+            { number: 86, symbol: 'Rn', name: 'Radon', category: 'noble-gas', weight: '[222]', density: '0.00973', melting: '-71', boiling: '-61.7', phase: 'Gas', discoverer: 'Friedrich Ernst Dorn', year: '1900', config: '[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶', shells: [2, 8, 18, 32, 18, 8], properties: 'Radioactive, colorless, odorless, tasteless noble gas. Health hazard due to radioactivity.', uses: 'Radiotherapy (historical), geological research (earthquake prediction).' },
+            // Period 7
+            { number: 87, symbol: 'Fr', name: 'Francium', category: 'alkali-metal', weight: '[223]', density: 'N/A (estimated ~1.87 g/cm³)', melting: '27 (estimated)', boiling: '677 (estimated)', phase: 'Solid (presumed)', discoverer: 'Marguerite Perey', year: '1939', config: '[Rn] 7s¹', shells: [2, 8, 18, 32, 18, 8, 1], properties: 'Extremely rare and radioactive alkali metal. Highest equivalent weight of any element.', uses: 'Scientific research only.' },
+            { number: 88, symbol: 'Ra', name: 'Radium', category: 'alkaline-earth', weight: '[226]', density: '5.5', melting: '700', boiling: '1737', phase: 'Solid', discoverer: 'Marie & Pierre Curie', year: '1898', config: '[Rn] 7s²', shells: [2, 8, 18, 32, 18, 8, 2], properties: 'Silvery-white radioactive alkaline earth metal. Glows in the dark (radioluminescence).', uses: 'Luminous paints (historical, hazardous), medical isotopes, cancer treatment (historical).' },
+            // Actinides (Period 7, f-block)
+            { number: 89, symbol: 'Ac', name: 'Actinium', category: 'actinide', weight: '[227]', density: '10', melting: '1051', boiling: '3198', phase: 'Solid', discoverer: 'André-Louis Debierne & Friedrich Oskar Giesel', year: '1899/1902', config: '[Rn] 6d¹ 7s²', shells: [2, 8, 18, 32, 18, 9, 2], properties: 'Silvery-white radioactive metal. Glows faintly blue in the dark.', uses: 'Neutron source, medical isotopes (cancer therapy).' },
+            { number: 90, symbol: 'Th', name: 'Thorium', category: 'actinide', weight: '232.0377(4)', density: '11.724', melting: '1750', boiling: '4788', phase: 'Solid', discoverer: 'Jöns Jacob Berzelius', year: '1829', config: '[Rn] 6d² 7s²', shells: [2, 8, 18, 32, 18, 10, 2], properties: 'Silvery-white radioactive metal. Tarnishes in air. Fertile material for nuclear fuel.', uses: 'Gas mantles (historical), alloys, potential nuclear fuel.' },
+            { number: 91, symbol: 'Pa', name: 'Protactinium', category: 'actinide', weight: '231.03588(1)', density: '15.37', melting: '1572', boiling: '4027 (estimated)', phase: 'Solid', discoverer: 'Kasimir Fajans & Oswald Helmuth Göhring / Lise Meitner & Otto Hahn', year: '1913/1917', config: '[Rn] 5f² 6d¹ 7s²', shells: [2, 8, 18, 32, 20, 9, 2], properties: 'Dense, silvery-gray radioactive metal. Highly toxic and radioactive.', uses: 'Scientific research only.' },
+            { number: 92, symbol: 'U', name: 'Uranium', category: 'actinide', weight: '238.02891(3)', density: '19.1', melting: '1132.2', boiling: '4131', phase: 'Solid', discoverer: 'Martin Heinrich Klaproth', year: '1789', config: '[Rn] 5f³ 6d¹ 7s²', shells: [2, 8, 18, 32, 21, 9, 2], properties: 'Silvery-gray radioactive metal. Fissile isotopes used in nuclear reactors and weapons.', uses: 'Nuclear fuel, nuclear weapons, counterweights, radiation shielding.' },
+            { number: 93, symbol: 'Np', name: 'Neptunium', category: 'actinide', weight: '[237]', density: '20.45', melting: '639', boiling: '3902', phase: 'Solid', discoverer: 'Edwin McMillan & Philip H. Abelson', year: '1940', config: '[Rn] 5f⁴ 6d¹ 7s²', shells: [2, 8, 18, 32, 22, 9, 2], properties: 'Silvery metallic radioactive element. First synthetic transuranium element.', uses: 'Neutron detection, precursor for Pu-238 production (spacecraft power).' },
+            { number: 94, symbol: 'Pu', name: 'Plutonium', category: 'actinide', weight: '[244]', density: '19.816', melting: '640', boiling: '3228', phase: 'Solid', discoverer: 'Glenn T. Seaborg et al.', year: '1940', config: '[Rn] 5f⁶ 7s²', shells: [2, 8, 18, 32, 24, 8, 2], properties: 'Silvery-white radioactive metal. Tarnishes in air. Fissile isotopes used in nuclear weapons and reactors.', uses: 'Nuclear weapons, nuclear fuel, radioisotope thermoelectric generators (RTGs for spacecraft).' },
+            { number: 95, symbol: 'Am', name: 'Americium', category: 'actinide', weight: '[243]', density: '13.67', melting: '1176', boiling: '2011', phase: 'Solid', discoverer: 'Glenn T. Seaborg et al.', year: '1944', config: '[Rn] 5f⁷ 7s²', shells: [2, 8, 18, 32, 25, 8, 2], properties: 'Silvery-white radioactive metal. Am-241 used in smoke detectors.', uses: 'Smoke detectors, neutron sources, gauges.' },
+            { number: 96, symbol: 'Cm', name: 'Curium', category: 'actinide', weight: '[247]', density: '13.51', melting: '1340', boiling: '3110', phase: 'Solid', discoverer: 'Glenn T. Seaborg et al.', year: '1944', config: '[Rn] 5f⁷ 6d¹ 7s²', shells: [2, 8, 18, 32, 25, 9, 2], properties: 'Silvery metallic radioactive element. Hard, brittle, and lustrous.', uses: 'Power source for spacecraft (RTGs), neutron sources, research.' },
+            { number: 97, symbol: 'Bk', name: 'Berkelium', category: 'actinide', weight: '[247]', density: '14.78', melting: '986', boiling: '2627 (estimated)', phase: 'Solid', discoverer: 'Glenn T. Seaborg et al.', year: '1949', config: '[Rn] 5f⁹ 7s²', shells: [2, 8, 18, 32, 27, 8, 2], properties: 'Silvery metallic radioactive element. Soft and malleable.', uses: 'Scientific research, source for heavier elements.' },
+            { number: 98, symbol: 'Cf', name: 'Californium', category: 'actinide', weight: '[251]', density: '15.1', melting: '900', boiling: '1470 (estimated)', phase: 'Solid', discoverer: 'Glenn T. Seaborg et al.', year: '1950', config: '[Rn] 5f¹⁰ 7s²', shells: [2, 8, 18, 32, 28, 8, 2], properties: 'Silvery metallic radioactive element. Strong neutron emitter.', uses: 'Neutron sources (cancer therapy, oil well logging, airport security), nuclear reactor startup.' },
+            { number: 99, symbol: 'Es', name: 'Einsteinium', category: 'actinide', weight: '[252]', density: '8.84 (estimated)', melting: '860', boiling: 'N/A', phase: 'Solid', discoverer: 'Albert Ghiorso et al.', year: '1952', config: '[Rn] 5f¹¹ 7s²', shells: [2, 8, 18, 32, 29, 8, 2], properties: 'Synthetic radioactive metal. Discovered in debris of first hydrogen bomb test.', uses: 'Scientific research, production of mendelevium.' },
+            { number: 100, symbol: 'Fm', name: 'Fermium', category: 'actinide', weight: '[257]', density: 'N/A', melting: '1527 (estimated)', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'Albert Ghiorso et al.', year: '1952', config: '[Rn] 5f¹² 7s²', shells: [2, 8, 18, 32, 30, 8, 2], properties: 'Synthetic radioactive metal. Discovered in debris of first hydrogen bomb test.', uses: 'Scientific research only.' },
+            { number: 101, symbol: 'Md', name: 'Mendelevium', category: 'actinide', weight: '[258]', density: 'N/A', melting: '827 (estimated)', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'Albert Ghiorso et al.', year: '1955', config: '[Rn] 5f¹³ 7s²', shells: [2, 8, 18, 32, 31, 8, 2], properties: 'Synthetic radioactive metal. First element synthesized one atom at a time.', uses: 'Scientific research only.' },
+            { number: 102, symbol: 'No', name: 'Nobelium', category: 'actinide', weight: '[259]', density: 'N/A', melting: '827 (estimated)', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'Joint Institute for Nuclear Research (JINR) / Lawrence Berkeley National Laboratory (LBNL)', year: '1966 (confirmed)', config: '[Rn] 5f¹⁴ 7s²', shells: [2, 8, 18, 32, 32, 8, 2], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 103, symbol: 'Lr', name: 'Lawrencium', category: 'actinide', weight: '[266]', density: 'N/A', melting: '1627 (estimated)', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'Albert Ghiorso et al.', year: '1961', config: '[Rn] 5f¹⁴ 7s² 7p¹ (expected) or [Rn] 5f¹⁴ 6d¹ 7s² (observed)', shells: [2, 8, 18, 32, 32, 8, 3], properties: 'Synthetic radioactive metal. Last actinide.', uses: 'Scientific research only.' },
+            // Back to Period 7, d-block (Superheavy elements)
+            { number: 104, symbol: 'Rf', name: 'Rutherfordium', category: 'transition-metal', weight: '[267]', density: 'N/A (predicted ~23.2 g/cm³)', melting: 'N/A (predicted ~2100 °C)', boiling: 'N/A (predicted ~5500 °C)', phase: 'Solid (presumed)', discoverer: 'JINR / LBNL', year: '1964/1969', config: '[Rn] 5f¹⁴ 6d² 7s²', shells: [2, 8, 18, 32, 32, 10, 2], properties: 'Synthetic radioactive metal. First transactinide element.', uses: 'Scientific research only.' },
+            { number: 105, symbol: 'Db', name: 'Dubnium', category: 'transition-metal', weight: '[270]', density: 'N/A (predicted ~29.3 g/cm³)', melting: 'N/A', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'JINR / LBNL', year: '1968/1970', config: '[Rn] 5f¹⁴ 6d³ 7s²', shells: [2, 8, 18, 32, 32, 11, 2], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 106, symbol: 'Sg', name: 'Seaborgium', category: 'transition-metal', weight: '[271]', density: 'N/A (predicted ~35 g/cm³)', melting: 'N/A', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'LBNL / JINR', year: '1974', config: '[Rn] 5f¹⁴ 6d⁴ 7s²', shells: [2, 8, 18, 32, 32, 12, 2], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 107, symbol: 'Bh', name: 'Bohrium', category: 'transition-metal', weight: '[270]', density: 'N/A (predicted ~37.1 g/cm³)', melting: 'N/A', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'Gesellschaft für Schwerionenforschung (GSI)', year: '1981', config: '[Rn] 5f¹⁴ 6d⁵ 7s²', shells: [2, 8, 18, 32, 32, 13, 2], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 108, symbol: 'Hs', name: 'Hassium', category: 'transition-metal', weight: '[277]', density: 'N/A (predicted ~40.7 g/cm³)', melting: 'N/A', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'GSI', year: '1984', config: '[Rn] 5f¹⁴ 6d⁶ 7s²', shells: [2, 8, 18, 32, 32, 14, 2], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 109, symbol: 'Mt', name: 'Meitnerium', category: 'transition-metal', weight: '[278]', density: 'N/A (predicted ~37.4 g/cm³)', melting: 'N/A', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'GSI', year: '1982', config: '[Rn] 5f¹⁴ 6d⁷ 7s²', shells: [2, 8, 18, 32, 32, 15, 2], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 110, symbol: 'Ds', name: 'Darmstadtium', category: 'transition-metal', weight: '[281]', density: 'N/A (predicted ~34.8 g/cm³)', melting: 'N/A', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'GSI', year: '1994', config: '[Rn] 5f¹⁴ 6d⁸ 7s² (predicted)', shells: [2, 8, 18, 32, 32, 16, 2], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 111, symbol: 'Rg', name: 'Roentgenium', category: 'transition-metal', weight: '[282]', density: 'N/A (predicted ~28.7 g/cm³)', melting: 'N/A', boiling: 'N/A', phase: 'Solid (presumed)', discoverer: 'GSI', year: '1994', config: '[Rn] 5f¹⁴ 6d⁹ 7s² (predicted)', shells: [2, 8, 18, 32, 32, 17, 2], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 112, symbol: 'Cn', name: 'Copernicium', category: 'post-transition', weight: '[285]', density: 'N/A (predicted ~23.7 g/cm³ or 14.0 g/cm³ as gas-like metal)', melting: 'N/A', boiling: 'N/A (predicted ~37 °C or ~84 °C)', phase: 'Gas or Liquid (predicted)', discoverer: 'GSI', year: '1996', config: '[Rn] 5f¹⁴ 6d¹⁰ 7s²', shells: [2, 8, 18, 32, 32, 18, 2], properties: 'Synthetic radioactive metal. Predicted to be volatile, possibly liquid or gas at room temp.', uses: 'Scientific research only.' },
+            { number: 113, symbol: 'Nh', name: 'Nihonium', category: 'post-transition', weight: '[286]', density: 'N/A (predicted ~16 g/cm³)', melting: 'N/A (predicted ~430 °C)', boiling: 'N/A (predicted ~1100 °C)', phase: 'Solid (presumed)', discoverer: 'RIKEN', year: '2004', config: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹', shells: [2, 8, 18, 32, 32, 18, 3], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 114, symbol: 'Fl', name: 'Flerovium', category: 'post-transition', weight: '[289]', density: 'N/A (predicted ~14 g/cm³)', melting: 'N/A (predicted ~-73 °C)', boiling: 'N/A (predicted ~-10 °C or ~67 °C)', phase: 'Gas (predicted)', discoverer: 'JINR & LLNL', year: '1999', config: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²', shells: [2, 8, 18, 32, 32, 18, 4], properties: 'Synthetic radioactive metal. Predicted to be volatile, possibly a gas.', uses: 'Scientific research only.' },
+            { number: 115, symbol: 'Mc', name: 'Moscovium', category: 'post-transition', weight: '[290]', density: 'N/A (predicted ~13.5 g/cm³)', melting: 'N/A (predicted ~400 °C)', boiling: 'N/A (predicted ~1100 °C)', phase: 'Solid (presumed)', discoverer: 'JINR & LLNL', year: '2003', config: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³', shells: [2, 8, 18, 32, 32, 18, 5], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 116, symbol: 'Lv', name: 'Livermorium', category: 'post-transition', weight: '[293]', density: 'N/A (predicted ~12.9 g/cm³)', melting: 'N/A (predicted 364–507 °C)', boiling: 'N/A (predicted 762–862 °C)', phase: 'Solid (presumed)', discoverer: 'JINR & LLNL', year: '2000', config: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴', shells: [2, 8, 18, 32, 32, 18, 6], properties: 'Synthetic radioactive metal.', uses: 'Scientific research only.' },
+            { number: 117, symbol: 'Ts', name: 'Tennessine', category: 'halogen', weight: '[294]', density: 'N/A (predicted 7.1–7.3 g/cm³)', melting: 'N/A (predicted 350–550 °C)', boiling: 'N/A (predicted ~610 °C)', phase: 'Solid (presumed)', discoverer: 'JINR, LLNL & ORNL', year: '2010', config: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵', shells: [2, 8, 18, 32, 32, 18, 7], properties: 'Synthetic radioactive element. Predicted to be a volatile solid, possibly metalloid-like.', uses: 'Scientific research only.' },
+            { number: 118, symbol: 'Og', name: 'Oganesson', category: 'noble-gas', weight: '[294]', density: 'N/A (predicted 4.9–5.1 g/cm³ if gas, ~7 g/cm³ if solid)', melting: 'N/A (predicted ~50 °C)', boiling: 'N/A (predicted ~80±30 °C or 157±30 °C)', phase: 'Gas or Solid (predicted)', discoverer: 'JINR & LLNL', year: '2006', config: '[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶', shells: [2, 8, 18, 32, 32, 18, 8], properties: 'Synthetic radioactive element. Predicted to be a noble gas but potentially reactive. May be solid at STP.', uses: 'Scientific research only.' }
+        ];
+
+
+        // DOM elements
+        const periodicTable = document.getElementById('periodic-table');
+        const searchInput = document.getElementById('search');
+        const categoryFilter = document.getElementById('category-filter');
+        const themeToggle = document.getElementById('theme-toggle');
+        const overlay = document.getElementById('overlay');
+        const elementDetail = document.getElementById('element-detail');
+        const detailClose = document.getElementById('detail-close');
+
+        // Initialize the periodic table
+        function initPeriodicTable() {
+            periodicTable.innerHTML = '';
+            
+            // Create empty cells for the periodic table layout (10 rows, 18 columns)
+            for (let i = 0; i < 10 * 18; i++) {
+                const cell = document.createElement('div');
+                // cell.className = 'empty-cell'; // No specific style for empty cells needed for now
+                periodicTable.appendChild(cell);
+            }
+            
+            // Place elements in their correct positions
+            elements.forEach(element => {
+                let positionIndex = getElementPosition(element.number);
+                if (positionIndex !== null && positionIndex > 0 && positionIndex <= periodicTable.children.length) {
+                    const cell = periodicTable.children[positionIndex - 1]; // positionIndex is 1-based
+                    if (cell) {
+                        cell.innerHTML = ''; // Clear any previous content (like 'empty-cell' text)
+                        cell.className = `element ${element.category}`;
+                        cell.innerHTML = `
+                            <div class="element-number">${element.number}</div>
+                            <div class="element-symbol">${element.symbol}</div>
+                            <div class="element-name">${element.name}</div>
+                        `;
+                        cell.addEventListener('click', () => showElementDetail(element));
+                    } else {
+                        console.warn(`Cell not found for element ${element.number} at position ${positionIndex}`);
+                    }
+                } else {
+                     console.warn(`Invalid position for element ${element.number}: ${positionIndex}`);
+                }
+            });
+
+            // Add Lanthanide/Actinide series placeholders in the main table
+            const lanthanidePlaceholderPos = (6 - 1) * 18 + 3; // Row 6, Col 3
+            const actinidePlaceholderPos = (7 - 1) * 18 + 3;   // Row 7, Col 3
+
+            const lanthanideCell = periodicTable.children[lanthanidePlaceholderPos - 1];
+            if (lanthanideCell) {
+                lanthanideCell.innerHTML = `
+                    <div class="element-number" style="font-size:0.5em;">57-71</div>
+                    <div class="element-symbol" style="font-size:0.7em;">La-Lu</div>
+                    <div class="element-name" style="font-size:0.4em; line-height:1.1;">Lanthanides</div>`;
+                lanthanideCell.className = 'element lanthanide'; // Style like lanthanides
+                lanthanideCell.style.cursor = 'default';
+                lanthanideCell.style.fontSize = '0.8em'; // Make placeholder text smaller
+                // Optional: Add click to scroll to Lanthanides if they are visually separated and far
+            }
+
+            const actinideCell = periodicTable.children[actinidePlaceholderPos - 1];
+            if (actinideCell) {
+                actinideCell.innerHTML = `
+                     <div class="element-number" style="font-size:0.5em;">89-103</div>
+                     <div class="element-symbol" style="font-size:0.7em;">Ac-Lr</div>
+                     <div class="element-name" style="font-size:0.4em; line-height:1.1;">Actinides</div>`;
+                actinideCell.className = 'element actinide'; // Style like actinides
+                actinideCell.style.cursor = 'default';
+                actinideCell.style.fontSize = '0.8em'; // Make placeholder text smaller
+            }
+        }
+
+        // Get position in the periodic table grid (1-based index)
+        function getElementPosition(atomicNumber) {
+            let row, col;
+
+            if (atomicNumber === 1) { row = 1; col = 1; } // H
+            else if (atomicNumber === 2) { row = 1; col = 18; } // He
+            // Period 2
+            else if (atomicNumber >= 3 && atomicNumber <= 4) { row = 2; col = atomicNumber - 3 + 1; } // Li, Be
+            else if (atomicNumber >= 5 && atomicNumber <= 10) { row = 2; col = atomicNumber - 5 + 13; } // B - Ne
+            // Period 3
+            else if (atomicNumber >= 11 && atomicNumber <= 12) { row = 3; col = atomicNumber - 11 + 1; } // Na, Mg
+            else if (atomicNumber >= 13 && atomicNumber <= 18) { row = 3; col = atomicNumber - 13 + 13; } // Al - Ar
+            // Period 4
+            else if (atomicNumber >= 19 && atomicNumber <= 36) { row = 4; col = atomicNumber - 19 + 1; } // K - Kr
+            // Period 5
+            else if (atomicNumber >= 37 && atomicNumber <= 54) { row = 5; col = atomicNumber - 37 + 1; } // Rb - Xe
+            // Period 6
+            else if (atomicNumber >= 55 && atomicNumber <= 56) { row = 6; col = atomicNumber - 55 + 1; } // Cs, Ba
+            else if (atomicNumber >= 57 && atomicNumber <= 71) { // Lanthanides
+                row = 8; // Placed in the 8th visual row of the grid (below main table)
+                col = atomicNumber - 57 + 3; // Starts at visual column 3
+            }
+            else if (atomicNumber >= 72 && atomicNumber <= 86) { row = 6; col = atomicNumber - 72 + 4; } // Hf - Rn (after La series jump)
+            // Period 7
+            else if (atomicNumber >= 87 && atomicNumber <= 88) { row = 7; col = atomicNumber - 87 + 1; } // Fr, Ra
+            else if (atomicNumber >= 89 && atomicNumber <= 103) { // Actinides
+                row = 9; // Placed in the 9th visual row of the grid
+                col = atomicNumber - 89 + 3; // Starts at visual column 3
+            }
+            else if (atomicNumber >= 104 && atomicNumber <= 118) { row = 7; col = atomicNumber - 104 + 4; } // Rf - Og (after Ac series jump)
+            else { return null; } // Should not happen for 1-118
+
+            return (row - 1) * 18 + col;
+        }
+
+
+        // Show element detail modal
+        function showElementDetail(element) {
+            document.getElementById('detail-symbol').textContent = element.symbol;
+            document.getElementById('detail-name').textContent = element.name;
+            document.getElementById('detail-category').textContent = element.category.replace('-', ' ').toUpperCase();
+            document.getElementById('detail-number').textContent = element.number;
+            document.getElementById('detail-weight').textContent = element.weight;
+            document.getElementById('detail-density').textContent = element.density + (element.phase === 'Gas' && !element.density.includes('g/cm³') ? ' g/L (STP)' : element.density.includes('g/cm³') ? '' : ' g/cm³');
+            document.getElementById('detail-melting').textContent = element.melting + (element.melting === 'N/A' || element.melting.includes('°C') ? '' : ' °C');
+            document.getElementById('detail-boiling').textContent = element.boiling + (element.boiling === 'N/A' || element.boiling.includes('°C') ? '' : ' °C');
+            document.getElementById('detail-phase').textContent = element.phase;
+            document.getElementById('detail-discoverer').textContent = element.discoverer;
+            document.getElementById('detail-year').textContent = element.year;
+            document.getElementById('detail-config').textContent = element.config;
+            document.getElementById('detail-properties').textContent = element.properties;
+            document.getElementById('detail-uses').textContent = element.uses;
+            
+            // Display electron shells text
+            document.getElementById('detail-shells-text').textContent = `Shells: ${element.shells.join(', ')}`;
+
+            // Create electron shells visualization (simplified)
+            const electronShellsViz = document.getElementById('electron-shells-viz');
+            electronShellsViz.innerHTML = ''; // Clear previous visualization
+            
+            // This visualization is very simplified and mainly for illustrative purposes
+            // It does not accurately represent d and f orbitals or complex shell filling.
+            element.shells.forEach((electronsInShell, shellIndex) => {
+                const shellDiv = document.createElement('div');
+                shellDiv.className = 'shell';
+                
+                const shellLabel = document.createElement('div');
+                shellLabel.className = 'shell-label';
+                shellLabel.textContent = `K L M N O P Q`.split(' ')[shellIndex] || `n=${shellIndex + 1}`; // K, L, M... labels
+                shellDiv.appendChild(shellLabel);
+                
+                const orbitalsDiv = document.createElement('div');
+                orbitalsDiv.className = 'orbitals';
+
+                // Simplified representation: just show total electrons in the shell as a filled circle
+                const orbital = document.createElement('div');
+                orbital.className = 'orbital filled';
+                orbital.textContent = electronsInShell;
+                orbitalsDiv.appendChild(orbital);
+                                
+                shellDiv.appendChild(orbitalsDiv);
+                electronShellsViz.appendChild(shellDiv);
+            });
+            
+            overlay.classList.add('active');
+            elementDetail.classList.add('active');
+        }
+
+        // Close element detail modal
+        function closeElementDetail() {
+            overlay.classList.remove('active');
+            elementDetail.classList.remove('active');
+        }
+
+        // Filter elements by search term and category
+        function filterElements() {
+            const searchTerm = searchInput.value.toLowerCase().trim();
+            const category = categoryFilter.value;
+            
+            // Iterate over actual element cells in the grid
+            const elementCells = periodicTable.querySelectorAll('.element');
+            
+            elementCells.forEach(cell => {
+                // Retrieve element data. This is a bit tricky as data isn't directly on cell.
+                // We'll use the atomic number from the cell to find the element in our `elements` array.
+                const numberDiv = cell.querySelector('.element-number');
+                if (!numberDiv || !numberDiv.textContent) { // Skip placeholder cells or malformed cells
+                     if (cell.innerText.includes('La-Lu') || cell.innerText.includes('Ac-Lr')) { // Keep placeholders visible
+                        if (category === 'all' || cell.classList.contains(category)) {
+                             cell.style.display = 'flex';
+                        } else {
+                             cell.style.display = 'none';
+                        }
+                     }
+                    return;
+                }
+                const atomicNumber = parseInt(numberDiv.textContent);
+                const element = elements.find(el => el.number === atomicNumber);
+
+                if (element) {
+                    const matchesSearch = searchTerm === '' ||
+                                          element.name.toLowerCase().includes(searchTerm) || 
+                                          element.symbol.toLowerCase().includes(searchTerm) || 
+                                          element.number.toString().includes(searchTerm);
+                    const matchesCategory = category === 'all' || element.category === category;
+                    
+                    if (matchesSearch && matchesCategory) {
+                        cell.style.display = 'flex';
+                    } else {
+                        cell.style.display = 'none';
+                    }
+                }
+            });
+        }
+
+
+        // Toggle theme
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                document.documentElement.removeAttribute('data-theme');
+                themeToggle.textContent = '🌓 Toggle Theme'; // Dark mode
+            } else {
+                document.documentElement.setAttribute('data-theme', 'light');
+                themeToggle.textContent = '🌙 Toggle Theme'; // Light mode
+            }
+        }
+
+        // Event listeners
+        searchInput.addEventListener('input', filterElements);
+        categoryFilter.addEventListener('change', filterElements);
+        themeToggle.addEventListener('click', toggleTheme);
+        detailClose.addEventListener('click', closeElementDetail);
+        overlay.addEventListener('click', closeElementDetail);
+
+        // Initialize
+        initPeriodicTable();
+    </script>
+</body>
+</html>

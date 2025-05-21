@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do App - Neon Dark Mode with Voice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom styles for neon effects and dark mode enhancements */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Fallback */
+        }
+
+        .neon-text-cyan {
+            color: #22d3ee;
+            text-shadow:
+                0 0 5px #22d3ee, 0 0 10px #22d3ee, 0 0 15px #22d3ee,
+                0 0 20px #0891b2, 0 0 30px #0891b2, 0 0 40px #0891b2;
+        }
+
+        .task-item.completed span {
+            text-decoration: line-through;
+            color: #6b7280;
+        }
+        .task-item.completed {
+            background-color: #374151 !important;
+        }
+
+        .task-item {
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            border: 1px solid #374151;
+        }
+        .task-item:hover {
+            background-color: #374151;
+            transform: translateY(-2px);
+        }
+
+        .message-box-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 1000; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        .message-box-overlay.visible { opacity: 1; visibility: visible; }
+        .message-box {
+            background-color: #1f2937; color: #e5e7eb; padding: 2rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.3), 0 0 30px rgba(0, 242, 255, 0.2);
+            text-align: center; max-width: 90%; width: 400px; border: 1px solid #0891b2;
+        }
+        .message-box-button {
+            margin-top: 1.5rem; padding: 0.6rem 1.2rem; border-radius: 0.375rem;
+            font-weight: 600; cursor: pointer;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1f2937; }
+        ::-webkit-scrollbar-thumb { background: #0891b2; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #22d3ee; }
+
+        input:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.5);
+        }
+        .form-checkbox:focus {
+             box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.5) !important;
+             border-color: #22d3ee !important;
+        }
+
+        /* Microphone button specific styles */
+        #voiceInputBtn.listening {
+            background-color: #ec4899; /* Neon Pink when listening */
+            box-shadow: 0 0 15px #ec4899, 0 0 25px #ec4899;
+        }
+        #voiceInputBtn:disabled {
+            background-color: #4b5563; /* Gray when disabled */
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen flex flex-col items-center pt-8 sm:pt-16 px-4">
+
+    <div class="w-full max-w-2xl bg-gray-800 shadow-2xl shadow-cyan-500/30 rounded-xl p-6 sm:p-8 border border-cyan-600/50">
+        <header class="mb-6 sm:mb-8 text-center">
+            <h1 class="text-4xl sm:text-5xl font-bold neon-text-cyan">Voice To-Do List</h1>
+            <p class="text-gray-400 mt-2">Conquer your tasks with neon focus! click mic and say your task with "add task" at end to add by voice.</p>
+        </header>
+
+        <div class="flex flex-col sm:flex-row gap-3 mb-6">
+            <input type="text" id="taskInput" placeholder="Enter or speak a new task..." class="flex-grow p-3 bg-gray-700 border-2 border-gray-600 rounded-lg text-gray-200 placeholder-gray-500 focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 outline-none transition duration-150 ease-in-out">
+            <button id="addTaskBtn" class="bg-cyan-500 hover:bg-cyan-400 text-gray-900 font-semibold py-3 px-4 sm:px-6 rounded-lg shadow-md shadow-cyan-500/50 hover:shadow-lg hover:shadow-cyan-400/60 transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-opacity-70">
+                <i class="fas fa-plus mr-0 sm:mr-2"></i><span class="hidden sm:inline">Add Task</span>
+            </button>
+            <button id="voiceInputBtn" title="Add task by voice" class="bg-teal-500 hover:bg-teal-400 text-gray-900 font-semibold py-3 px-4 rounded-lg shadow-md shadow-teal-500/50 hover:shadow-lg hover:shadow-teal-400/60 transition duration-150 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-70">
+                <i class="fas fa-microphone"></i>
+            </button>
+        </div>
+
+        <div class="flex justify-center gap-2 mb-6">
+            <button id="filterAll" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg text-sm transition duration-150">All</button>
+            <button id="filterActive" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg text-sm transition duration-150">Active</button>
+            <button id="filterCompleted" class="filter-btn bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium py-2 px-4 rounded-lg text-sm transition duration-150">Completed</button>
+        </div>
+
+        <ul id="taskList" class="space-y-3 max-h-[40vh] sm:max-h-[50vh] overflow-y-auto pr-2">
+            </ul>
+
+        <p id="emptyMessage" class="text-center text-gray-500 mt-8 hidden">No tasks here. Let's add some!</p>
+
+        <div class="mt-8 text-center">
+            <button id="clearCompletedBtn" class="bg-pink-600 hover:bg-pink-500 text-white font-semibold py-2 px-4 rounded-lg shadow-md shadow-pink-600/50 hover:shadow-lg hover:shadow-pink-500/60 transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-70 hidden">
+                Clear Completed
+            </button>
+        </div>
+    </div>
+
+    <div id="customMessageBoxOverlay" class="message-box-overlay">
+        <div class="message-box">
+            <p id="messageBoxText" class="text-lg"></p>
+            <button id="messageBoxButton" class="message-box-button bg-cyan-500 hover:bg-cyan-400 text-gray-900">OK</button>
+        </div>
+    </div>
+
+    <footer class="text-center text-gray-500 mt-12 pb-8 text-sm">
+        <p>&copy; <span id="currentYear"></span> To-Do App. Powered by Neon, Tailwind & Voice.</p>
+    </footer>
+
+    <script>
+        // DOM Elements
+        const taskInput = document.getElementById('taskInput');
+        const addTaskBtn = document.getElementById('addTaskBtn');
+        const voiceInputBtn = document.getElementById('voiceInputBtn'); // New voice button
+        const taskList = document.getElementById('taskList');
+        const emptyMessage = document.getElementById('emptyMessage');
+        const filterAllBtn = document.getElementById('filterAll');
+        const filterActiveBtn = document.getElementById('filterActive');
+        const filterCompletedBtn = document.getElementById('filterCompleted');
+        const clearCompletedBtn = document.getElementById('clearCompletedBtn');
+        const currentYearSpan = document.getElementById('currentYear');
+
+        // Custom Message Box Elements
+        const messageBoxOverlay = document.getElementById('customMessageBoxOverlay');
+        const messageBoxText = document.getElementById('messageBoxText');
+        const messageBoxButton = document.getElementById('messageBoxButton');
+
+        if (currentYearSpan) {
+            currentYearSpan.textContent = new Date().getFullYear();
+        }
+
+        function showMessage(message) {
+            messageBoxText.textContent = message;
+            messageBoxOverlay.classList.add('visible');
+        }
+        messageBoxButton.addEventListener('click', () => messageBoxOverlay.classList.remove('visible'));
+        messageBoxOverlay.addEventListener('click', (event) => {
+            if (event.target === messageBoxOverlay) messageBoxOverlay.classList.remove('visible');
+        });
+
+        let tasks = [];
+        let currentFilter = 'all';
+        const TASKS_STORAGE_KEY = 'todo_app_tasks_dark_neon_voice'; // Updated key
+
+        function loadTasksFromLocalStorage() {
+            const storedTasks = localStorage.getItem(TASKS_STORAGE_KEY);
+            if (storedTasks) tasks = JSON.parse(storedTasks);
+        }
+        function saveTasksToLocalStorage() {
+            localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks));
+        }
+
+        function renderTasks() {
+            taskList.innerHTML = '';
+            let tasksToRender = tasks;
+            if (currentFilter === 'active') tasksToRender = tasks.filter(task => !task.completed);
+            else if (currentFilter === 'completed') tasksToRender = tasks.filter(task => task.completed);
+
+            if (tasksToRender.length === 0 && tasks.length > 0) {
+                 emptyMessage.textContent = `No ${currentFilter} tasks.`;
+                 emptyMessage.classList.remove('hidden');
+            } else if (tasks.length === 0) {
+                emptyMessage.textContent = 'No tasks yet. Add some!';
+                emptyMessage.classList.remove('hidden');
+            } else {
+                emptyMessage.classList.add('hidden');
+            }
+
+            tasksToRender.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task-item flex items-center justify-between bg-gray-700/50 p-3 rounded-lg shadow-md hover:shadow-cyan-500/30 ${task.completed ? 'completed' : ''}`;
+                li.dataset.id = task.id;
+
+                const taskContentDiv = document.createElement('div');
+                taskContentDiv.className = 'flex items-center flex-grow min-w-0';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = task.completed;
+                checkbox.className = 'form-checkbox h-5 w-5 text-cyan-500 bg-gray-600 border-gray-500 rounded focus:ring-cyan-400 focus:ring-offset-gray-800 mr-3 cursor-pointer flex-shrink-0';
+                checkbox.addEventListener('change', () => toggleTaskCompletion(task.id));
+
+                const taskTextSpan = document.createElement('span');
+                taskTextSpan.textContent = task.text;
+                taskTextSpan.className = 'text-gray-200 break-all';
+
+                taskContentDiv.appendChild(checkbox);
+                taskContentDiv.appendChild(taskTextSpan);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'text-pink-500 hover:text-pink-400 transition duration-150 ease-in-out ml-3 flex-shrink-0 p-1 rounded-full hover:bg-gray-700';
+                deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+                deleteBtn.addEventListener('click', () => deleteTask(task.id));
+
+                li.appendChild(taskContentDiv);
+                li.appendChild(deleteBtn);
+                taskList.appendChild(li);
+            });
+            updateClearCompletedButtonVisibility();
+        }
+
+        function addTask() {
+            const taskText = taskInput.value.trim();
+            if (taskText === '') {
+                showMessage('Task cannot be empty!');
+                return;
+            }
+            const newTask = { id: Date.now().toString(), text: taskText, completed: false };
+            tasks.unshift(newTask);
+            taskInput.value = '';
+            saveTasksToLocalStorage();
+            renderTasks();
+        }
+
+        function toggleTaskCompletion(taskId) {
+            const taskIndex = tasks.findIndex(task => task.id === taskId);
+            if (taskIndex > -1) {
+                tasks[taskIndex].completed = !tasks[taskIndex].completed;
+                saveTasksToLocalStorage();
+                renderTasks();
+            }
+        }
+        function deleteTask(taskId) {
+            tasks = tasks.filter(task => task.id !== taskId);
+            saveTasksToLocalStorage();
+            renderTasks();
+        }
+        function clearCompletedTasks() {
+            tasks = tasks.filter(task => !task.completed);
+            saveTasksToLocalStorage();
+            renderTasks();
+        }
+        function updateClearCompletedButtonVisibility() {
+            clearCompletedBtn.classList.toggle('hidden', !tasks.some(task => task.completed));
+        }
+
+        addTaskBtn.addEventListener('click', addTask);
+        taskInput.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') addTask();
+        });
+        clearCompletedBtn.addEventListener('click', clearCompletedTasks);
+
+        const filterButtons = [filterAllBtn, filterActiveBtn, filterCompletedBtn];
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                filterButtons.forEach(btn => {
+                    btn.classList.remove('bg-cyan-500', 'text-gray-900', 'font-bold', 'shadow-cyan-500/50');
+                    btn.classList.add('bg-gray-700', 'text-gray-300');
+                });
+                button.classList.remove('bg-gray-700', 'text-gray-300');
+                button.classList.add('bg-cyan-500', 'text-gray-900', 'font-bold', 'shadow-cyan-500/50');
+                currentFilter = button.id.replace('filter', '').toLowerCase();
+                if (currentFilter === 'all') currentFilter = 'all'; // Ensure 'all' is correctly set
+                renderTasks();
+            });
+        });
+
+        // --- Speech Recognition Logic ---
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition;
+        let isListening = false;
+
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.continuous = false; // Process single utterances
+            recognition.lang = 'en-US';
+            recognition.interimResults = true; // Get interim results for responsiveness
+
+            recognition.onstart = () => {
+                isListening = true;
+                voiceInputBtn.classList.add('listening');
+                voiceInputBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>'; // Indicate listening
+                taskInput.placeholder = "Listening...";
+            };
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    const transcriptPart = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcriptPart;
+                    } else {
+                        interimTranscript += transcriptPart;
+                    }
+                }
+                taskInput.value = finalTranscript || interimTranscript; // Update input field live
+
+                if (finalTranscript) {
+                    finalTranscript = finalTranscript.trim().toLowerCase();
+                    const addTaskCommand = "add task";
+
+                    if (finalTranscript.endsWith(addTaskCommand)) {
+                        const taskText = finalTranscript.substring(0, finalTranscript.length - addTaskCommand.length).trim();
+                        if (taskText) {
+                            taskInput.value = taskText; // Set input to the clean task
+                            addTask(); // Add the task
+                        } else {
+                            showMessage("Please say the task before 'add task'.");
+                            taskInput.value = ''; // Clear if only "add task" was said
+                        }
+                    }
+                    // If "add task" is not said, the final transcript remains in the input field
+                    // for the user to manually click the "Add Task" button.
+                }
+            };
+
+            recognition.onend = () => {
+                isListening = false;
+                voiceInputBtn.classList.remove('listening');
+                voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>'; // Reset icon
+                taskInput.placeholder = "Enter or speak a new task...";
+            };
+
+            recognition.onerror = (event) => {
+                isListening = false;
+                voiceInputBtn.classList.remove('listening');
+                voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                taskInput.placeholder = "Enter or speak a new task...";
+                if (event.error === 'no-speech') {
+                    showMessage("No speech detected. Please try again.");
+                } else if (event.error === 'audio-capture') {
+                    showMessage("Microphone problem. Please ensure it's working.");
+                } else if (event.error === 'not-allowed') {
+                    showMessage("Permission to use microphone was denied. Please enable it in browser settings.");
+                } else {
+                    showMessage(`Speech recognition error: ${event.error}`);
+                }
+                console.error("Speech recognition error:", event.error);
+            };
+
+            voiceInputBtn.addEventListener('click', () => {
+                if (isListening) {
+                    recognition.stop();
+                } else {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        // This can happen if recognition is already active and stop() hasn't fully processed
+                        console.warn("Could not start recognition (possibly already active or finishing):", e);
+                         isListening = false; // Reset state
+                        voiceInputBtn.classList.remove('listening');
+                        voiceInputBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                    }
+                }
+            });
+
+        } else {
+            console.warn("Speech Recognition API not supported in this browser.");
+            voiceInputBtn.disabled = true;
+            voiceInputBtn.title = "Voice input not supported in your browser";
+            showMessage("Sorry, voice input is not supported by your browser.");
+        }
+
+        // --- Initial Load ---
+        window.addEventListener('load', () => {
+            loadTasksFromLocalStorage();
+            renderTasks();
+            filterAllBtn.click(); // Programmatically click 'All' to set initial active state
+        });
+    </script>
+</body>
+</html>

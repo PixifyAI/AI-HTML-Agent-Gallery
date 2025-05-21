@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixel Studio Pro</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --dark: #1f2937;
+            --darker: #111827;
+            --light: #f3f4f6;
+            --lighter: #ffffff;
+            --gray: #9ca3af;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            background-color: var(--dark);
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: var(--primary-light);
+        }
+
+        .logo svg {
+            margin-right: 0.5rem;
+            fill: var(--primary);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            flex-direction: row;
+            overflow: hidden;
+        }
+
+        .toolbar {
+            background-color: var(--dark);
+            width: 4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem 0.5rem;
+            gap: 1rem;
+            border-right: 1px solid var(--darker);
+        }
+
+        .tool-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.5rem;
+            background-color: var(--darker);
+            border: 1px solid var(--gray);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            color: var(--light);
+            transition: all 0.2s ease;
+        }
+
+        .tool-btn:hover {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-light);
+        }
+
+        .tool-btn.active {
+            background-color: var(--primary);
+            border-color: var(--primary-light);
+        }
+
+        .tool-btn svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            fill: currentColor;
+        }
+
+        .color-btn {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.5rem;
+            border: 2px solid var(--gray);
+            cursor: pointer;
+            overflow: hidden;
+        }
+
+        .color-btn.active {
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: auto;
+            position: relative;
+            background-color: var(--darker);
+            background-image: linear-gradient(45deg, #222 25%, transparent 25%),
+                            linear-gradient(-45deg, #222 25%, transparent 25%),
+                            linear-gradient(45deg, transparent 75%, #222 75%),
+                            linear-gradient(-45deg, transparent 75%, #222 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+        }
+
+        #pixelCanvas {
+            background-color: white;
+            image-rendering: pixelated;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            cursor: crosshair;
+        }
+
+        .sidebar {
+            width: 300px;
+            background-color: var(--dark);
+            padding: 1rem;
+            border-left: 1px solid var(--darker);
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .panel {
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .panel-title svg {
+            width: 1rem;
+            height: 1rem;
+            margin-right: 0.5rem;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .form-group label {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+
+        .form-control {
+            padding: 0.5rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--gray);
+            background-color: var(--darker);
+            color: var(--light);
+            font-size: 0.9rem;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.25rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #0da271;
+        }
+
+        .btn-dark {
+            background-color: var(--dark);
+            color: var(--light);
+            border: 1px solid var(--gray);
+        }
+
+        .btn-dark:hover {
+            background-color: var(--darker);
+        }
+
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+        }
+
+        .btn svg {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: var(--darker);
+            border-radius: 0.25rem;
+            margin-bottom: 0.5rem;
+            gap: 0.5rem;
+        }
+
+        .layer-item.active {
+            border: 1px solid var(--primary);
+        }
+
+        .layer-item .visibility-toggle {
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        .layer-item .visibility-toggle.visible {
+            color: var(--light);
+        }
+
+        .layer-name {
+            flex: 1;
+            font-size: 0.9rem;
+        }
+
+        .layer-controls {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .layer-preview {
+            width: 1.5rem;
+            height: 1.5rem;
+            background-color: #fff;
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+
+        .layer-preview canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 5px;
+            background: var(--darker);
+            outline: none;
+            margin: 0.5rem 0;
+        }
+
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        .range-slider::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        .status-bar {
+            background-color: var(--dark);
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+            color: var(--gray);
+            display: flex;
+            justify-content: space-between;
+            border-top: 1px solid var(--darker);
+        }
+
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: var(--dark);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--primary-light);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--gray);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .color-picker {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .color-preview {
+            height: 2rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--gray);
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: var(--dark);
+            color: var(--light);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: var(--dark);
+            color: var(--light);
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .notification.success {
+            border-left: 4px solid var(--secondary);
+        }
+
+        .notification.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .color-history {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .history-color {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 0.25rem;
+            border: 1px solid var(--gray);
+            cursor: pointer;
+        }
+
+        .history-color:hover {
+            transform: scale(1.1);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 1rem;
+            height: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+
+            .toolbar {
+                width: 100%;
+                height: auto;
+                flex-direction: row;
+                justify-content: center;
+                padding: 0.5rem;
+                overflow-x: auto;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: 40vh;
+                border-left: none;
+                border-top: 1px solid var(--darker);
+            }
+        }
+
+        /* Dark scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--gray);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path d="M8.5 13.5l2.5 3 3.5-4.5 4.5 6H5m16 1V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2z"/>
+            </svg>
+            Pixel Studio Pro
+        </div>
+        <div>
+            <button id="newBtn" class="btn btn-dark">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                New
+            </button>
+            <button id="exportBtn" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+                Export
+            </button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="toolbar" id="toolsContainer">
+            <button class="tool-btn active" data-tool="pen" title="Pen Tool (P)">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a.996.996 0 000-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+                </svg>
+            </button>
+            <button class="tool-btn" data-tool="eraser" title="Eraser Tool (E)">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M15.14 3c-.51 0-1.02.2-1.41.59L3 14.3c-.78.78-.78 2.05 0 2.83L6.17 20h12.94l2.3-2.3c.78-.78.78-2.05 0-2.83L9.7 3.41c-.39-.39-.9-.59-1.41-.59L15.14 3zm2.86 15H8.86l-2.76-2.76L14.3 7.14l2.76 2.76L17 20z"/>
+                </svg>
+            </button>
+            <button class="tool-btn" data-tool="fill" title="Fill Tool (F)">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M16.56 8.94L7.62 0 6.21 1.41l2.38 2.38-5.15 5.15a1.49 1.49 0 000 2.12l5.5 5.5c.29.29.68.44 1.06.44s.77-.15 1.06-.44l5.5-5.5c.59-.58.59-1.53 0-2.12zM5.21 10L10 5.21 14.79 10H5.21zM19 11.5s-2 2.17-2 3.5c0 1.1.9 2 2 2s2-.9 2-2c0-1.33-2-3.5-2-3.5z"/>
+                    <path d="M0 20h24v4H0z" fill-opacity=".36"/>
+                </svg>
+            </button>
+            <button class="tool-btn" data-tool="eyedropper" title="Color Picker Tool (I)">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M17.66 8L12 2.35 6.34 8A8.02 8.02 0 004 13.64c0 2 .78 4.11 2.34 5.67a7.99 7.99 0 0011.32 0c1.56-1.56 2.34-3.67 2.34-5.67S19.22 9.56 17.66 8zM6 14c.01-2 .62-3.27 1.76-4.4L12 5.27l4.24 4.38C17.38 10.77 17.99 12 18 14H6z"/>
+                </svg>
+            </button>
+            <div class="color-btn" id="primaryColor" style="background-color: #000000;" title="Primary Color"></div>
+            <div class="color-btn" id="secondaryColor" style="background-color: #ffffff;" title="Secondary Color"></div>
+        </div>
+
+        <div class="workspace">
+            <div class="canvas-container" id="canvasContainer">
+                <canvas id="pixelCanvas" width="32" height="32"></canvas>
+            </div>
+            <div class="status-bar">
+                <div id="coordinateDisplay">Position: 0, 0</div>
+                <div id="zoomDisplay">Zoom: 100%</div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M3 17h18v2H3zm0-7h18v5H3zm0-4h18v2H3z"/>
+                    </svg>
+                    Canvas Settings
+                </div>
+                <div class="form-group">
+                    <label for="canvasWidth">Canvas Width</label>
+                    <input type="number" id="canvasWidth" class="form-control" value="32" min="1" max="256">
+                </div>
+                <div class="form-group">
+                    <label for="canvasHeight">Canvas Height</label>
+                    <input type="number" id="canvasHeight" class="form-control" value="32" min="1" max="256">
+                </div>
+                <button id="resizeCanvasBtn" class="btn btn-dark">Resize Canvas</button>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M12 22C6.49 22 2 17.51 2 12S6.49 2 12 2s10 4.04 10 9c0 3.31-2.69 6-6 6h-1.77c-.28 0-.5.22-.5.5 0 .12.05.23.13.33.41.47.64 1.06.64 1.67A2.5 2.5 0 0112 22zm0-18c-4.41 0-8 3.59-8 8s3.59 8 8 8c.28 0 .5-.22.5-.5a.54.54 0 00-.14-.35c-.41-.46-.63-1.05-.63-1.65a2.5 2.5 0 012.5-2.5H16c2.21 0 4-1.79 4-4 0-3.86-3.59-7-8-7z"/>
+                        <circle cx="6.5" cy="11.5" r="1.5"/>
+                        <circle cx="9.5" cy="7.5" r="1.5"/>
+                        <circle cx="14.5" cy="7.5" r="1.5"/>
+                        <circle cx="17.5" cy="11.5" r="1.5"/>
+                    </svg>
+                    Color Palette
+                </div>
+                <div class="color-grid">
+                    <div class="color-btn color-palette-item" style="background-color: #000000;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #ffffff;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #ff0000;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #00ff00;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #0000ff;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #ffff00;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #ff00ff;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #00ffff;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #ffa500;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #800080;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #008000;"></div>
+                    <div class="color-btn color-palette-item" style="background-color: #800000;"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="hexColor">Hex</label>
+                        <input type="text" id="hexColor" class="form-control" value="#000000">
+                    </div>
+                    <button id="addColorBtn" class="btn btn-primary btn-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="form-group">
+                    <label>Recently Used</label>
+                    <div class="color-history" id="colorHistory"></div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zm-4-4h-4v-2h4v-2h-4V9h4V7H9v10h6z"/>
+                    </svg>
+                    Layers
+                </div>
+                <div id="layersContainer"></div>
+                <div class="form-row">
+                    <button id="addLayerBtn" class="btn btn-dark">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                        </svg>
+                        Add Layer
+                    </button>
+                    <button id="duplicateLayerBtn" class="btn btn-dark">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
+                        </svg>
+                        Duplicate
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                        <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a.996.996 0 00-1.41 0L9 12.25 11.75 15l8.96-8.96a.996.996 0 000-1.41z"/>
+                    </svg>
+                    Tool Settings
+                </div>
+                <div class="form-group">
+                    <label for="brushSize">Brush Size: <span id="brushSizeValue">1</span>px</label>
+                    <input type="range" id="brushSize" class="range-slider" min="1" max="10" value="1">
+                </div>
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="showGrid" checked>
+                    <label for="showGrid">Show Grid</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Color Picker Modal -->
+    <div class="modal-backdrop" id="colorPickerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Color Picker</div>
+                <button class="modal-close" id="closeColorPicker">&times;</button>
+            </div>
+            <div class="color-picker">
+                <div class="color-preview" id="colorPreview"></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="redValue">Red</label>
+                        <input type="number" id="redValue" class="form-control" min="0" max="255" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="greenValue">Green</label>
+                        <input type="number" id="greenValue" class="form-control" min="0" max="255" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="blueValue">Blue</label>
+                        <input type="number" id="blueValue" class="form-control" min="0" max="255" value="0">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label

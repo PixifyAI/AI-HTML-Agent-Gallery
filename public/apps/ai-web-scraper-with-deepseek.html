@@ -1,0 +1,1189 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"67eba9ccf9f9390b4cd0a051"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Web Scraper with Deepseek AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+        }
+        .result-container {
+            transition: all 0.3s ease;
+        }
+        .loader {
+            border-top-color: #3498db;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @-webkit-keyframes spinner {
+            0% { -webkit-transform: rotate(0deg); }
+            100% { -webkit-transform: rotate(360deg); }
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .storage-item {
+            transition: all 0.2s ease;
+        }
+        .storage-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .compare-highlight {
+            background-color: rgba(255, 255, 0, 0.3);
+            border-left: 3px solid #f59e0b;
+        }
+        .compare-content-box {
+            position: relative;
+        }
+        .compare-content-box::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(to bottom, rgba(249, 250, 251, 0), rgba(249, 250, 251, 1));
+            pointer-events: none;
+        }
+        .markdown-content pre {
+            background-color: #f3f4f6;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+        .markdown-content code {
+            background-color: #f3f4f6;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: monospace;
+        }
+        .markdown-content ul, .markdown-content ol {
+            padding-left: 1.5rem;
+            margin: 1rem 0;
+        }
+        .markdown-content li {
+            margin-bottom: 0.5rem;
+        }
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+            font-weight: bold;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .markdown-content h1 { font-size: 1.5rem; }
+        .markdown-content h2 { font-size: 1.25rem; }
+        .markdown-content h3 { font-size: 1.125rem; }
+        .dark .gradient-bg {
+            background: linear-gradient(135deg, #4b6cb7, #182848);
+        }
+        .dark body {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+        .dark .bg-white {
+            background-color: #2d3748;
+        }
+        .dark .text-gray-700 {
+            color: #e2e8f0;
+        }
+        .dark .bg-gray-50 {
+            background-color: #4a5568;
+        }
+        .dark .text-gray-900 {
+            color: #f7fafc;
+        }
+    </style>
+</head>
+<body class="min-h-screen gradient-bg">
+    <div class="container mx-auto px-4 py-12">
+        <div class="max-w-6xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-white mb-2">AI Web Scraper with Deepseek</h1>
+                <p class="text-xl text-white opacity-80">Extract, analyze and compare website data with Deepseek AI</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex mb-6 bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden max-w-2xl mx-auto">
+                <button id="scrape-tab" class="flex-1 py-3 px-4 font-medium text-center border-b-2 border-purple-600 text-purple-600 focus:outline-none">
+                    <i class="fas fa-globe mr-2"></i>Scrape
+                </button>
+                <button id="compare-tab" class="flex-1 py-3 px-4 font-medium text-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                    <i class="fas fa-exchange-alt mr-2"></i>Compare
+                </button>
+                <button id="storage-tab" class="flex-1 py-3 px-4 font-medium text-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                    <i class="fas fa-database mr-2"></i>Storage
+                </button>
+                <button id="settings-tab" class="flex-1 py-3 px-4 font-medium text-center text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 focus:outline-none">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </button>
+            </div>
+
+            <!-- Main Card -->
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden">
+                <!-- Scrape Tab Content -->
+                <div id="scrape-content" class="tab-content">
+                    <!-- Input Section -->
+                    <div class="p-8">
+                        <div class="mb-6">
+                            <label for="url" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                                <i class="fas fa-globe mr-2"></i>Website URL
+                            </label>
+                            <div class="flex">
+                                <input type="url" id="url" placeholder="https://example.com" 
+                                    class="flex-grow px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <button id="scrape-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-r-lg transition duration-200">
+                                    <i class="fas fa-search mr-2"></i>Scrape
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="query-section" class="hidden">
+                            <div class="mb-6">
+                                <label for="query" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                                    <i class="fas fa-robot mr-2"></i>Ask Deepseek About This Website
+                                </label>
+                                <div class="flex">
+                                    <input type="text" id="query" placeholder="What products do they sell? How much do they cost?" 
+                                        class="flex-grow px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <button id="ask-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-r-lg transition duration-200">
+                                        <i class="fas fa-paper-plane mr-2"></i>Ask
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex justify-end mb-4">
+                                <button id="save-btn" class="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium">
+                                    <i class="fas fa-save mr-1"></i> Save to Storage
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div id="results" class="border-t border-gray-200 dark:border-gray-700 p-8">
+                        <div id="initial-state" class="text-center py-12">
+                            <i class="fas fa-search text-gray-300 text-5xl mb-4"></i>
+                            <h3 class="text-xl text-gray-500 dark:text-gray-400 font-medium">Enter a website URL to begin scraping</h3>
+                        </div>
+
+                        <div id="loading-state" class="hidden text-center py-12">
+                            <div class="loader ease-linear rounded-full border-4 border-t-4 border-gray-200 h-12 w-12 mx-auto mb-4"></div>
+                            <h3 class="text-xl text-gray-700 dark:text-gray-300 font-medium">Analyzing website...</h3>
+                        </div>
+
+                        <div id="scraped-content" class="hidden">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Scraped Results</h3>
+                                <span id="website-url" class="text-sm text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full"></span>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div class="text-purple-600 dark:text-purple-400 mb-2">
+                                        <i class="fas fa-file-alt"></i>
+                                    </div>
+                                    <h4 class="font-medium text-gray-700 dark:text-gray-300">Pages Found</h4>
+                                    <p id="page-count" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div class="text-purple-600 dark:text-purple-400 mb-2">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                    <h4 class="font-medium text-gray-700 dark:text-gray-300">Images Found</h4>
+                                    <p id="image-count" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+                                </div>
+                                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <div class="text-purple-600 dark:text-purple-400 mb-2">
+                                        <i class="fas fa-link"></i>
+                                    </div>
+                                    <h4 class="font-medium text-gray-700 dark:text-gray-300">Links Found</h4>
+                                    <p id="link-count" class="text-2xl font-bold text-gray-900 dark:text-white">0</p>
+                                </div>
+                            </div>
+
+                            <div class="mb-8">
+                                <h4 class="font-medium text-gray-700 dark:text-gray-300 mb-2">Page Content Preview</h4>
+                                <div id="content-preview" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg max-h-60 overflow-y-auto text-gray-700 dark:text-gray-300">
+                                    <!-- Content will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="ai-response" class="hidden mt-8">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Deepseek AI Analysis</h3>
+                                <span class="text-sm text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900 px-3 py-1 rounded-full">
+                                    <i class="fas fa-robot mr-1"></i> AI Response
+                                </span>
+                            </div>
+                            <div class="bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-500 p-4 rounded-r-lg">
+                                <div id="ai-response-content" class="text-gray-700 dark:text-gray-300 markdown-content">
+                                    <!-- AI response will be inserted here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compare Tab Content -->
+                <div id="compare-content" class="tab-content hidden">
+                    <div class="p-8">
+                        <div class="mb-8">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4"><i class="fas fa-exchange-alt mr-2"></i>Compare Websites</h3>
+                            <p class="text-gray-600 dark:text-gray-400 mb-4">Select two websites from your storage to compare their content using Deepseek AI.</p>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div>
+                                    <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">First Website</label>
+                                    <select id="compare-url-1" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <option value="">Select a website</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">Second Website</label>
+                                    <select id="compare-url-2" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <option value="">Select a website</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-between">
+                                <button id="compare-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition duration-200">
+                                    <i class="fas fa-balance-scale-left mr-2"></i>Compare Websites
+                                </button>
+                                <button id="clear-comparison-btn" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 font-medium">
+                                    <i class="fas fa-trash-alt mr-1"></i> Clear Comparison
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="comparison-results" class="hidden">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-3">Comparison Results</h4>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
+                                    <thead class="bg-gray-100 dark:bg-gray-700">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Metric</th>
+                                            <th id="compare-site-1-header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Site 1</th>
+                                            <th id="compare-site-2-header" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Site 2</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Difference</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">Page Count</td>
+                                            <td id="compare-page-count-1" class="px-6 py-4 whitespace-nowrap">0</td>
+                                            <td id="compare-page-count-2" class="px-6 py-4 whitespace-nowrap">0</td>
+                                            <td id="compare-page-diff" class="px-6 py-4 whitespace-nowrap">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">Image Count</td>
+                                            <td id="compare-image-count-1" class="px-6 py-4 whitespace-nowrap">0</td>
+                                            <td id="compare-image-count-2" class="px-6 py-4 whitespace-nowrap">0</td>
+                                            <td id="compare-image-diff" class="px-6 py-4 whitespace-nowrap">0</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900 dark:text-white">Link Count</td>
+                                            <td id="compare-link-count-1" class="px-6 py-4 whitespace-nowrap">0</td>
+                                            <td id="compare-link-count-2" class="px-6 py-4 whitespace-nowrap">0</td>
+                                            <td id="compare-link-diff" class="px-6 py-4 whitespace-nowrap">0</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                                <div class="compare-content-box">
+                                    <h5 id="compare-site-1-title" class="text-md font-semibold mb-2 text-gray-800 dark:text-white">Site 1 Content</h5>
+                                    <div id="compare-content-1" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg h-64 overflow-y-auto text-gray-700 dark:text-gray-300 border-l-2 border-blue-500">
+                                        <!-- Content for site 1 will be inserted here -->
+                                    </div>
+                                </div>
+                                <div class="compare-content-box">
+                                    <h5 id="compare-site-2-title" class="text-md font-semibold mb-2 text-gray-800 dark:text-white">Site 2 Content</h5>
+                                    <div id="compare-content-2" class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg h-64 overflow-y-auto text-gray-700 dark:text-gray-300 border-l-2 border-green-500">
+                                        <!-- Content for site 2 will be inserted here -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-8">
+                                <h5 class="text-md font-semibold mb-3 text-gray-800 dark:text-white">Deepseek AI Comparison Analysis</h5>
+                                
+                                <div class="mb-6">
+                                    <label for="comparison-query" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                                        <i class="fas fa-question-circle mr-2"></i>Ask a Specific Comparison Question
+                                    </label>
+                                    <div class="flex">
+                                        <input type="text" id="comparison-query" placeholder="Which site has better prices? Which has more detailed product descriptions?" 
+                                            class="flex-grow px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-l-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                        <button id="ask-comparison-btn" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-r-lg transition duration-200">
+                                            <i class="fas fa-robot mr-2"></i>Ask Deepseek
+                                        </button>
+                                    </div>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Example: "Which site has cheaper prices for similar products?" or "Compare the product descriptions quality"</p>
+                                </div>
+                                
+                                <div id="ai-comparison-response" class="bg-purple-50 dark:bg-purple-900 border-l-4 border-purple-500 p-4 rounded-r-lg hidden">
+                                    <div id="ai-comparison-content" class="text-gray-700 dark:text-gray-300 markdown-content">
+                                        <!-- AI comparison response will be inserted here -->
+                                    </div>
+                                </div>
+                                
+                                <button id="ai-compare-btn" class="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition duration-200">
+                                    <i class="fas fa-balance-scale mr-2"></i>Get Standard AI Comparison Summary
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Storage Tab Content -->
+                <div id="storage-content" class="tab-content hidden">
+                    <div class="p-8">
+                        <div class="mb-8">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4"><i class="fas fa-database mr-2"></i>Saved Websites</h3>
+                            
+                            <div class="relative">
+                                <input type="text" id="storage-search" placeholder="Search saved websites..." 
+                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 pl-10">
+                                <i class="fas fa-search absolute left-3 top-4 text-gray-400"></i>
+                            </div>
+                        </div>
+                        
+                        <div id="storage-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Saved items will be inserted here -->
+                        </div>
+                        
+                        <div id="empty-storage" class="text-center py-12">
+                            <i class="fas fa-database text-gray-300 text-5xl mb-4"></i>
+                            <h3 class="text-xl text-gray-500 dark:text-gray-400 font-medium">No websites saved yet</h3>
+                            <p class="text-gray-400 dark:text-gray-500 mt-2">Save websites from the Scrape tab to view them here</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab Content -->
+                <div id="settings-content" class="tab-content hidden">
+                    <div class="p-8">
+                        <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-6"><i class="fas fa-cog mr-2"></i>Settings</h3>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Deepseek AI Configuration</h4>
+                            
+                            <div class="mb-6">
+                                <label for="api-key" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                                    <i class="fas fa-key mr-2"></i>Deepseek API Key
+                                </label>
+                                <input type="password" id="api-key" placeholder="Enter your Deepseek API key" 
+                                    class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">You can get a free API key from <a href="https://deepseek.com" target="_blank" class="text-purple-600 dark:text-purple-400 hover:underline">deepseek.com</a></p>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label for="ai-model" class="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                                    <i class="fas fa-brain mr-2"></i>AI Model
+                                </label>
+                                <select id="ai-model" class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-800 dark:text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="deepseek-chat">Deepseek Chat (Default)</option>
+                                    <option value="deepseek-coder">Deepseek Coder (For technical content)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="flex justify-between items-center mb-6">
+                                <div>
+                                    <label class="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                                        <i class="fas fa-history mr-2"></i>Response Length
+                                    </label>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Adjust how detailed AI responses should be</p>
+                                </div>
+                                <div class="flex items-center">
+                                    <button id="reduce-length" class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-l-lg hover:bg-gray-300 dark:hover:bg-gray-500">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <span id="length-value" class="bg-gray-100 dark:bg-gray-800 px-4 py-1">Medium</span>
+                                    <button id="increase-length" class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-r-lg hover:bg-gray-300 dark:hover:bg-gray-500">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button id="save-settings" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg transition duration-200 w-full">
+                                <i class="fas fa-save mr-2"></i> Save Settings
+                            </button>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-700 p-6 rounded-lg mt-6">
+                            <h4 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Application Settings</h4>
+                            
+                            <div class="mb-4">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="dark-mode" class="rounded text-purple-600 focus:ring-purple-500">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">Dark Mode</span>
+                                </label>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="auto-save" checked class="rounded text-purple-600 focus:ring-purple-500">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">Auto-save scraped results</span>
+                                </label>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" id="notifications" checked class="rounded text-purple-600 focus:ring-purple-500">
+                                    <span class="ml-2 text-gray-700 dark:text-gray-300">Enable notifications</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8 text-white opacity-70 text-sm">
+                <p>AI Web Scraper with Deepseek AI - Powered by Deepseek's free model</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Deepseek API configuration
+            const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+            const BACKEND_API_URL = 'http://localhost:3001/api/scrape'; // Change this in production
+            
+            // App state
+            let apiKey = localStorage.getItem('deepseek_api_key') || '';
+            let aiModel = localStorage.getItem('ai_model') || 'deepseek-chat';
+            let responseLength = localStorage.getItem('response_length') || 'medium';
+            let currentScrapedData = null;
+            let comparedItem1 = null;
+            let comparedItem2 = null;
+            
+            // DOM Elements
+            const scrapeBtn = document.getElementById('scrape-btn');
+            const askBtn = document.getElementById('ask-btn');
+            const saveBtn = document.getElementById('save-btn');
+            const urlInput = document.getElementById('url');
+            const queryInput = document.getElementById('query');
+            const initialState = document.getElementById('initial-state');
+            const loadingState = document.getElementById('loading-state');
+            const scrapedContent = document.getElementById('scraped-content');
+            const querySection = document.getElementById('query-section');
+            const aiResponse = document.getElementById('ai-response');
+            const websiteUrl = document.getElementById('website-url');
+            const pageCount = document.getElementById('page-count');
+            const imageCount = document.getElementById('image-count');
+            const linkCount = document.getElementById('link-count');
+            const contentPreview = document.getElementById('content-preview');
+            const aiResponseContent = document.getElementById('ai-response-content');
+            
+            // Tab elements
+            const scrapeTab = document.getElementById('scrape-tab');
+            const compareTab = document.getElementById('compare-tab');
+            const storageTab = document.getElementById('storage-tab');
+            const settingsTab = document.getElementById('settings-tab');
+            const scrapeContent = document.getElementById('scrape-content');
+            const compareContent = document.getElementById('compare-content');
+            const storageContent = document.getElementById('storage-content');
+            const settingsContent = document.getElementById('settings-content');
+            
+            // Compare elements
+            const compareUrl1 = document.getElementById('compare-url-1');
+            const compareUrl2 = document.getElementById('compare-url-2');
+            const compareBtn = document.getElementById('compare-btn');
+            const clearComparisonBtn = document.getElementById('clear-comparison-btn');
+            const comparisonResults = document.getElementById('comparison-results');
+            const compareSite1Header = document.getElementById('compare-site-1-header');
+            const compareSite2Header = document.getElementById('compare-site-2-header');
+            const comparePageCount1 = document.getElementById('compare-page-count-1');
+            const comparePageCount2 = document.getElementById('compare-page-count-2');
+            const comparePageDiff = document.getElementById('compare-page-diff');
+            const compareImageCount1 = document.getElementById('compare-image-count-1');
+            const compareImageCount2 = document.getElementById('compare-image-count-2');
+            const compareImageDiff = document.getElementById('compare-image-diff');
+            const compareLinkCount1 = document.getElementById('compare-link-count-1');
+            const compareLinkCount2 = document.getElementById('compare-link-count-2');
+            const compareLinkDiff = document.getElementById('compare-link-diff');
+            const compareSite1Title = document.getElementById('compare-site-1-title');
+            const compareSite2Title = document.getElementById('compare-site-2-title');
+            const compareContent1 = document.getElementById('compare-content-1');
+            const compareContent2 = document.getElementById('compare-content-2');
+            const aiCompareBtn = document.getElementById('ai-compare-btn');
+            const aiComparisonResponse = document.getElementById('ai-comparison-response');
+            const aiComparisonContent = document.getElementById('ai-comparison-content');
+            const comparisonQuery = document.getElementById('comparison-query');
+            const askComparisonBtn = document.getElementById('ask-comparison-btn');
+            
+            // Storage elements
+            const storageSearch = document.getElementById('storage-search');
+            const storageList = document.getElementById('storage-list');
+            const emptyStorage = document.getElementById('empty-storage');
+            
+            // Settings elements
+            const apiKeyInput = document.getElementById('api-key');
+            const aiModelSelect = document.getElementById('ai-model');
+            const lengthValue = document.getElementById('length-value');
+            const reduceLengthBtn = document.getElementById('reduce-length');
+            const increaseLengthBtn = document.getElementById('increase-length');
+            const saveSettingsBtn = document.getElementById('save-settings');
+            const darkModeToggle = document.getElementById('dark-mode');
+            const autoSaveToggle = document.getElementById('auto-save');
+            const notificationsToggle = document.getElementById('notifications');
+            
+            // Utility Functions
+            function generateId() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+            
+            function isValidUrl(url) {
+                try {
+                    new URL(url);
+                    return true;
+                } catch {
+                    return false;
+                }
+            }
+            
+            function setLoadingState(isLoading) {
+                if (isLoading) {
+                    initialState.classList.add('hidden');
+                    loadingState.classList.remove('hidden');
+                    scrapedContent.classList.add('hidden');
+                    aiResponse.classList.add('hidden');
+                } else {
+                    loadingState.classList.add('hidden');
+                }
+            }
+            
+            function displayScrapedData(data) {
+                websiteUrl.textContent = data.url;
+                pageCount.textContent = data.pageCount;
+                imageCount.textContent = data.imageCount;
+                linkCount.textContent = data.linkCount;
+                contentPreview.textContent = data.content;
+                
+                scrapedContent.classList.remove('hidden');
+                querySection.classList.remove('hidden');
+            }
+            
+            function showNotification(message, type = 'info') {
+                if (!notificationsToggle.checked) return;
+                
+                const colors = {
+                    info: 'bg-blue-500',
+                    success: 'bg-green-500',
+                    warning: 'bg-yellow-500',
+                    error: 'bg-red-500'
+                };
+                
+                const notification = document.createElement('div');
+                notification.className = `fixed bottom-4 right-4 text-white px-4 py-2 rounded shadow-lg ${colors[type]} transition-opacity opacity-0`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.add('opacity-100');
+                }, 10);
+                
+                setTimeout(() => {
+                    notification.classList.remove('opacity-100');
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 3000);
+            }
+            
+            function applyDarkMode() {
+                if (darkModeToggle.checked) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            }
+            
+            function getMaxTokens() {
+                switch(responseLength) {
+                    case 'short': return 300;
+                    case 'medium': return 600;
+                    case 'long': return 1000;
+                    case 'very long': return 1500;
+                    default: return 600;
+                }
+            }
+            
+            // Core Functions
+            async function scrapeWebsite(url) {
+                try {
+                    const response = await fetch(BACKEND_API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ url })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Scraping failed');
+                    }
+                    
+                    const data = await response.json();
+                    data.id = generateId();
+                    return data;
+                } catch (error) {
+                    console.error('Scraping error:', error);
+                    throw error;
+                }
+            }
+            
+            async function queryDeepseek(prompt, context = '') {
+                if (!apiKey) {
+                    showNotification('Please set your Deepseek API key in Settings', 'error');
+                    throw new Error('API key not configured');
+                }
+                
+                try {
+                    const response = await fetch(DEEPSEEK_API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${apiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: aiModel,
+                            messages: [
+                                {
+                                    role: "system",
+                                    content: "You are a helpful assistant that analyzes website content."
+                                },
+                                {
+                                    role: "user",
+                                    content: context ? `${context}\n\nQuestion: ${prompt}` : prompt
+                                }
+                            ],
+                            max_tokens: getMaxTokens(),
+                            temperature: 0.7
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error?.message || 'API request failed');
+                    }
+                    
+                    const data = await response.json();
+                    return data.choices[0].message.content;
+                } catch (error) {
+                    console.error('Deepseek API error:', error);
+                    throw error;
+                }
+            }
+            
+            function saveToStorage(data) {
+                return new Promise((resolve, reject) => {
+                    try {
+                        let scrapedData = JSON.parse(localStorage.getItem('scrapedData')) || [];
+                        const existingIndex = scrapedData.findIndex(item => item.url === data.url);
+                        
+                        if (existingIndex !== -1) {
+                            scrapedData[existingIndex] = data;
+                        } else {
+                            scrapedData.push(data);
+                        }
+                        
+                        localStorage.setItem('scrapedData', JSON.stringify(scrapedData));
+                        resolve(true);
+                    } catch (error) {
+                        console.error('Storage error:', error);
+                        reject(error);
+                    }
+                });
+            }
+            
+            function loadStorage() {
+                const scrapedData = JSON.parse(localStorage.getItem('scrapedData')) || [];
+                
+                if (scrapedData.length === 0) {
+                    emptyStorage.classList.remove('hidden');
+                    storageList.classList.add('hidden');
+                    return;
+                }
+                
+                emptyStorage.classList.add('hidden');
+                storageList.classList.remove('hidden');
+                storageList.innerHTML = '';
+                
+                // Filter by search term if any
+                const searchTerm = storageSearch.value.toLowerCase();
+                const filteredData = searchTerm ? 
+                    scrapedData.filter(item => 
+                        item.url.toLowerCase().includes(searchTerm) || 
+                        (item.content && item.content.toLowerCase().includes(searchTerm))
+                    ) : scrapedData;
+                
+                if (filteredData.length === 0) {
+                    storageList.innerHTML = '<div class="col-span-3 text-center py-8 text-gray-500 dark:text-gray-400">No results found matching your search</div>';
+                    return;
+                }
+                
+                filteredData.forEach(item => {
+                    const storageItem = document.createElement('div');
+                    storageItem.className = 'storage-item bg-gray-50 dark:bg-gray-700 rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer';
+                    storageItem.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium text-gray-800 dark:text-white truncate">${item.url}</h4>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">${new Date(item.timestamp).toLocaleDateString()}</span>
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">${item.content.substring(0, 150)}...</p>
+                        <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400">
+                            <span><i class="fas fa-file-alt mr-1"></i> ${item.pageCount} pages</span>
+                            <span><i class="fas fa-image mr-1"></i> ${item.imageCount} images</span>
+                            <span><i class="fas fa-link mr-1"></i> ${item.linkCount} links</span>
+                        </div>
+                        <div class="flex justify-end mt-3 space-x-2">
+                            <button class="load-btn text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 text-sm" data-id="${item.id}">
+                                <i class="fas fa-eye mr-1"></i> View
+                            </button>
+                            <button class="delete-btn text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 text-sm" data-id="${item.id}">
+                                <i class="fas fa-trash-alt mr-1"></i> Delete
+                            </button>
+                        </div>
+                    `;
+                    storageList.appendChild(storageItem);
+                });
+                
+                // Add event listeners to buttons
+                document.querySelectorAll('.load-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = this.getAttribute('data-id');
+                        loadFromStorage(id);
+                        showTab('scrape');
+                    });
+                });
+                
+                document.querySelectorAll('.delete-btn').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        const id = this.getAttribute('data-id');
+                        deleteFromStorage(id);
+                    });
+                });
+                
+                // Add click event to load full item
+                document.querySelectorAll('.storage-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        const id = this.querySelector('.load-btn').getAttribute('data-id');
+                        loadFromStorage(id);
+                        showTab('scrape');
+                    });
+                });
+            }
+            
+            function loadFromStorage(id) {
+                const scrapedData = JSON.parse(localStorage.getItem('scrapedData')) || [];
+                const item = scrapedData.find(item => item.id === id);
+                
+                if (item) {
+                    currentScrapedData = item;
+                    urlInput.value = item.url;
+                    displayScrapedData(item);
+                }
+            }
+            
+            function deleteFromStorage(id) {
+                if (confirm('Are you sure you want to delete this saved website?')) {
+                    let scrapedData = JSON.parse(localStorage.getItem('scrapedData')) || [];
+                    scrapedData = scrapedData.filter(item => item.id !== id);
+                    localStorage.setItem('scrapedData', JSON.stringify(scrapedData));
+                    loadStorage();
+                    showNotification('Website deleted from storage', 'success');
+                }
+            }
+            
+            function updateCompareDropdowns() {
+                const scrapedData = JSON.parse(localStorage.getItem('scrapedData')) || [];
+                
+                compareUrl1.innerHTML = '<option value="">Select a website</option>';
+                compareUrl2.innerHTML = '<option value="">Select a website</option>';
+                
+                scrapedData.forEach(item => {
+                    const option1 = document.createElement('option');
+                    option1.value = item.id;
+                    option1.textContent = item.url;
+                    compareUrl1.appendChild(option1);
+                    
+                    const option2 = document.createElement('option');
+                    option2.value = item.id;
+                    option2.textContent = item.url;
+                    compareUrl2.appendChild(option2);
+                });
+            }
+            
+            function compareWebsites() {
+                const id1 = compareUrl1.value;
+                const id2 = compareUrl2.value;
+                
+                if (!id1 || !id2) {
+                    showNotification('Please select two websites to compare', 'error');
+                    return;
+                }
+                
+                if (id1 === id2) {
+                    showNotification('Please select two different websites to compare', 'error');
+                    return;
+                }
+                
+                const scrapedData = JSON.parse(localStorage.getItem('scrapedData')) || [];
+                comparedItem1 = scrapedData.find(item => item.id === id1);
+                comparedItem2 = scrapedData.find(item => item.id === id2);
+                
+                if (!comparedItem1 || !comparedItem2) {
+                    showNotification('Error loading website data. Please try again.', 'error');
+                    return;
+                }
+                
+                // Update UI with comparison data
+                compareSite1Header.textContent = comparedItem1.url;
+                compareSite2Header.textContent = comparedItem2.url;
+                compareSite1Title.textContent = comparedItem1.url;
+                compareSite2Title.textContent = comparedItem2.url;
+                
+                comparePageCount1.textContent = comparedItem1.pageCount;
+                comparePageCount2.textContent = comparedItem2.pageCount;
+                comparePageDiff.textContent = Math.abs(comparedItem1.pageCount - comparedItem2.pageCount);
+                
+                compareImageCount1.textContent = comparedItem1.imageCount;
+                compareImageCount2.textContent = comparedItem2.imageCount;
+                compareImageDiff.textContent = Math.abs(comparedItem1.imageCount - comparedItem2.imageCount);
+                
+                compareLinkCount1.textContent = comparedItem1.linkCount;
+                compareLinkCount2.textContent = comparedItem2.linkCount;
+                compareLinkDiff.textContent = Math.abs(comparedItem1.linkCount - comparedItem2.linkCount);
+                
+                compareContent1.textContent = comparedItem1.content.substring(0, 500) + (comparedItem1.content.length > 500 ? '...' : '');
+                compareContent2.textContent = comparedItem2.content.substring(0, 500) + (comparedItem2.content.length > 500 ? '...' : '');
+                
+                // Highlight differences
+                highlightDifferences(comparePageCount1, comparePageCount2, comparePageDiff);
+                highlightDifferences(compareImageCount1, compareImageCount2, compareImageDiff);
+                highlightDifferences(compareLinkCount1, compareLinkCount2, compareLinkDiff);
+                
+                // Show results
+                comparisonResults.classList.remove('hidden');
+                aiComparisonResponse.classList.add('hidden');
+                
+                showNotification('Websites loaded for comparison', 'success');
+            }
+            
+            function highlightDifferences(el1, el2, diffEl) {
+                const val1 = parseInt(el1.textContent);
+                const val2 = parseInt(el2.textContent);
+                
+                if (val1 > val2) {
+                    el1.classList.add('font-bold', 'text-green-600');
+                    el2.classList.remove('font-bold', 'text-green-600');
+                    diffEl.classList.add('font-bold', 'text-green-600');
+                } else if (val2 > val1) {
+                    el2.classList.add('font-bold', 'text-green-600');
+                    el1.classList.remove('font-bold', 'text-green-600');
+                    diffEl.classList.add('font-bold', 'text-green-600');
+                } else {
+                    el1.classList.remove('font-bold', 'text-green-600');
+                    el2.classList.remove('font-bold', 'text-green-600');
+                    diffEl.classList.remove('font-bold', 'text-green-600');
+                }
+            }
+            
+            function clearComparison() {
+                compareUrl1.value = '';
+                compareUrl2.value = '';
+                comparisonResults.classList.add('hidden');
+                aiComparisonResponse.classList.add('hidden');
+                comparedItem1 = null;
+                comparedItem2 = null;
+                
+                showNotification('Comparison cleared', 'info');
+            }
+            
+            async function getStandardComparison() {
+                if (!comparedItem1 || !comparedItem2) {
+                    showNotification('Please select and compare two websites first', 'error');
+                    return;
+                }
+                
+                aiComparisonContent.innerHTML = '<div class="flex items-center"><div class="loader ease-linear rounded-full border-2 border-t-2 border-purple-500 h-4 w-4 mr-2"></div> <span>Deepseek AI is analyzing the comparison...</span></div>';
+                aiComparisonResponse.classList.remove('hidden');
+                
+                const prompt = `Compare these two websites based on their content, structure, and other relevant metrics:
+Website 1 (${comparedItem1.url}):
+${comparedItem1.content.substring(0, 2000)}...
+Website 2 (${comparedItem2.url}):
+${comparedItem2.content.substring(0, 2000)}...
+Provide a detailed comparison in the following format:
+1. Content Analysis: Compare the depth, quality, and relevance of content
+2. Structure: Compare the organization and navigation
+3. SEO Metrics: Compare potential SEO performance
+4. Recommendations: Which website is better in different aspects and why
+Format your response with clear headings and bullet points.`;
+                
+                try {
+                    const response = await queryDeepseek(prompt);
+                    aiComparisonContent.innerHTML = response;
+                } catch (error) {
+                    console.error('Comparison error:', error);
+                    aiComparisonContent.innerHTML = 'Error processing your comparison request. Please try again.';
+                }
+            }
+            
+            async function askComparisonQuestion() {
+                const question = comparisonQuery.value.trim();
+                
+                if (!question) {
+                    showNotification('Please enter a comparison question', 'error');
+                    return;
+                }
+                
+                if (!comparedItem1 || !comparedItem2) {
+                    showNotification('Please select and compare two websites first', 'error');
+                    return;
+                }
+                
+                aiComparisonContent.innerHTML = '<div class="flex items-center"><div class="loader ease-linear rounded-full border-2 border-t-2 border-purple-500 h-4 w-4 mr-2"></div> <span>Deepseek AI is analyzing your question...</span></div>';
+                aiComparisonResponse.classList.remove('hidden');
+                
+                const context = `You are comparing two websites:
+Website 1 (${comparedItem1.url}):
+${comparedItem1.content.substring(0, 2000)}...
+Website 2 (${comparedItem2.url}):
+${comparedItem2.content.substring(0, 2000)}...
+Please answer the following question:`;
+                
+                try {
+                    const response = await queryDeepseek(question, context);
+                    aiComparisonContent.innerHTML = response;
+                } catch (error) {
+                    console.error('Comparison error:', error);
+                    aiComparisonContent.innerHTML = 'Error processing your comparison question. Please try again.';
+                }
+            }
+            
+            function adjustLength(increase) {
+                const lengths = ['short', 'medium', 'long', 'very long'];
+                let currentIndex = lengths.indexOf(responseLength);
+                
+                if (increase) {
+                    if (currentIndex < lengths.length - 1) {
+                        responseLength = lengths[currentIndex + 1];
+                    }
+                } else {
+                    if (currentIndex > 0) {
+                        responseLength = lengths[currentIndex - 1];
+                    }
+                }
+                
+                lengthValue.textContent = responseLength.charAt(0).toUpperCase() + responseLength.slice(1);
+            }
+            
+            function showTab(tabName) {
+                // Reset tab styling
+                scrapeTab.classList.remove('border-purple-600', 'text-purple-600');
+                scrapeTab.classList.add('text-gray-500', 'hover:text-gray-700');
+                compareTab.classList.remove('border-purple-600', 'text-purple-600');
+                compareTab.classList.add('text-gray-500', 'hover:text-gray-700');
+                storageTab.classList.remove('border-purple-600', 'text-purple-600');
+                storageTab.classList.add('text-gray-500', 'hover:text-gray-700');
+                settingsTab.classList.remove('border-purple-600', 'text-purple-600');
+                settingsTab.classList.add('text-gray-500', 'hover:text-gray-700');
+                
+                // Hide all content
+                scrapeContent.classList.add('hidden');
+                compareContent.classList.add('hidden');
+                storageContent.classList.add('hidden');
+                settingsContent.classList.add('hidden');
+                
+                // Show selected tab
+                switch(tabName) {
+                    case 'scrape':
+                        scrapeTab.classList.add('border-purple-600', 'text-purple-600');
+                        scrapeTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+                        scrapeContent.classList.remove('hidden');
+                        break;
+                    case 'compare':
+                        compareTab.classList.add('border-purple-600', 'text-purple-600');
+                        compareTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+                        compareContent.classList.remove('hidden');
+                        updateCompareDropdowns();
+                        break;
+                    case 'storage':
+                        compareTab.classList.add('border-purple-600', 'text-purple-600');
+                        compareTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+                        storageContent.classList.remove('hidden');
+                        loadStorage();
+                        break;
+                    case 'settings':
+                        settingsTab.classList.add('border-purple-600', 'text-purple-600');
+                        settingsTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+                        settingsContent.classList.remove('hidden');
+                        loadSettings();
+                        break;
+                }
+            }
+            
+            function loadSettings() {
+                apiKey = localStorage.getItem('deepseek_api_key') || '';
+                aiModel = localStorage.getItem('ai_model') || 'deepseek-chat';
+                responseLength = localStorage.getItem('response_length') || 'medium';
+                
+                apiKeyInput.value = apiKey;
+                aiModelSelect.value = aiModel;
+                lengthValue.textContent = responseLength.charAt(0).toUpperCase() + responseLength.slice(1);
+                
+                darkModeToggle.checked = localStorage.getItem('dark_mode') === 'true';
+                autoSaveToggle.checked = localStorage.getItem('auto_save') !== 'false';
+                notificationsToggle.checked = localStorage.getItem('notifications') !== 'false';
+                
+                applyDarkMode();
+            }
+            
+            function saveSettings() {
+                apiKey = apiKeyInput.value.trim();
+                aiModel = aiModelSelect.value;
+                responseLength = lengthValue.textContent.toLowerCase();
+                
+                localStorage.setItem('deepseek_api_key', apiKey);
+                localStorage.setItem('ai_model', aiModel);
+                localStorage.setItem('response_length', responseLength);
+                localStorage.setItem('dark_mode', darkModeToggle.checked);
+                localStorage.setItem('auto_save', autoSaveToggle.checked);
+                localStorage.setItem('notifications', notificationsToggle.checked);
+                
+                showNotification('Settings saved successfully!', 'success');
+                applyDarkMode();
+            }
+            
+            // Initialize event listeners
+            function initEventListeners() {
+                // Tab navigation
+                scrapeTab.addEventListener('click', () => showTab('scrape'));
+                compareTab.addEventListener('click', () => showTab('compare'));
+                storageTab.addEventListener('click', () => showTab('storage'));
+                settingsTab.addEventListener('click', () => showTab('settings'));
+                
+                // Scrape button
+                scrapeBtn.addEventListener('click', async function() {
+                    try {
+                        const url = urlInput.value.trim();
+                        if (!isValidUrl(url)) {
+                            showNotification('Please enter a valid URL starting with http:// or https://', 'error');
+                            return;
+                        }
+                        
+                        setLoadingState(true);
+                        
+                        const data = await scrapeWebsite(url);
+                        currentScrapedData = data;
+                        displayScrapedData(data);
+                        
+                        if (autoSaveToggle.checked) {
+                            await saveToStorage(data);
+                            showNotification('Website data saved automatically', 'success');
+                        }
+                    } catch (error) {
+                        console.error('Scraping error:', error);
+                        showNotification(`Error: ${error.message}`, 'error');
+                        setLoadingState(false);
+                        initialState.classList.remove('hidden');
+                    }
+                });
+                
+                // Ask button
+                askBtn.addEventListener('click', async function() {
+                    try {
+                        const question = queryInput.value.trim();
+                        if (!question) throw new Error('Please enter a question');
+                        if (!currentScrapedData) throw new Error('Please scrape a website first');
+                        
+                        aiResponseContent.innerHTML = '<div class="flex items-center"><div class="loader ease-linear rounded-full border-2 border-t-2 border-purple-500 h-4 w-4 mr-2"></div> <span>Deepseek AI is thinking...</span></div>';
+                        aiResponse.classList.remove('hidden');
+                        
+                        const context = `Website URL: ${currentScrapedData.url}\n\nContent:\n${currentScrapedData.content.substring(0, 3000)}`;
+                        const response = await queryDeepseek(question, context);
+                        
+                        aiResponseContent.innerHTML = response;
+                    } catch (error) {
+                        console.error('AI query error:', error);
+                        aiResponseContent.innerHTML = `Error: ${error.message}`;
+                    }
+                });
+                
+                // Save button
+                saveBtn.addEventListener('click', async function() {
+                    if (!currentScrapedData) {
+                        showNotification('No website data to save. Please scrape a website first.', 'error');
+                        return;
+                    }
+                    
+                    try {
+                        await saveToStorage(currentScrapedData);
+                        showNotification('Website data saved successfully!', 'success');
+                    } catch (error) {
+                        showNotification(`Error saving website data: ${error.message}`, 'error');
+                    }
+                });
+                
+                // Compare buttons
+                compareBtn.addEventListener('click', compareWebsites);
+                clearComparisonBtn.addEventListener('click', clearComparison);
+                aiCompareBtn.addEventListener('click', getStandardComparison);
+                askComparisonBtn.addEventListener('click', askComparisonQuestion);
+                
+                // Settings buttons
+                reduceLengthBtn.addEventListener('click', () => adjustLength(false));
+                increaseLengthBtn.addEventListener('click', () => adjustLength(true));
+                saveSettingsBtn.addEventListener('click', saveSettings);
+                darkModeToggle.addEventListener('change', () => {
+                    localStorage.setItem('dark_mode', darkModeToggle.checked);
+                    applyDarkMode();
+                });
+                
+                // Keyboard shortcuts
+                urlInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') scrapeBtn.click();
+                });
+                
+                queryInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') askBtn.click();
+                });
+                
+                comparisonQuery.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') askComparisonQuestion();
+                });
+                
+                storageSearch.addEventListener('input', () => loadStorage());
+            }
+            
+            // Initialize the app
+            function init() {
+                loadSettings();
+                initEventListeners();
+                showTab('scrape');
+            }
+            
+            init();
+        });
+    </script>
+</body>
+</html>

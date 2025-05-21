@@ -1,0 +1,1669 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"655fe44dd192bb39953095ba"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dungeon Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        #gameCanvas {
+            background-color: #222;
+            display: block;
+            margin: 0 auto;
+            border: 4px solid #8B4513;
+            box-shadow: 0 0 20px rgba(139, 69, 19, 0.5);
+            image-rendering: pixelated;
+        }
+        .health-bar {
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .health-fill {
+            height: 100%;
+            background-color: #ff3333;
+            transition: width 0.3s;
+        }
+        .mana-bar {
+            height: 20px;
+            background-color: #333;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        .mana-fill {
+            height: 100%;
+            background-color: #3399ff;
+            transition: width 0.3s;
+        }
+        .game-container {
+            background-color: #111;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+        }
+        .character-select {
+            transition: all 0.3s;
+        }
+        .character-select:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+        }
+        .character-select.selected {
+            border-color: gold;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4 font-mono">
+    <div id="gameContainer" class="game-container max-w-4xl w-full transition-all duration-300">
+        <!-- Character Selection Screen -->
+        <div id="characterSelection" class="">
+            <h1 class="text-4xl font-bold text-center mb-6 text-yellow-400">
+                <i class="fas fa-dungeon mr-2"></i> Dungeon Adventure
+            </h1>
+            
+            <div class="text-center mb-8">
+                <p class="mb-4">Choose your hero and descend into the dungeon!</p>
+                <p class="text-sm text-gray-400">Arrow keys to move, Space to attack</p>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                <div class="character-select border-2 border-gray-700 rounded-lg pa4 p-4 cursor-pointer" data-class="warrior">
+                    <div class="text-2xl text-center mb-2 text-red-400"><i class="fas fa-shield-alt"></i></div>
+                    <h3 class="text-xl font-bold text-center mb-2">Warrior</h3>
+                    <p class="text-sm text-gray-300 text-center">High health, strong attacks</p>
+                    <div class="mt-2">
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-heart text-red-500 mr-2"></i>
+                            <span>120 HP</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-bolt text-blue-400 mr-2"></i>
+                            <span>30 MP</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-fist-raised text-yellow-400 mr-2"></i>
+                            <span>Powerful strikes</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="character-select border-2 border-gray-700 rounded-lg p-4 cursor-pointer" data-class="rogue">
+                    <div class="text-2xl text-center mb-2 text-green-400"><i class="fas fa-user-ninja"></i></div>
+                    <h3 class="text-xl font-bold text-center mb-2">Rogue</h3>
+                    <p class="text-sm text-gray-300 text-center">Fast attacks, critical hits</p>
+                    <div class="mt-2">
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-heart text-red-500 mr-2"></i>
+                            <span>90 HP</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-bolt text-blue-400 mr-2"></i>
+                            <span>50 MP</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-running text-green-400 mr-2"></i>
+                            <span>Quick strikes</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="character-select border-2 border-gray-700 rounded-lg p-4 cursor-pointer" data-class="mage">
+                    <div class="text-2xl text-center mb-2 text-blue-400"><i class="fas fa-hat-wizard"></i></div>
+                    <h3 class="text-xl font-bold text-center mb-2">Mage</h3>
+                    <p class="text-sm text-gray-300 text-center">Ranged attacks, mana shield</p>
+                    <div class="mt-2">
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-heart text-red-500 mr-2"></i>
+                            <span>80 HP</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-bolt text-blue-400 mr-2"></i>
+                            <span>80 MP</span>
+                        </div>
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-magic text-purple-400 mr-2"></i>
+                            <span>Magic attacks</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <button id="startGameBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-all">
+                    <i class="fas fa-play mr-2"></i> Begin Adventure
+                </button>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="gameScreen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <div class="flex items-center space-x-4">
+                    <div>
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-heart text-red-500 mr-2"></i>
+                            <span id="healthText">100/100</span>
+                        </div>
+                        <div class="health-bar w-48">
+                            <div id="healthBar" class="health-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center mb-1">
+                            <i class="fas fa-bolt text-blue-400 mr-2"></i>
+                            <span id="manaText">50/50</span>
+                        </div>
+                        <div class="mana-bar w-48">
+                            <div id="manaBar" class="mana-fill" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-6">
+                    <div class="text-xl font-bold">
+                        <i class="fas fa-coins text-yellow-400 mr-2"></i>
+                        <span id="goldCount">0</span>
+                    </div>
+                    <div class="text-xl font-bold">
+                        <i class="fas fa-skull text-gray-400 mr-2"></i>
+                        <span id="killCount">0</span>
+                    </div>
+                    <div class="text-xl font-bold">
+                        <i class="fas fa-layer-group text-blue-200 mr-2"></i>
+                        <span id="floorCount">1</span>
+                    </div>
+                </div>
+            </div>
+            
+            <canvas id="gameCanvas" width="800" height="500"></canvas>
+            
+            <div class="mt-4 flex justify-between items-center">
+                <div class="text-sm text-gray-400">
+                    Arrow keys to move, Space to attack
+                </div>
+                <div>
+                    <button id="restartBtn" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded mr-2">
+                        <i class="fas fa-redo mr-2"></i> Restart
+                    </button>
+                    <button id="menuBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        <i class="fas fa-home mr-2"></i> Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game variables
+        let canvas, ctx;
+        let gameRunning = false;
+        let lastTime = 0;
+        let selectedCharacter = null;
+        let goldCount = 0;
+        let killCount = 0;
+        let floorCount = 1;
+        let dungeonMap = [];
+        let tileSize = 40;
+        let mapWidth = 20;
+        let mapHeight = 12;
+        
+        const gameState = {
+            player: {
+                x: 2,
+                y: 2,
+                width: 30,
+                height: 30,
+                color: '#ff5555',
+                health: 100,
+                maxHealth: 100,
+                mana: 50,
+                maxMana: 50,
+                speed: 3,
+                attackPower: 20,
+                attackRange: 60,
+                attackCooldown: 0,
+                direction: 'right',
+                stats: {
+                    strength: 1,
+                    dexterity: 1,
+                    intelligence: 1
+                },
+                class: ''
+            },
+            enemies: [],
+            treasures: [],
+            particles: [],
+            rooms: [],
+            staircases: {
+                up: null,
+                down: null
+            },
+            keys: {},
+            gameTime: 0
+        };
+
+        // Sprites
+        const sprites = {
+            player: {
+                warrior: {
+                    right: { x: 0, y: 0, width: 32, height: 32 },
+                    left: { x: 32, y: 0, width: 32, height: 32 },
+                    up: { x: 64, y: 0, width: 32, height: 32 },
+                    down: { x: 96, y: 0, width: 32, height: 32 }
+                },
+                rogue: {
+                    right: { x: 0, y: 32, width: 32, height: 32 },
+                    left: { x: 32, y: 32, width: 32, height: 32 },
+                    up: { x: 64, y: 32, width: 32, height: 32 },
+                    down: { x: 96, y: 32, width: 32, height: 32 }
+                },
+                mage: {
+                    right: { x: 0, y: 64, width: 32, height: 32 },
+                    left: { x: 32, y: 64, width: 32, height: 32 },
+                    up: { x: 64, y: 64, width: 32, height: 32 },
+                    down: { x: 96, y: 64, width: 32, height: 32 }
+                }
+            },
+            enemies: {
+                slime: { x: 0, y: 96, width: 32, height: 32 },
+                skeleton: { x: 32, y: 96, width: 32, height: 32 },
+                bat: { x: 64, y: 96, width: 32, height: 32 }
+            },
+            items: {
+                treasure: { x: 96, y: 96, width: 32, height: 32 },
+                healthPotion: { x: 128, y: 96, width: 32, height: 32 },
+                manaPotion: { x: 160, y: 96, width: 32, height: 32 },
+                stairsUp: { x: 0, y: 128, width: 32, height: 32 },
+                stairsDown: { x: 32, y: 128, width: 32, height: 32 }
+            },
+            tiles: {
+                floor: { x: 0, y: 0, width: 32, height: 32 },
+                wall: { x: 32, y: 0, width: 32, height: 32 },
+                corridor: { x: 64, y: 0, width: 32, height: 32 }
+            }
+        };
+
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', () => {
+            // Character selection
+            const characterSelects = document.querySelectorAll('.character-select');
+            characterSelects.forEach(select => {
+                select.addEventListener('click', () => {
+                    characterSelects.forEach(s => s.classList.remove('selected', 'border-yellow-400'));
+                    select.classList.add('selected', 'border-yellow-400');
+                    selectedCharacter = select.dataset.class;
+                });
+            });
+            
+            // Start game button
+            document.getElementById('startGameBtn').addEventListener('click', () => {
+                if (!selectedCharacter) {
+                    alert('Please select a character first!');
+                    return;
+                }
+                startGame();
+            });
+            
+            // Restart and menu buttons
+            document.getElementById('restartBtn').addEventListener('click', restartGame);
+            document.getElementById('menuBtn').addEventListener('click', returnToMenu);
+            
+            // Initialize canvas
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Keyboard controls
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+        });
+
+        function handleKeyDown(e) {
+            if (!gameRunning) return;
+            
+            // Prevent default for game controls
+            if ([32, 37, 38, 39, 40].includes(e.keyCode)) {
+                e.preventDefault();
+            }
+            
+            gameState.keys[e.key.toLowerCase()] = true;
+            
+            // Attack with space
+            if (e.key === ' ' && gameState.player.attackCooldown <= 0) {
+                attack();
+            }
+        }
+
+        function handleKeyUp(e) {
+            gameState.keys[e.key.toLowerCase()] = false;
+        }
+
+        // Start the game
+        function startGame() {
+            document.getElementById('characterSelection').classList.add('hidden');
+            document.getElementById('gameScreen').classList.remove('hidden');
+            
+            // Set up player based on selected character
+            setupPlayer();
+            
+            // Initialize dungeon
+            generateDungeon();
+            
+            // Start game loop
+            gameRunning = true;
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function setupPlayer() {
+            const player = gameState.player;
+            player.class = selectedCharacter;
+            
+            // Set stats based on class
+            switch (selectedCharacter) {
+                case 'warrior':
+                    player.maxHealth = 120;
+                    player.health = 120;
+                    player.maxMana = 30;
+                    player.mana = 30;
+                    player.speed = 3;
+                    player.attackPower = 25;
+                    player.stats.strength = 3;
+                    player.stats.dexterity = 1;
+                    player.stats.intelligence = 1;
+                    break;
+                case 'rogue':
+                    player.maxHealth = 90;
+                    player.health = 90;
+                    player.maxMana = 50;
+                    player.mana = 50;
+                    player.speed = 4;
+                    player.attackPower = 18;
+                    player.stats.strength = 1;
+                    player.stats.dexterity = 3;
+                    player.stats.intelligence = 1;
+                    break;
+                case 'mage':
+                    player.maxHealth = 80;
+                    player.health = 80;
+                    player.maxMana = 80;
+                    player.mana = 80;
+                    player.speed = 3;
+                    player.attackPower = 15;
+                    player.stats.strength = 1;
+                    player.stats.dexterity = 1;
+                    player.stats.intelligence = 3;
+                    break;
+            }
+            
+            // Update UI
+            updateUI();
+        }
+
+        function generateDungeon() {
+            dungeonMap = [];
+            gameState.enemies = [];
+            gameState.treasures = [];
+            gameState.rooms = [];
+            
+            // Initialize empty map (0 = wall, 1 = floor)
+            for (let y = 0; y < mapHeight; y++) {
+                dungeonMap[y] = [];
+                for (let x = 0; x < mapWidth; x++) {
+                    dungeonMap[y][x] = 0;
+                }
+            }
+            
+            // Generate rooms
+            const roomCount = 3 + Math.floor(Math.random() * 3);
+            for (let i = 0; i < roomCount; i++) {
+                let roomPlaced = false;
+                let tries = 0;
+                const maxTries = 20;
+                
+                while (!roomPlaced && tries < maxTries) {
+                    tries++;
+                    
+                    const width = 3 + Math.floor(Math.random() * 4);
+                    const height = 3 + Math.floor(Math.random() * 4);
+                    const x = 1 + Math.floor(Math.random() * (mapWidth - width - 1));
+                    const y = 1 + Math.floor(Math.random() * (mapHeight - height - 1));
+                    
+                    // Check if room overlaps with existing rooms
+                    let canPlace = true;
+                    for (let ry = y - 1; ry < y + height + 1; ry++) {
+                        for (let rx = x - 1; rx < x + width + 1; rx++) {
+                            if (dungeonMap[ry][rx] === 1) {
+                                canPlace = false;
+                                break;
+                            }
+                        }
+                        if (!canPlace) break;
+                    }
+                    
+                    // Place the room
+                    if (canPlace) {
+                        for (let ry = y; ry < y + height; ry++) {
+                            for (let rx = x; rx < x + width; rx++) {
+                                dungeonMap[ry][rx] = 1;
+                            }
+                        }
+                        
+                        gameState.rooms.push({
+                            x, y, width, height,
+                            centerX: x + Math.floor(width / 2),
+                            centerY: y + Math.floor(height / 2)
+                        });
+                        
+                        roomPlaced = true;
+                    }
+                }
+            }
+            
+            // Connect rooms with corridors
+            for (let i = 0; i < gameState.rooms.length - 1; i++) {
+                const room1 = gameState.rooms[i];
+                const room2 = gameState.rooms[i + 1];
+                
+                // 50% chance to connect horizontally first
+                if (Math.random() > 0.5) {
+                    connectHorizontally(room1.centerX, room2.centerX, room1.centerY);
+                    connectVertically(room1.centerY, room2.centerY, room2.centerX);
+                } else {
+                    connectVertically(room1.centerY, room2.centerY, room1.centerX);
+                    connectHorizontally(room1.centerX, room2.centerX, room2.centerY);
+                }
+            }
+            
+            // Place player in first room
+            const startRoom = gameState.rooms[0];
+            gameState.player.x = startRoom.centerX;
+            gameState.player.y = startRoom.centerY;
+            
+            // Place staircases
+            const endRoom = gameState.rooms[gameState.rooms.length - 1];
+            gameState.staircases.down = { x: endRoom.centerX, y: endRoom.centerY };
+            
+            // Spawn enemies
+            spawnEnemies();
+            
+            // Spawn treasures
+            spawnTreasures();
+        }
+        
+        function connectHorizontally(x1, x2, y) {
+            const startX = Math.min(x1, x2);
+            const endX = Math.max(x1, x2);
+            
+            for (let x = startX; x <= endX; x++) {
+                dungeonMap[y][x] = 1;
+            }
+        }
+        
+        function connectVertically(y1, y2, x) {
+            const startY = Math.min(y1, y2);
+            const endY = Math.max(y1, y2);
+            
+            for (let y = startY; y <= endY; y++) {
+                dungeonMap[y][x] = 1;
+            }
+        }
+        
+        function spawnEnemies() {
+            const enemyTypes = ['slime', 'skeleton', 'bat'];
+            const enemyCount = 5 + Math.floor(Math.random() * 5) + floorCount;
+            
+            for (let i = 0; i < enemyCount; i++) {
+                // Find a valid position
+                let x, y;
+                let validPosition = false;
+                let tries = 0;
+                
+                while (!validPosition && tries < 100) {
+                    tries++;
+                    
+                    // Don't spawn in first or last room
+                    const roomIndex = 1 + Math.floor(Math.random() * (gameState.rooms.length - 2));
+                    const room = gameState.rooms[roomIndex];
+                    
+                    x = room.x + Math.floor(Math.random() * room.width);
+                    y = room.y + Math.floor(Math.random() * room.height);
+                    
+                    // Check distance to player
+                    const dx = x - gameState.player.x;
+                    const dy = y - gameState.player.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    validPosition = dungeonMap[y][x] === 1 && distance > 3 &&
+                                   !gameState.enemies.some(e => e.x === x && e.y === y) &&
+                                   (gameState.staircases.down.x !== x || gameState.staircases.down.y !== y);
+                }
+                
+                if (validPosition) {
+                    const type = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+                    let health, speed, power;
+                    
+                    // Set enemy stats
+                    switch (type) {
+                        case 'slime':
+                            health = 30 + floorCount * 5;
+                            speed = 1;
+                            power = 10 + floorCount * 2;
+                            break;
+                        case 'skeleton':
+                            health = 40 + floorCount * 5;
+                            speed = 2;
+                            power = 15 + floorCount * 2;
+                            break;
+                        case 'bat':
+                            health = 20 + floorCount * 5;
+                            speed = 3;
+                            power = 8 + floorCount * 2;
+                            break;
+                    }
+                    
+                    gameState.enemies.push({
+                        x, y,
+                        width: 30,
+                        height: 30,
+                        type,
+                        health,
+                        maxHealth: health,
+                        speed,
+                        power,
+                        attackCooldown: 0,
+                        direction: Math.random() > 0.5 ? 'left' : 'right',
+                        damageTaken: 0,
+                        state: 'idle'
+                    });
+                }
+            }
+        }
+        
+        function spawnTreasures() {
+            const treasureCount = 3 + Math.floor(Math.random() * 3);
+            
+            for (let i = 0; i < treasureCount; i++) {
+                // Find a valid position
+                let x, y;
+                let validPosition = false;
+                let tries = 0;
+                
+                while (!validPosition && tries < 100) {
+                    tries++;
+                    
+                    const roomIndex = Math.floor(Math.random() * gameState.rooms.length);
+                    const room = gameState.rooms[roomIndex];
+                    
+                    x = room.x + Math.floor(Math.random() * room.width);
+                    y = room.y + Math.floor(Math.random() * room.height);
+                    
+                    // Check distance to player and enemies
+                    const dx = x - gameState.player.x;
+                    const dy = y - gameState.player.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    validPosition = dungeonMap[y][x] === 1 && distance > 3 &&
+                                   !gameState.treasures.some(t => t.x === x && t.y === y) &&
+                                   (gameState.staircases.down.x !== x || gameState.staircases.down.y !== y);
+                }
+                
+                if (validPosition) {
+                    // Determine treasure type (70% gold, 15% health, 15% mana)
+                    const rand = Math.random();
+                    let type, value;
+                    
+                    if (rand < 0.7) {
+                        type = 'treasure';
+                        value = 10 + Math.floor(Math.random() * 20) + floorCount * 5;
+                    } else if (rand < 0.85) {
+                        type = 'healthPotion';
+                        value = 20 + floorCount * 3;
+                    } else {
+                        type = 'manaPotion';
+                        value = 15 + floorCount * 3;
+                    }
+                    
+                    gameState.treasures.push({
+                        x, y,
+                        width: 30,
+                        height: 30,
+                        type,
+                        value,
+                        collected: false
+                    });
+                }
+            }
+        }
+
+        // Game loop
+        function gameLoop(timestamp) {
+            if (!gameRunning) return;
+            
+            const deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update game state
+            updateGame(deltaTime);
+            
+            // Draw game
+            drawGame();
+            
+            // Continue loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update game state
+        function updateGame(deltaTime) {
+            const player = gameState.player;
+            const timeFactor = deltaTime / 16; // Normalize to ~60fps
+            
+            gameState.gameTime += deltaTime;
+            
+            // Handle player movement
+            let moved = false;
+            let newX = player.x;
+            let newY = player.y;
+            
+            if (gameState.keys.arrowright || gameState.keys.d) {
+                newX += player.speed * 0.1 * timeFactor;
+                player.direction = 'right';
+                moved = true;
+            }
+            if (gameState.keys.arrowleft || gameState.keys.a) {
+                newX -= player.speed * 0.1 * timeFactor;
+                player.direction = 'left';
+                moved = true;
+            }
+            if (gameState.keys.arrowup || gameState.keys.w) {
+                newY -= player.speed * 0.1 * timeFactor;
+                player.direction = 'up';
+                moved = true;
+            }
+            if (gameState.keys.arrowdown || gameState.keys.s) {
+                newY += player.speed * 0.1 * timeFactor;
+                player.direction = 'down';
+                moved = true;
+            }
+            
+            // Check collision with walls
+            const tileX = Math.floor(newX);
+            const tileY = Math.floor(newY);
+            
+            if (tileX >= 0 && tileX < mapWidth && tileY >= 0 && tileY < mapHeight) {
+                if (dungeonMap[tileY][tileX] === 1) {
+                    player.x = newX;
+                    player.y = newY;
+                }
+            }
+            
+            // Update attack cooldown
+            if (player.attackCooldown > 0) {
+                player.attackCooldown -= timeFactor;
+            }
+            
+            // Regenerate mana
+            if (player.mana < player.maxMana) {
+                player.mana = Math.min(player.maxMana, player.mana + 0.02 * timeFactor);
+            }
+            
+            // Update enemies
+            for (let i = gameState.enemies.length - 1; i >= 0; i--) {
+                const enemy = gameState.enemies[i];
+                
+                // Reset damage indicator
+                if (enemy.damageTaken > 0) {
+                    enemy.damageTaken -= 0.05 * timeFactor;
+                }
+                
+                // Check if enemy is dying
+                if (enemy.health <= 0) {
+                    // Create death particles
+                    for (let j = 0; j < 10; j++) {
+                        gameState.particles.push({
+                            x: enemy.x * tileSize + enemy.width / 2,
+                            y: enemy.y * tileSize + enemy.height / 2,
+                            size: 3 + Math.random() * 4,
+                            color: enemy.type === 'slime' ? '#55ff55' : 
+                                   enemy.type === 'skeleton' ? '#dddddd' : '#993399',
+                            velocityX: -2 + Math.random() * 4,
+                            velocityY: -2 + Math.random() * 4,
+                            life: 30 + Math.random() * 20,
+                            gravity: 0.1
+                        });
+                    }
+                    
+                    // Remove enemy
+                    gameState.enemies.splice(i, 1);
+                    killCount++;
+                    continue;
+                }
+                
+                // Update attack cooldown
+                if (enemy.attackCooldown > 0) {
+                    enemy.attackCooldown -= timeFactor;
+                }
+                
+                // AI movement
+                const dx = player.x - enemy.x;
+                const dy = player.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Chase player if within range
+                if (distance < 8 && distance > 0.8) {
+                    enemy.x += (dx / distance) * enemy.speed * 0.05 * timeFactor;
+                    enemy.y += (dy / distance) * enemy.speed * 0.05 * timeFactor;
+                    
+                    // Update direction
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        enemy.direction = dx > 0 ? 'right' : 'left';
+                    } else {
+                        enemy.direction = dy > 0 ? 'down' : 'up';
+                    }
+                    
+                    enemy.state = 'chasing';
+                } else {
+                    // Random wandering
+                    if (Math.random() < 0.01 * timeFactor) {
+                        enemy.state = Math.random() > 0.5 ? 'idle' : 'wandering';
+                        if (enemy.state === 'wandering') {
+                            enemy.direction = ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)];
+                        }
+                    }
+                    
+                    if (enemy.state === 'wandering') {
+                        switch (enemy.direction) {
+                            case 'up': enemy.y -= enemy.speed * 0.02 * timeFactor; break;
+                            case 'down': enemy.y += enemy.speed * 0.02 * timeFactor; break;
+                            case 'left': enemy.x -= enemy.speed * 0.02 * timeFactor; break;
+                            case 'right': enemy.x += enemy.speed * 0.02 * timeFactor; break;
+                        }
+                        
+                        // Change direction if hitting a wall
+                        const ex = Math.floor(enemy.x);
+                        const ey = Math.floor(enemy.y);
+                        if (ex <= 0 || ex >= mapWidth - 1 || ey <= 0 || ey >= mapHeight - 1 || dungeonMap[ey][ex] !== 1) {
+                            enemy.direction = ['up', 'down', 'left', 'right'][Math.floor(Math.random() * 4)];
+                        }
+                    }
+                }
+                
+                // Attack player if close enough
+                if (distance < 1.2 && enemy.attackCooldown <= 0) {
+                    player.health -= enemy.power;
+                    enemy.attackCooldown = 60;
+                    
+                    // Create hit particles
+                    for (let j = 0; j < 5; j++) {
+                        gameState.particles.push({
+                            x: player.x * tileSize + player.width / 2,
+                            y: player.y * tileSize + player.height / 2,
+                            size: 2 + Math.random() * 3,
+                            color: '#ff0000',
+                            velocityX: -1 + Math.random() * 2,
+                            velocityY: -1 + Math.random() * 2,
+                            life: 15 + Math.random() * 10
+                        });
+                    }
+                    
+                    // Check player death
+                    if (player.health <= 0) {
+                        gameOver(false);
+                    }
+                }
+            }
+            
+            // Check for treasure collection
+            for (let i = gameState.treasures.length - 1; i >= 0; i--) {
+                const treasure = gameState.treasures[i];
+                const dx = player.x - treasure.x;
+                const dy = player.y - treasure.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 1 && !treasure.collected) {
+                    treasure.collected = true;
+                    
+                    // Handle different treasure types
+                    switch (treasure.type) {
+                        case 'treasure':
+                            goldCount += treasure.value;
+                            
+                            // Create gold particles
+                            for (let j = 0; j < 8; j++) {
+                                gameState.particles.push({
+                                    x: treasure.x * tileSize + treasure.width / 2,
+                                    y: treasure.y * tileSize + treasure.height / 2,
+                                    size: 2 + Math.random() * 3,
+                                    color: '#ffd700',
+                                    velocityX: -1 + Math.random() * 2,
+                                    velocityY: -1 + Math.random() * 2,
+                                    life: 20 + Math.random() * 10
+                                });
+                            }
+                            break;
+                            
+                        case 'healthPotion':
+                            player.health = Math.min(player.maxHealth, player.health + treasure.value);
+                            
+                            // Create healing particles
+                            for (let j = 0; j < 10; j++) {
+                                gameState.particles.push({
+                                    x: treasure.x * tileSize + treasure.width / 2,
+                                    y: treasure.y * tileSize + treasure.height / 2,
+                                    size: 3 + Math.random() * 3,
+                                    color: '#ff3366',
+                                    velocityX: -1 + Math.random() * 2,
+                                    velocityY: -1 + Math.random() * 2,
+                                    life: 20 + Math.random() * 10
+                                });
+                            }
+                            break;
+                            
+                        case 'manaPotion':
+                            player.mana = Math.min(player.maxMana, player.mana + treasure.value);
+                            
+                            // Create mana particles
+                            for (let j = 0; j < 10; j++) {
+                                gameState.particles.push({
+                                    x: treasure.x * tileSize + treasure.width / 2,
+                                    y: treasure.y * tileSize + treasure.height / 2,
+                                    size: 3 + Math.random() * 3,
+                                    color: '#3399ff',
+                                    velocityX: -1 + Math.random() * 2,
+                                    velocityY: -1 + Math.random() * 2,
+                                    life: 20 + Math.random() * 10
+                                });
+                            }
+                            break;
+                    }
+                    
+                    gameState.treasures.splice(i, 1);
+                }
+            }
+            
+            // Check for staircase
+            if (gameState.staircases.down) {
+                const dx = player.x - gameState.staircases.down.x;
+                const dy = player.y - gameState.staircases.down.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < 1) {
+                    nextFloor();
+                }
+            }
+            
+            // Update particles
+            for (let i = gameState.particles.length - 1; i >= 0; i--) {
+                const particle = gameState.particles[i];
+                
+                particle.x += particle.velocityX * timeFactor;
+                particle.y += particle.velocityY * timeFactor;
+                if (particle.gravity) {
+                    particle.velocityY += particle.gravity * timeFactor;
+                }
+                particle.life -= timeFactor;
+                
+                if (particle.life <= 0) {
+                    gameState.particles.splice(i, 1);
+                }
+            }
+            
+            // Update UI
+            updateUI();
+        }
+
+        function attack() {
+            const player = gameState.player;
+            
+            if (player.attackCooldown > 0) return;
+            
+            player.attackCooldown = 20;
+            
+            // Calculate attack area based on direction
+            let attackX = player.x;
+            let attackY = player.y;
+            let attackWidth = player.width / tileSize;
+            let attackHeight = player.height / tileSize;
+            
+            switch (player.direction) {
+                case 'right':
+                    attackX += 0.8;
+                    attackWidth = 1.2;
+                    attackHeight = 0.6;
+                    break;
+                case 'left':
+                    attackX -= 1.0;
+                    attackWidth = 1.2;
+                    attackHeight = 0.6;
+                    break;
+                case 'up':
+                    attackY -= 0.8;
+                    attackWidth = 0.6;
+                    attackHeight = 1.2;
+                    break;
+                case 'down':
+                    attackY += 0.8;
+                    attackWidth = 0.6;
+                    attackHeight = 1.2;
+                    break;
+            }
+            
+            // Check for enemies in attack range
+            let hitSomething = false;
+            
+            for (let i = 0; i < gameState.enemies.length; i++) {
+                const enemy = gameState.enemies[i];
+                
+                if (enemy.x < attackX + attackWidth &&
+                    enemy.x + enemy.width/tileSize > attackX &&
+                    enemy.y < attackY + attackHeight &&
+                    enemy.y + enemy.height/tileSize > attackY) {
+                    
+                    // Calculate damage (with potential critical for rogue)
+                    let damage = player.attackPower;
+                    if (player.class === 'rogue' && Math.random() < 0.3) {
+                        damage *= 2; // Critical hit
+                        
+                        // Create critical hit particles
+                        for (let j = 0; j < 8; j++) {
+                            gameState.particles.push({
+                                x: enemy.x * tileSize + enemy.width / 2,
+                                y: enemy.y * tileSize + enemy.height / 2,
+                                size: 4 + Math.random() * 3,
+                                color: '#ffff00',
+                                velocityX: -1 + Math.random() * 2,
+                                velocityY: -1 + Math.random() * 2,
+                                life: 15 + Math.random() * 10
+                            });
+                        }
+                    } else {
+                        // Normal attack particles
+                        for (let j = 0; j < 5; j++) {
+                            gameState.particles.push({
+                                x: enemy.x * tileSize + enemy.width / 2,
+                                y: enemy.y * tileSize + enemy.height / 2,
+                                size: 2 + Math.random() * 3,
+                                color: '#ffffff',
+                                velocityX: -1 + Math.random() * 2,
+                                velocityY: -1 + Math.random() * 2,
+                                life: 10 + Math.random() * 10
+                            });
+                        }
+                    }
+                    
+                    enemy.health -= damage;
+                    enemy.damageTaken = 1;
+                    hitSomething = true;
+                }
+            }
+            
+            // Create weapon swing effect if mage (ranged attack)
+            if (player.class === 'mage' && player.mana >= 10) {
+                player.mana -= 10;
+                
+                // Create magic projectile
+                gameState.particles.push({
+                    x: player.x * tileSize + player.width / 2,
+                    y: player.y * tileSize + player.height / 2,
+                    size: 8,
+                    color: '#9933ff',
+                    velocityX: (player.direction === 'right' ? 6 : player.direction === 'left' ? -6 : 0) * timeFactor,
+                    velocityY: (player.direction === 'down' ? 6 : player.direction === 'up' ? -6 : 0) * timeFactor,
+                    life: 60,
+                    isProjectile: true,
+                    power: player.attackPower * 0.8
+                });
+            }
+            
+            // Play attack sound if hit something
+            if (hitSomething) {
+                // Would play sound here
+            }
+        }
+        
+        function nextFloor() {
+            floorCount++;
+            document.getElementById('floorCount').textContent = floorCount;
+            generateDungeon();
+            
+            // Create transition particles
+            for (let i = 0; i < -50; i++) {
+                gameState.particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: 2 + Math.random() * 4,
+                    color: '#3399ff',
+                    velocityX: -1 + Math.random() * 2,
+                    velocityY: -1 + Math.random() * 2,
+                    life: 30 + Math.random() * 20
+                });
+            }
+        }
+
+        // Draw game
+        function drawGame() {
+            const player = gameState.player;
+            
+            // Draw dungeon tiles
+            for (let y = 0; y < mapHeight; y++) {
+                for (let x = 0; x < mapWidth; x++) {
+                    const screenX = x * tileSize;
+                    const screenY = y * tileSize;
+                    
+                    if (dungeonMap[y][x] === 0) { // Wall
+                        ctx.fillStyle = '#333333';
+                        ctx.fillRect(screenX, screenY, tileSize, tileSize);
+                        
+                        // Draw brick pattern
+                        ctx.fillStyle = '#444444';
+                        for (let by = 0; by < tileSize; by += 8) {
+                            for (let bx = (by / 8) % 2 === 0 ? 0 : 8; bx < tileSize; bx += 16) {
+                                ctx.fillRect(screenX + bx, screenY + by, 8, 4);
+                            }
+                        }
+                    } else { // Floor
+                        ctx.fillStyle = '#222222';
+                        ctx.fillRect(screenX, screenY, tileSize, tileSize);
+                        
+                        // Draw floor pattern
+                        ctx.fillStyle = '#282828';
+                        if (x % 2 === y % 2) {
+                            ctx.fillRect(screenX + 10, screenY + 10, 3, 3);
+                        } else {
+                            ctx.fillRect(screenX + 20, screenY + 20, 3, 3);
+                        }
+                    }
+                }
+            }
+            
+            // Draw staircases
+            if (gameState.staircases.down) {
+                const sx = gameState.staircases.down.x * tileSize;
+                const sy = gameState.staircases.down.y * tileSize;
+                
+                // Draw animated staircase
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(sx, sy, tileSize, tileSize);
+                
+                // Steps
+                ctx.fillStyle = '#A0522D';
+                for (let i = 0; i < 4; i++) {
+                    const offset = Math.sin(gameState.gameTime * 0.005 + i) * 2;
+                    ctx.fillRect(sx + i * 6, sy + i * 6, tileSize - i * 8, 6);
+                }
+                
+                // Glow
+                ctx.fillStyle = 'rgba(255, 215, 0, ' + (0.3 + Math.sin(gameState.gameTime * 0.01) * 0.2) + ')';
+                ctx.beginPath();
+                ctx.arc(sx + tileSize/2, sy + tileSize/2, tileSize/2 + 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            // Draw treasures
+            for (let i = 0; i < gameState.treasures.length; i++) {
+                const treasure = gameState.treasures[i];
+                const screenX = treasure.x * tileSize;
+                const screenY = treasure.y * tileSize;
+                
+                // Draw treasure based on type with animation
+                switch (treasure.type) {
+                    case 'treasure':
+                        // Chest base
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(screenX + 5, screenY + 10, 22, 15);
+                        
+                        // Chest top
+                        ctx.fillStyle = '#A0522D';
+                        ctx.beginPath();
+                        ctx.moveTo(screenX + 5, screenY + 10);
+                        ctx.lineTo(screenX + 27, screenY + 10);
+                        ctx.lineTo(screenX + 23, screenY + 5);
+                        ctx.lineTo(screenX + 9, screenY + 5);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Gold shine
+                        ctx.fillStyle = 'rgba(255, 215, 0, ' + (0.5 + Math.sin(gameState.gameTime * 0.01) * 0.4) + ')';
+                        ctx.beginPath();
+                        ctx.arc(screenX + 16, screenY + 12, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'healthPotion':
+                        // Bottle
+                        ctx.fillStyle = '#ff3366';
+                        ctx.beginPath();
+                        ctx.moveTo(screenX + 10, screenY + 25);
+                        ctx.lineTo(screenX + 22, screenY + 25);
+                        ctx.lineTo(screenX + 22, screenY + 10);
+                        ctx.quadraticCurveTo(screenX + 16, screenY + 5, screenX + 10, screenY + 10);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Liquid
+                        ctx.fillStyle = '#ff0066';
+                        const liquidHeight = 12 + Math.sin(gameState.gameTime * 0.02) * 2;
+                        ctx.fillRect(screenX + 12, screenY + 25 - liquidHeight, 8, liquidHeight);
+                        
+                        // Glow
+                        ctx.fillStyle = 'rgba(255, 0, 102, ' + (0.2 + Math.sin(gameState.gameTime * 0.015) * 0.2) + ')';
+                        ctx.beginPath();
+                        ctx.arc(screenX + 16, screenY + 16, 12, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                        
+                    case 'manaPotion':
+                        // Bottle
+                        ctx.fillStyle = '#3399ff';
+                        ctx.beginPath();
+                        ctx.moveTo(screenX + 10, screenY + 25);
+                        ctx.lineTo(screenX + 22, screenY + 25);
+                        ctx.lineTo(screenX + 22, screenY + 10);
+                        ctx.quadraticCurveTo(screenX + 16, screenY + 5, screenX + 10, screenY + 10);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Liquid
+                        ctx.fillStyle = '#3366ff';
+                        const manaHeight = 12 + Math.sin(gameState.gameTime * 0.025) * 2;
+                        ctx.fillRect(screenX + 12, screenY + 25 - manaHeight, 8, manaHeight);
+                        
+                        // Glow
+                        ctx.fillStyle = 'rgba(51, 102, 255, ' + (0.2 + Math.sin(gameState.gameTime * 0.02) * 0.2) + ')';
+                        ctx.beginPath();
+                        ctx.arc(screenX + 16, screenY + 16, 12, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                }
+            }
+            
+            // Draw enemies
+            for (let i = 0; i < gameState.enemies.length; i++) {
+                const enemy = gameState.enemies[i];
+                const screenX = enemy.x * tileSize;
+                const screenY = enemy.y * tileSize;
+                
+                // Draw enemy based on type
+                switch (enemy.type) {
+                    case 'slime':
+                        // Body
+                        ctx.fillStyle = '#55ff55';
+                        ctx.beginPath();
+                        ctx.ellipse(screenX + 15, screenY + 15, 15, 12 + Math.sin(gameState.gameTime * 0.02 + i) * 2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Eyes
+                        ctx.fillStyle = '#000000';
+                        const eyeOffset = Math.sin(gameState.gameTime * 0.05 + i) * 2;
+                        ctx.beginPath();
+                        ctx.arc(screenX + 8 + (enemy.direction === 'left' ? -eyeOffset : enemy.direction === 'right' ? eyeOffset : 0), 
+                                screenY + 8, 3, 0, Math.PI * 2);
+                        ctx.arc(screenX + 20 + (enemy.direction === 'left' ? -eyeOffset : enemy.direction === 'right' ? eyeOffset : 0), 
+                                screenY + 8, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Mouth (only when chasing)
+                        if (enemy.state === 'chasing') {
+                            ctx.strokeStyle = '#000000';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.arc(screenX + 14, screenY + 15, 6, 0, Math.PI);
+                            ctx.stroke();
+                        }
+                        
+                        // Damage flash
+                        if (enemy.damageTaken > 0) {
+                            ctx.fillStyle = 'rgba(255, 255, 255, ' + enemy.damageTaken * 0.7 + ')';
+                            ctx.beginPath();
+                            ctx.ellipse(screenX + 15, screenY + 15, 15, 12, 0, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+                        
+                    case 'skeleton':
+                        // Head
+                        ctx.fillStyle = '#dddddd';
+                        ctx.beginPath();
+                        ctx.arc(screenX + 15, screenY + 10, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Body
+                        ctx.fillRect(screenX + 10, screenY + 18, 10, 10);
+                        
+                        // Arms
+                        const armX = enemy.direction === 'left' ? -3 : enemy.direction === 'right' ? 3 : 0;
+                        ctx.fillRect(screenX + 5 + armX, screenY + 20, 10, 4);
+                        ctx.fillRect(screenX + 15 - armX, screenY + 20, 10, 4);
+                        
+                        // Legs
+                        ctx.fillRect(screenX + 10, screenY + 28, 5, 8);
+                        ctx.fillRect(screenX + 15, screenY + 28, 5, 8);
+                        
+                        // Eye sockets
+                        ctx.fillStyle = '#000000';
+                        ctx.beginPath();
+                        ctx.arc(screenX + 12, screenY + 8, 2, 0, Math.PI * 2);
+                        ctx.arc(screenX + 18, screenY + 8, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Damage flash
+                        if (enemy.damageTaken > 0) {
+                            ctx.fillStyle = 'rgba(255, 0, 0, ' + enemy.damageTaken * 0.5 + ')';
+                            ctx.beginPath();
+                            ctx.arc(screenX + 15, screenY + 15, 15, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+                        
+                    case 'bat':
+                        // Wings
+                        const wingAngle = Math.sin(gameState.gameTime * 0.1 + i) * Math.PI / 4;
+                        
+                        ctx.fillStyle = '#993399';
+                        ctx.save();
+                        ctx.translate(screenX + 15, screenY + 15);
+                        ctx.rotate(wingAngle);
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, 15, 5, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.rotate(Math.PI);
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, 15, 5, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        
+                        // Body
+                        ctx.fillStyle = '#663366';
+                        ctx.beginPath();
+                        ctx.arc(screenX + 15, screenY + 15, 6, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Eyes
+                        ctx.fillStyle = '#ffffff';
+                        ctx.beginPath();
+                        ctx.arc(screenX + 12, screenY + 13, 2, 0, Math.PI * 2);
+                        ctx.arc(screenX + 18, screenY + 13, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Damage flash
+                        if (enemy.damageTaken > 0) {
+                            ctx.fillStyle = 'rgba(255, 255, 255, ' + enemy.damageTaken * 0.7 + ')';
+                            ctx.beginPath();
+                            ctx.arc(screenX + 15, screenY + 15, 12, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        break;
+                }
+                
+                // Health bar
+                if (enemy.health < enemy.maxHealth) {
+                    const healthWidth = 30 * (enemy.health / enemy.maxHealth);
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(screenX, screenY - 10, healthWidth, 3);
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(screenX, screenY - 10, 30, 3);
+                }
+            }
+            
+            // Draw particles (under player)
+            for (let i = 0; i < gameState.particles.length; i++) {
+                const particle = gameState.particles[i];
+                
+                if (particle.isProjectile) {
+                    // Check for collision with enemies
+                    for (let j = 0; j < gameState.enemies.length; j++) {
+                        const enemy = gameState.enemies[j];
+                        
+                        const ex = enemy.x * tileSize + enemy.width / 2;
+                        const ey = enemy.y * tileSize + enemy.height / 2;
+                        const dx = particle.x - ex;
+                        const dy = particle.y - ey;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < (enemy.width / 2 + particle.size / 2)) {
+                            enemy.health -= particle.power;
+                            enemy.damageTaken = 1;
+                            
+                            // Create hit effect
+                            for (let k = 0; k < 10; k++) {
+                                gameState.particles.push({
+                                    x: particle.x,
+                                    y: particle.y,
+                                    size: 2 + Math.random() * 3,
+                                    color: '#ffffff',
+                                    velocityX: -2 + Math.random() * 4,
+                                    velocityY: -2 + Math.random() * 4,
+                                    life: 15 + Math.random() * 10
+                                });
+                            }
+                            
+                            particle.life = 0;
+                            break;
+                        }
+                    }
+                    
+                    // Draw magic projectile
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glow effect
+                    ctx.fillStyle = 'rgba(153, 51, 255, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size * 1.5, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (particle.y < player.y * tileSize + player.height / 2) {
+                    // Only draw particles below player here (others will be drawn above)
+                    drawParticle(particle);
+                }
+            }
+            
+            // Draw player
+            const screenX = player.x * tileSize;
+            const screenY = player.y * tileSize;
+            
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.beginPath();
+            ctx.ellipse(screenX + 15, screenY + 30, 10, 4, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw player character
+            drawPlayerCharacter(screenX, screenY, player);
+            
+            // Draw particles (above player)
+            for (let i = 0; i < gameState.particles.length; i++) {
+                const particle = gameState.particles[i];
+                
+                if (!particle.isProjectile && particle.y >= player.y * tileSize + player.height / 2) {
+                    drawParticle(particle);
+                }
+            }
+        }
+        
+        function drawPlayerCharacter(x, y, player) {
+            // Draw based on class and direction
+            switch (player.class) {
+                case 'warrior':
+                    // Body
+                    ctx.fillStyle = '#ff5555';
+                    ctx.fillRect(x + 8, y + 10, 14, 18);
+                    
+                    // Head
+                    ctx.fillStyle = '#ffccaa';
+                    ctx.beginPath();
+                    ctx.arc(x + 15, y + 8, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Hair
+                    ctx.fillStyle = '#663300';
+                    if (player.direction === 'left' || player.direction === 'right') {
+                        ctx.beginPath();
+                        ctx.arc(x + 15, y + 6, 8, 0, Math.PI);
+                        ctx.fill();
+                    } else {
+                        ctx.beginPath();
+                        ctx.arc(x + 15, y + 6, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    // Shield
+                    if (player.direction === 'left') {
+                        ctx.fillStyle = '#8B4513';
+                        ctx.fillRect(x, y + 15, 6, 16);
+                        ctx.fillStyle = '#A0522D';
+                        ctx.fillRect(x + 1, y + 16, 4, 14);
+                    }
+                    
+                    // Sword
+                    if (player.direction === 'right') {
+                        ctx.fillStyle = '#cccccc';
+                        ctx.fillRect(x + 22, y + 15, 12, 3);
+                        ctx.fillStyle = '#999999';
+                        ctx.fillRect(x + 34, y + 16, 2, 1);
+                    }
+                    
+                    // Armor details
+                    ctx.fillStyle = '#993333';
+                    ctx.fillRect(x + 10, y + 15, 10, 3);
+                    
+                    break;
+                    
+                case 'rogue':
+                    // Body
+                    ctx.fillStyle = '#33aa33';
+                    ctx.fillRect(x + 8, y + 10, 14, 18);
+                    
+                    // Head
+                    ctx.fillStyle = '#ffccaa';
+                    ctx.beginPath();
+                    ctx.arc(x + 15, y + 8, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Mask
+                    ctx.fillStyle = '#334433';
+                    if (player.direction === 'left' || player.direction === 'right') {
+                        ctx.beginPath();
+                        ctx.moveTo(x + 15, y + 6);
+                        ctx.lineTo(x + 8, y + 11);
+                        ctx.lineTo(x + 8, y + 15);
+                        ctx.lineTo(x + 15, y + 10);
+                        ctx.fill();
+                    } else {
+                        ctx.fillRect(x + 8, y + 10, 14, 4);
+                    }
+                    
+                    // Dagger
+                    if (player.attackCooldown > 0) {
+                        // Draw dagger in attack motion
+                        ctx.fillStyle = '#cccccc';
+                        const attackOffset = 10 * (1 - player.attackCooldown / 20);
+                        ctx.save();
+                        ctx.translate(x + 15, y + 15);
+                        ctx.rotate(Math.PI / 4 * (1 - player.attackCooldown / 20));
+                        ctx.fillRect(5 + attackOffset, -1.5, 12, 3);
+                        ctx.restore();
+                    } else {
+                        // Draw sheathed dagger
+                        ctx.fillStyle = '#333333';
+                        ctx.fillRect(x + 20, y + 20, 2, 8);
+                    }
+                    
+                    // Belt
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(x + 10, y + 25, 10, 2);
+                    
+                    break;
+                    
+                case 'mage':
+                    // Robe
+                    ctx.fillStyle = '#3355aa';
+                    ctx.beginPath();
+                    ctx.moveTo(x + 8, y + 28);
+                    ctx.lineTo(x + 22, y + 28);
+                    ctx.lineTo(x + 20, y + 10);
+                    ctx.lineTo(x + 10, y + 10);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Head
+                    ctx.fillStyle = '#ffccaa';
+                    ctx.beginPath();
+                    ctx.arc(x + 15, y + 8, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Hat
+                    ctx.fillStyle = '#6600cc';
+                    ctx.beginPath();
+                    ctx.moveTo(x + 8, y + 8);
+                    ctx.lineTo(x + 22, y + 8);
+                    ctx.lineTo(x + 15, y + 2);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Staff
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(x + 5, y + 5, 3, 25);
+                    
+                    // Orb
+                    if (player.attackCooldown > 0) {
+                        // Draw orb with glow when attacking
+                        ctx.fillStyle = '#9933ff';
+                        ctx.beginPath();
+                        ctx.arc(x + 6, y + 10, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        ctx.fillStyle = 'rgba(153, 51, 255, 0.5)';
+                        ctx.beginPath();
+                        ctx.arc(x + 6, y + 10, 8, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    
+                    break;
+            }
+            
+            // Draw attack effect if attacking
+            if (player.attackCooldown > 15) {
+                const attackProgress = (20 - player.attackCooldown) / 5;
+                
+                // Draw sword swing effect for warrior
+                if (player.class === 'warrior' && (player.direction === 'left' || player.direction === 'right')) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.lineWidth = 2 + attackProgress;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 25, y + 18);
+                    ctx.lineTo(x + 25 + 30 * attackProgress, y + 18 - 10 * attackProgress);
+                    ctx.stroke();
+                }
+                
+                // Draw dagger slash effect for rogue
+                if (player.class === 'rogue') {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                    ctx.lineWidth = 1 + attackProgress;
+                    ctx.beginPath();
+                    ctx.moveTo(x + 18, y + 15);
+                    ctx.lineTo(x + 18 + 20 * attackProgress, y + 15 - 15 * attackProgress);
+                    ctx.stroke();
+                }
+            }
+            
+            // Draw health bar if damaged
+            if (player.health < player.maxHealth) {
+                const healthWidth = 30 * (player.health / player.maxHealth);
+                ctx.fillStyle = '#ff0000';
+                ctx.fillRect(x, y - 10, healthWidth, 3);
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(x, y - 10, 30, 3);
+            }
+        }
+        
+        function drawParticle(particle) {
+            ctx.fillStyle = particle.color;
+            ctx.globalAlpha = Math.min(1, particle.life / 20);
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+
+        // Update UI
+        function updateUI() {
+            const player = gameState.player;
+            
+            // Update health and mana bars
+            document.getElementById('healthText').textContent = `${Math.floor(player.health)}/${player.maxHealth}`;
+            document.getElementById('manaText').textContent = `${Math.floor(player.mana)}/${player.maxMana}`;
+            document.getElementById('healthBar').style.width = `${(player.health / player.maxHealth) * 100}%`;
+            document.getElementById('manaBar').style.width = `${(player.mana / player.maxMana) * 100}%`;
+            
+            // Update gold and kill count
+            document.getElementById('goldCount').textContent = goldCount;
+            document.getElementById('killCount').textContent = killCount;
+        }
+        
+        function gameOver(victory) {
+            gameRunning = false;
+            
+            // Create game over overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'fixed inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center z-50';
+            overlay.innerHTML = `
+                <div class="bg-gray-800 rounded-lg p-8 max-w-md w-full text-center">
+                    <h2 class="text-3xl font-bold mb-4 ${victory ? 'text-yellow-400' : 'text-red-500'}">
+                        ${victory ? 'Victory!' : 'Game Over'}
+                    </h2>
+                    <p class="mb-4">You ${victory ? 'conquered' : 'explored'} ${floorCount} floors.</p>
+                    <p class="mb-6">You collected ${goldCount} gold and defeated ${killCount} enemies.</p>
+                    <div class="flex justify-center space-x-4">
+                        <button id="restartGameBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">
+                            Play Again
+                        </button>
+                        <button id="returnToMenuBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded">
+                            Main Menu
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            
+            // Button event listeners
+            document.getElementById('restartGameBtn').addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                restartGame();
+            });
+            
+            document.getElementById('returnToMenuBtn').addEventListener('click', () => {
+                document.body.removeChild(overlay);
+                returnToMenu();
+            });
+        }
+        
+        function restartGame() {
+            // Reset game state
+            goldCount = 0;
+            killCount = 0;
+            floorCount = 1;
+            gameState.player.health = gameState.player.maxHealth;
+            gameState.player.mana = gameState.player.maxMana;
+            
+            // Update UI
+            document.getElementById('goldCount').textContent = goldCount;
+            document.getElementById('killCount').textContent = killCount;
+            document.getElementById('floorCount').textContent = floorCount;
+            updateUI();
+            
+            // Generate new dungeon
+            generateDungeon();
+            
+            // Restart game loop
+            gameRunning = true;
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function returnToMenu() {
+            document.getElementById('characterSelection').classList.remove('hidden');
+            document.getElementById('gameScreen').classList.add('hidden');
+            gameRunning = false;
+        }
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - <a href="https://enzostvs-deepsite.hf.space?remix=etnom/gauntlet" style="color: #fff;text-decoration: underline;" target="_blank" >🧬 Remix</a></p></body>
+</html>

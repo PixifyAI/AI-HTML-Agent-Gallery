@@ -1,0 +1,1432 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"67a887c0b4fa67845bd7c37e"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Superhero Janitor - Clean Up the City!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3a86ff;
+            --secondary: #ff006e;
+            --accent: #8338ec;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        header::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: linear-gradient(135deg, 
+                rgba(255, 255, 255, 0.1) 0%, 
+                rgba(255, 255, 255, 0) 20%, 
+                rgba(255, 255, 255, 0) 80%, 
+                rgba(255, 255, 255, 0.1) 100%);
+            z-index: -1;
+            border-radius: 15px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            background: linear-gradient(to right, #fff, #ddd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-style: italic;
+            margin-bottom: 15px;
+        }
+
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .game-area {
+            display: grid;
+            grid-template-columns: 1fr 300px;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .game-area {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .city-map {
+            background-color: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 500px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .hero {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%233a86ff"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm-1.06 13.54L7.4 12l1.41-1.41 2.12 2.12 4.24-4.24 1.41 1.41-5.64 5.66z"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            transition: transform 0.3s ease, left 0.5s ease, top 0.5s ease;
+            z-index: 10;
+            filter: drop-shadow(0 0 5px var(--primary));
+        }
+
+        .debris {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: #555;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: transform 0.2s ease, opacity 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .debris:hover {
+            transform: scale(1.1);
+        }
+
+        .building {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            background-color: #333;
+            border: 2px solid #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            padding-bottom: 10px;
+            color: white;
+            font-size: 0.8rem;
+            z-index: 1;
+        }
+
+        .building::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: 10px;
+            right: 10px;
+            height: 10px;
+            background-color: #222;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .building.damaged {
+            background-color: #832;
+            border-color: #a43;
+        }
+
+        .building .windows {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 5px;
+        }
+
+        .building .window {
+            width: 10px;
+            height: 15px;
+            background-color: yellow;
+        }
+
+        .building.damaged .window {
+            background-color: rgba(255, 255, 0, 0.3);
+        }
+
+        .power-ups {
+            display: grid;
+            gap: 15px;
+        }
+
+        .power-card {
+            background: linear-gradient(145deg, rgba(50,50,60,0.8), rgba(30,30,40,0.8));
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .power-card:hover {
+            transform: translateY(-5px);
+            background: linear-gradient(145deg, rgba(60,60,70,0.9), rgba(40,40,50,0.9));
+        }
+
+        .power-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                transparent 100%
+            );
+            transform: rotate(30deg);
+            transition: all 0.7s ease;
+        }
+
+        .power-card:hover::before {
+            left: 100%;
+        }
+
+        .power-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .power-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .power-desc {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .power-cost {
+            color: var(--secondary);
+            font-weight: bold;
+            align-self: flex-end;
+        }
+
+        .power-card.na {
+            opacity: 0.6;
+            cursor: not-allowed;
+            filter: grayscale(80%);
+        }
+
+        .power-card.na:hover {
+            transform: none;
+            background: linear-gradient(145deg, rgba(50,50,60,0.8), rgba(30,30,40,0.8));
+        }
+
+        .message-log {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 0.9rem;
+            opacity: 0.9;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 0.9; transform: translateY(0); }
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #555;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: linear-gradient(145deg, var(--dark), #2a2a3e);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+
+        .modal h2 {
+            margin-bottom: 15px;
+            color: var(--primary);
+            text-align: center;
+        }
+
+        .modal p {
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            opacity: 0.6;
+        }
+
+        .modal-close:hover {
+            opacity: 1;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 1.5s ease forwards;
+            opacity: 0.8;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty));
+                opacity: 0;
+            }
+        }
+
+        .secret-power {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--primary) 0%, transparent 70%);
+            z-index: 5;
+            opacity: 0;
+            transform: scale(0);
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            pointer-events: none;
+        }
+
+        .secret-power.active {
+            width: 150px;
+            height: 150px;
+            opacity: 0.7;
+            transform: scale(1);
+        }
+
+        .level-complete {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 30px 50px;
+            border-radius: 10px;
+            text-align: center;
+            z-index: 20;
+            opacity: 0;
+            transition: all 0.5s ease;
+            border: 2px solid var(--primary);
+        }
+
+        .level-complete.active {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .level-complete h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 2rem;
+        }
+
+        .level-complete p {
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .tutorial-hint {
+            position: absolute;
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .tutorial-hint::after {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid var(--primary);
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>SUPERHERO JANITOR</h1>
+            <p class="subtitle">Clean up after epic battles while secretly using powers to fix the city!</p>
+        </header>
+
+        <div class="stats-container">
+            <div class="stat">
+                <div class="stat-value" id="score">0</div>
+                <div class="stat-label">SCORE</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="trash-collected">0/10</div>
+                <div class="stat-label">TRASH CLEANED</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="hero-points">50</div>
+                <div class="stat-label">HERO POINTS</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="hero-progress"></div>
+                </div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="level">1</div>
+                <div class="stat-label">LEVEL</div>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="city-map" id="city-map">
+                <!-- Dynamic content will be added here by JavaScript -->
+            </div>
+            <div class="right-panel">
+                <div class="power-ups">
+                    <div class="power-card" id="power-speed" data-cost="20">
+                        <div class="power-icon"><i class="fas fa-bolt"></i></div>
+                        <div class="power-title">Super Speed</div>
+                        <div class="power-desc">Double your cleaning speed for 10 seconds</div>
+                        <div class="power-cost">20 HP</div>
+                    </div>
+                    <div class="power-card" id="power-telekinesis" data-cost="30">
+                        <div class="power-icon"><i class="fas fa-hand-rock"></i></div>
+                        <div class="power-title">Telekinesis</div>
+                        <div class="power-desc">Attract all trash in a 200px radius</div>
+                        <div class="power-cost">30 HP</div>
+                    </div>
+                    <div class="power-card na" id="power-rebuild" data-cost="50">
+                        <div class="power-icon"><i class="fas fa-building"></i></div>
+                        <div class="power-title">City Rebuild (Level 3)</div>
+                        <div class="power-desc">Repair all damaged buildings in the city</div>
+                        <div class="power-cost">50 HP</div>
+                    </div>
+                    <div class="power-card na" id="power-stealth" data-cost="40">
+                        <div class="power-icon"><i class="fas fa-user-secret"></i></div>
+                        <div class="power-title">Stealth Mode (Level 2)</div>
+                        <div class="power-desc">Become invisible to surveillance for 15 seconds</div>
+                        <div class="power-cost">40 HP</div>
+                    </div>
+                </div>
+
+                <div class="message-log" id="message-log">
+                    <!-- Messages will appear here -->
+                </div>
+
+                <div class="buttons">
+                    <button id="end-day-btn" disabled>
+                        <i class="fas fa-moon"></i> End Day
+                    </button>
+                    <button id="new-game-btn">
+                        <i class="fas fa-redo"></i> New Game
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="level-complete" id="level-complete">
+            <h2>LEVEL COMPLETE!</h2>
+            <p id="level-summary">You cleaned up <span id="level-trash">0</span> pieces of trash!</p>
+            <p>You earned <span id="level-bonus">0</span> bonus hero points!</p>
+            <button id="next-level-btn">
+                <i class="fas fa-arrow-right"></i> Next Level
+            </button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="intro-modal">
+        <div class="modal">
+            <button class="modal-close" id="close-intro">&times;</button>
+            <h2>Welcome to SUPERHERO JANITOR!</h2>
+            <p>You're Mike Monroe, a mild-mannered janitor by day, but secretly a superhero with incredible powers!</p>
+            <p>Your mission: Clean up the city after epic superhero battles while using your powers to fix things without being discovered.</p>
+            <p>Click on trash to clean it up. Collect Hero Points to unlock special abilities. Keep your secret identity safe!</p>
+            <div class="modal-buttons">
+                <button id="start-game"><i class="fas fa-play"></i> Start Game</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="game-over-modal">
+        <div class="modal">
+            <h2 id="game-over-title">Game Over</h2>
+            <p id="game-over-message"></p>
+            <div class="modal-buttons">
+                <button id="restart-game"><i class="fas fa-redo"></i> Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const game = {
+            score: 0,
+            heroPoints: 50,
+            level: 1,
+            trashCollected: 0,
+            trashTotal: 10,
+            speedActive: false,
+            stealthActive: false,
+            gameActive: false,
+            heroPosition: { x: 50, y: 50 },
+            heroElement: null,
+            secretPowerActive: false,
+            messageCount: 0,
+            maxMessages: 8,
+            powerCooldowns: {},
+            surveillanceTimer: null,
+            debrisElements: [],
+            buildingElements: [],
+            maxHeroPoints: 100,
+            tutorialStep: 0
+        };
+
+        // DOM elements
+        const elements = {
+            cityMap: document.getElementById('city-map'),
+            score: document.getElementById('score'),
+            trashCollected: document.getElementById('trash-collected'),
+            heroPoints: document.getElementById('hero-points'),
+            heroProgress: document.getElementById('hero-progress'),
+            level: document.getElementById('level'),
+            messageLog: document.getElementById('message-log'),
+            endDayBtn: document.getElementById('end-day-btn'),
+            newGameBtn: document.getElementById('new-game-btn'),
+            introModal: document.getElementById('intro-modal'),
+            gameOverModal: document.getElementById('game-over-modal'),
+            closeIntro: document.getElementById('close-intro'),
+            startGame: document.getElementById('start-game'),
+            restartGame: document.getElementById('restart-game'),
+            gameOverTitle: document.getElementById('game-over-title'),
+            gameOverMessage: document.getElementById('game-over-message'),
+            powerCards: {
+                speed: document.getElementById('power-speed'),
+                telekinesis: document.getElementById('power-telekinesis'),
+                rebuild: document.getElementById('power-rebuild'),
+                stealth: document.getElementById('power-stealth')
+            },
+            levelComplete: document.getElementById('level-complete'),
+            levelSummary: document.getElementById('level-summary'),
+            levelTrash: document.getElementById('level-trash'),
+            levelBonus: document.getElementById('level-bonus'),
+            nextLevelBtn: document.getElementById('next-level-btn')
+        };
+
+        // Initialize game
+        function initGame() {
+            // Reset game state
+            game.score = 0;
+            game.heroPoints = 50;
+            game.level = 1;
+            game.trashCollected = 0;
+            game.trashTotal = 10;
+            game.speedActive = false;
+            game.stealthActive = false;
+            game.gameActive = true;
+            game.messageCount = 0;
+            game.powerCooldowns = {};
+            game.surveillanceTimer = null;
+            game.tutorialStep = 0;
+            
+            // Clear city map
+            elements.cityMap.innerHTML = '';
+            
+            // Clear messages
+            elements.messageLog.innerHTML = '';
+            
+            // Create hero
+            createHero();
+            
+            // Update UI
+            updateStats();
+            
+            // Generate level
+            generateLevel();
+            
+            // Show tutorial message
+            addMessage("You're secretly a superhero, but your cover is janitor Mike Monroe.", "system");
+            addMessage("Click on trash to clean it up and earn Hero Points.", "system");
+            
+            // Hide modals
+            elements.introModal.classList.remove('active');
+            elements.gameOverModal.classList.remove('active');
+            elements.levelComplete.classList.remove('active');
+            
+            // Start surveillance timer
+            startSurveillance();
+            
+            // Start tutorial
+            setTimeout(() => {
+                showTutorialHint("Click on that pile of trash to clean it up!", 
+                    document.querySelector('.debris'), 0);
+            }, 1000);
+        }
+        
+        // Show tutorial hint
+        function showTutorialHint(text, target, step) {
+            if (game.tutorialStep !== step) return;
+            
+            const hint = document.createElement('div');
+            hint.className = 'tutorial-hint';
+            hint.textContent = text;
+            document.body.appendChild(hint);
+            
+            const rect = target.getBoundingClientRect();
+            hint.style.top = (rect.top - hint.offsetHeight - 10) + 'px';
+            hint.style.left = (rect.left + rect.width/2 - hint.offsetWidth/2) + 'px';
+            
+            setTimeout(() => {
+                hint.style.opacity = '1';
+            }, 100);
+            
+            // Remove hint when clicked
+            const clickHandler = () => {
+                hint.style.opacity = '0';
+                setTimeout(() => {
+                    hint.remove();
+                    game.tutorialStep++;
+                    document.removeEventListener('click', clickHandler);
+                }, 300);
+            };
+            
+            document.addEventListener('click', clickHandler, { once: true });
+        }
+        
+        // Create hero element
+        function createHero() {
+            game.heroElement = document.createElement('div');
+            game.heroElement.className = 'hero';
+            game.heroElement.style.left = game.heroPosition.x + 'px';
+            game.heroElement.style.top = game.heroPosition.y + 'px';
+            elements.cityMap.appendChild(game.heroElement);
+        }
+        
+        // Generate level
+        function generateLevel() {
+            // Clear previous debris and buildings
+            elements.cityMap.innerHTML = '';
+            elements.cityMap.appendChild(game.heroElement);
+            game.debrisElements = [];
+            game.buildingElements = [];
+            
+            // Adjust difficulty based on level
+            game.trashTotal = 8 + game.level * 2;
+            game.trashCollected = 0;
+            
+            // Update trash display
+            elements.trashCollected.textContent = `${game.trashCollected}/${game.trashTotal}`;
+            
+            // Generate debris
+            for (let i = 0; i < game.trashTotal; i++) {
+                createDebris();
+            }
+            
+            // Generate buildings (5 + level buildings)
+            const buildingCount = 5 + game.level;
+            for (let i = 0; i < buildingCount; i++) {
+                createBuilding();
+            }
+            
+            // Damage some buildings (1 per 2 levels)
+            const damagedCount = Math.floor(game.level / 2);
+            for (let i = 0; i < damagedCount; i++) {
+                const building = game.buildingElements[Math.floor(Math.random() * game.buildingElements.length)];
+                building.classList.add('damaged');
+            }
+            
+            // Update power availability based on level
+            updatePowerAvailability();
+            
+            // Position hero at center
+            const mapRect = elements.cityMap.getBoundingClientRect();
+            game.heroPosition = {
+                x: mapRect.width / 2 - 25,
+                y: mapRect.height / 2 - 25
+            };
+            game.heroElement.style.left = game.heroPosition.x + 'px';
+            game.heroElement.style.top = game.heroPosition.y + 'px';
+        }
+        
+        // Create debris element
+        function createDebris() {
+            const debris = document.createElement('div');
+            debris.className = 'debris';
+            
+            // Random position within city map (avoid edges)
+            const mapRect = elements.cityMap.getBoundingClientRect();
+            const x = 30 + Math.random() * (mapRect.width - 60);
+            const y = 30 + Math.random() * (mapRect.height - 60);
+            
+            debris.style.left = x + 'px';
+            debris.style.top = y + 'px';
+            
+            // Random debris icon
+            const icons = ['🗑️', '🔥', '🚗', '🏗️', '🧱', '📱', '💻', '🔋', '🥫', '📦'];
+            debris.textContent = icons[Math.floor(Math.random() * icons.length)];
+            
+            // Click event to clean up debris
+            debris.addEventListener('click', () => {
+                if (!game.gameActive) return;
+                
+                cleanDebris(debris);
+                
+                if (game.tutorialStep === 0) {
+                    game.tutorialStep++;
+                    showTutorialHint("Great! Now let's try using your secret powers. Click on Super Speed!", 
+                        elements.powerCards.speed, 1);
+                }
+            });
+            
+            elements.cityMap.appendChild(debris);
+            game.debrisElements.push(debris);
+            
+            return debris;
+        }
+        
+        // Clean up debris
+        function cleanDebris(debris) {
+            // Find index of debris
+            const index = game.debrisElements.indexOf(debris);
+            if (index === -1) return;
+            
+            // Remove from array
+            game.debrisElements.splice(index, 1);
+            
+            // Calculate score based on distance
+            const debrisRect = debris.getBoundingClientRect();
+            const debrisX = debrisRect.left + debrisRect.width/2;
+            const debrisY = debrisRect.top + debrisRect.height/2;
+            
+            const heroRect = game.heroElement.getBoundingClientRect();
+            const heroX = heroRect.left + heroRect.width/2;
+            const heroY = heroRect.top + heroRect.height/2;
+            
+            const distance = Math.sqrt(
+                Math.pow(debrisX - heroX, 2) + 
+                Math.pow(debrisY - heroY, 2)
+            );
+            
+            // Base score is 10, modified by distance (closer = more points)
+            let points = Math.max(5, 15 - Math.floor(distance / 20));
+            
+            // Double points if speed is active
+            if (game.speedActive) {
+                points *= 2;
+                addMessage("Super Speed bonus: +" + points + " points!", "system");
+            }
+            
+            // Add score
+            game.score += points;
+            game.trashCollected++;
+            
+            // Add hero points (1 per debris plus bonus if speed active)
+            let hpGain = 1;
+            if (game.speedActive) hpGain = 2;
+            game.heroPoints = Math.min(game.maxHeroPoints, game.heroPoints + hpGain);
+            
+            // Create particles
+            createParticles(debrisX, debrisY, points);
+            
+            // Update UI
+            updateStats();
+            
+            // Animate debris removal
+            debris.style.transform = 'scale(0)';
+            debris.style.opacity = '0';
+            
+            setTimeout(() => {
+                debris.remove();
+            }, 300);
+            
+            // Add random message
+            const messages = [
+                "Trash cleaned! The city looks better already.",
+                "That debris was no match for your janitorial skills!",
+                "Disposing of hazardous materials... quietly.",
+                "Good job! The cleanup is progressing nicely.",
+                "Another mess taken care of. Not suspicious at all."
+            ];
+            
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            addMessage(randomMessage, "action");
+            
+            // Check if level is complete
+            if (game.trashCollected >= game.trashTotal) {
+                completeLevel();
+            }
+        }
+        
+        // Create building
+        function createBuilding() {
+            const building = document.createElement('div');
+            building.className = 'building';
+            
+            // Random position within city map (avoid edges)
+            const mapRect = elements.cityMap.getBoundingClientRect();
+            const x = 50 + Math.random() * (mapRect.width - 130);
+            const y = 50 + Math.random() * (mapRect.height - 180);
+            
+            building.style.left = x + 'px';
+            building.style.top = y + 'px';
+            
+            // Building name
+            const names = ['City Tower', 'Commerce Plaza', 'Residential Complex', 'Tech Center', 
+                          'Hero HQ', 'Apartment Block', 'Office Building', 'Shopping Mall'];
+            const name = names[Math.floor(Math.random() * names.length)];
+            
+            // Add windows
+            const windows = document.createElement('div');
+            windows.className = 'windows';
+            
+            // Number of windows (4-6 rows, 2-4 columns)
+            const rows = 4 + Math.floor(Math.random() * 3);
+            const cols = 2 + Math.floor(Math.random() * 3);
+            
+            for (let i = 0; i < rows * cols; i++) {
+                const window = document.createElement('div');
+                window.className = 'window';
+                windows.appendChild(window);
+            }
+            
+            building.appendChild(windows);
+            
+            // Add name label
+            building.textContent = name;
+            
+            elements.cityMap.appendChild(building);
+            game.buildingElements.push(building);
+            
+            return building;
+        }
+        
+        // Repair damaged buildings
+        function repairBuildings() {
+            let buildingsRepaired = 0;
+            
+            game.buildingElements.forEach(building => {
+                if (building.classList.contains('damaged')) {
+                    building.classList.remove('damaged');
+                    buildingsRepaired++;
+                    
+                    // Animate repair
+                    createParticles(
+                        building.getBoundingClientRect().left + building.offsetWidth/2,
+                        building.getBoundingClientRect().top + building.offsetHeight/2,
+                        0,
+                        20,
+                        'var(--primary)'
+                    );
+                }
+            });
+            
+            return buildingsRepaired;
+        }
+        
+        // Complete current level
+        function completeLevel() {
+            game.gameActive = false;
+            
+            // Calculate bonus (10 per unused hero point)
+            const bonus = Math.floor(game.heroPoints / 2);
+            game.score += bonus * 10;
+            
+            // Update level complete display
+            elements.levelTrash.textContent = game.trashCollected;
+            elements.levelBonus.textContent = bonus * 10;
+            
+            // Show level complete
+            elements.levelComplete.classList.add('active');
+            
+            // Stop surveillance timer
+            clearInterval(game.surveillanceTimer);
+        }
+        
+        // Start next level
+        function nextLevel() {
+            game.level++;
+            game.gameActive = true;
+            
+            // Update level display
+            elements.level.textContent = game.level;
+            
+            // Generate new level
+            generateLevel();
+            
+            // Hide level complete
+            elements.levelComplete.classList.remove('active');
+            
+            // Start new surveillance timer
+            startSurveillance();
+            
+            // Add level message
+            addMessage(`Level ${game.level} started. The city needs your help!`, "system");
+        }
+        
+        // End current day (special action)
+        function endDay() {
+            if (!game.gameActive) return;
+            
+            // Calculate score based on remaining trash
+            const remainingTrash = game.trashTotal - game.trashCollected;
+            if (remainingTrash > 0) {
+                const penalty = remainingTrash * 10;
+                game.score = Math.max(0, game.score - penalty);
+                addMessage(`Day ended early! -${penalty} points for ${remainingTrash} remaining trash pieces.`, "warning");
+            }
+            
+            // Complete level
+            completeLevel();
+        }
+        
+        // Create particles when collecting trash/points
+        function createParticles(x, y, points, count = 10, color = 'var(--secondary)') {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.backgroundColor = color;
+                
+                // Random size
+                const size = 5 + Math.random() * 10;
+                particle.style.width = size + 'px';
+                particle.style.height = size + 'px';
+                
+                // Random animation
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 20 + Math.random() * 50;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                
+                particle.style.setProperty('--tx', tx + 'px');
+                particle.style.setProperty('--ty', ty + 'px');
+                
+                // Position
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                
+                // Show points on first particle
+                if (i === 0 && points > 0) {
+                    particle.textContent = '+' + points;
+                    particle.style.fontSize = '12px';
+                    particle.style.fontWeight = 'bold';
+                    particle.style.color = '#fff';
+                    particle.style.textShadow = '0 0 3px #000';
+                    particle.style.zIndex = '100';
+                    particle.style.animationDuration = '1.5s';
+                }
+                
+                document.body.appendChild(particle);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    particle.remove();
+                }, 1500);
+            }
+        }
+        
+        // Activate secret power effect at position
+        function activateSecretPower(x, y) {
+            game.secretPowerActive = true;
+            
+            const power = document.createElement('div');
+            power.className = 'secret-power';
+            power.style.left = (x - 75) + 'px';
+            power.style.top = (y - 75) + 'px';
+            
+            document.body.appendChild(power);
+            
+            // Activate animation
+            setTimeout(() => {
+                power.classList.add('active');
+            }, 10);
+            
+            // Remove after animation
+            setTimeout(() => {
+                power.remove();
+                game.secretPowerActive = false;
+            }, 500);
+        }
+        
+        // Add message to log
+        function addMessage(text, type = 'normal') {
+            if (game.messageCount >= game.maxMessages) {
+                elements.messageLog.removeChild(elements.messageLog.firstChild);
+                game.messageCount--;
+            }
+            
+            const message = document.createElement('div');
+            message.className = 'message ' + type;
+            
+            // Add timestamp
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + 
+                           now.getMinutes().toString().padStart(2, '0') + ':' + 
+                           now.getSeconds().toString().padStart(2, '0');
+            
+            message.innerHTML = `<strong>[${timeStr}]</strong> ${text}`;
+            
+            elements.messageLog.appendChild(message);
+            game.messageCount++;
+            
+            // Auto-scroll to bottom
+            elements.messageLog.scrollTop = elements.messageLog.scrollHeight;
+        }
+        
+        // Update all stats displays
+        function updateStats() {
+            elements.score.textContent = game.score;
+            elements.trashCollected.textContent = `${game.trashCollected}/${game.trashTotal}`;
+            elements.heroPoints.textContent = game.heroPoints;
+            elements.heroProgress.style.width = `${(game.heroPoints / game.maxHeroPoints) * 100}%`;
+            
+            // Enable/disable end day button
+            elements.endDayBtn.disabled = game.trashCollected < 3;
+        }
+        
+        // Update power availability based on level and hero points
+        function updatePowerAvailability() {
+            // Super Speed
+            if (game.heroPoints >= 20 && !game.powerCooldowns.speed) {
+                elements.powerCards.speed.classList.remove('na');
+            } else {
+                elements.powerCards.speed.classList.add('na');
+            }
+            
+            // Telekinesis
+            if (game.heroPoints >= 30 && !game.powerCooldowns.telekinesis) {
+                elements.powerCards.telekinesis.classList.remove('na');
+            } else {
+                elements.powerCards.telekinesis.classList.add('na');
+            }
+            
+            // Stealth Mode (level 2+)
+            if (game.level >= 2 && game.heroPoints >= 40 && !game.powerCooldowns.stealth) {
+                elements.powerCards.stealth.classList.remove('na');
+            } else {
+                elements.powerCards.stealth.classList.add('na');
+            }
+            
+            // City Rebuild (level 3+)
+            if (game.level >= 3 && game.heroPoints >= 50 && !game.powerCooldowns.rebuild) {
+                elements.powerCards.rebuild.classList.remove('na');
+            } else {
+                elements.powerCards.rebuild.classList.add('na');
+            }
+        }
+        
+        // Start surveillance timer (random detection events)
+        function startSurveillance() {
+            if (game.surveillanceTimer) clearInterval(game.surveillanceTimer);
+            
+            // Random interval between 20-60 seconds
+            const interval = 20000 + Math.random() * 40000;
+            
+            game.surveillanceTimer = setInterval(() => {
+                if (!game.gameActive || game.stealthActive) return;
+                
+                // Random chance of detection based on level
+                const detectionChance = 0.2 + (game.level * 0.05);
+                
+                if (Math.random() < detectionChance) {
+                    // Detect super speed if active
+                    if (game.speedActive) {
+                        addMessage("WARNING: Security cameras detected unusual movement!", "warning");
+                        game.score = Math.max(0, game.score - 50);
+                        updateStats();
+                    }
+                    // Or random question about cleanup
+                    else if (Math.random() < 0.7) {
+                        const questions = [
+                            "Security guard: 'Hey Mike, how did you clean that area so fast?'",
+                            "Camera footage shows something... strange near your location.",
+                            "Police are asking questions about the cleanup process."
+                        ];
+                        
+                        addMessage(questions[Math.floor(Math.random() * questions.length)], "warning");
+                    }
+                }
+            }, interval);
+        }
+        
+        // Activate power
+        function activatePower(power) {
+            if (!game.gameActive) return;
+            
+            const cost = parseInt(elements.powerCards[power].dataset.cost);
+            
+            // Check if power is available
+            if (game.heroPoints < cost || game.powerCooldowns[power]) {
+                return;
+            }
+            
+            // Deduct hero points
+            game.heroPoints -= cost;
+            updateStats();
+            
+            // Show secret power effect at hero position
+            const heroRect = game.heroElement.getBoundingClientRect();
+            const heroX = heroRect.left + heroRect.width/2;
+            const heroY = heroRect.top + heroRect.height/2;
+            
+            activateSecretPower(heroX, heroY);
+            
+            // Power effects
+            switch (power) {
+                case 'speed':
+                    addMessage("Super Speed activated! You're cleaning at double speed!", "power");
+                    game.speedActive = true;
+                    
+                    // End after 10 seconds
+                    setTimeout(() => {
+                        game.speedActive = false;
+                        addMessage("Super Speed has worn off.", "system");
+                    }, 10000);
+                    
+                    // Cooldown
+                    game.powerCooldowns.speed = true;
+                    setTimeout(() => {
+                        delete game.powerCooldowns.speed;
+                        updatePowerAvailability();
+                    }, 20000);
+                    
+                    if (game.tutorialStep === 1) {
+                        game.tutorialStep++;
+                        showTutorialHint("Awesome! Now try Telekinesis to attract all nearby trash!", 
+                            elements.powerCards.telekinesis, 2);
+                    }
+                    break;
+                    
+                case 'telekinesis':
+                    addMessage("Telekinesis! Pulling trash toward you...", "power");
+                    
+                    // Move all debris within 200px toward hero
+                    const heroCenterX = game.heroPosition.x + 25;
+                    const heroCenterY = game.heroPosition.y + 25;
+                    
+                    game.debrisElements.forEach(debris => {
+                        const debrisRect = debris.getBoundingClientRect();
+                        const mapRect = elements.cityMap.getBoundingClientRect();
+                        
+                        const debrisX = debrisRect.left - mapRect.left + debrisRect.width/2;
+                        const debrisY = debrisRect.top - mapRect.top + debrisRect.height/2;
+                        
+                        const distance = Math.sqrt(
+                            Math.pow(debrisX - heroCenterX, 2) + 
+                            Math.pow(debrisY - heroCenterY, 2)
+                        );
+                        
+                        if (distance <= 200) {
+                            // Move toward hero
+                            const angle = Math.atan2(heroCenterY - debrisY, heroCenterX - debrisX);
+                            const newX = debrisX + Math.cos(angle) * 50;
+                            const newY = debrisY + Math.sin(angle) * 50;
+                            
+                            debris.style.left = newX + 'px';
+                            debris.style.top = newY + 'px';
+                            
+                            // Create particle trail
+                            createParticles(
+                                debrisRect.left + debrisRect.width/2,
+                                debrisRect.top + debrisRect.height/2,
+                                0,
+                                3,
+                                'var(--primary)'
+                            );
+                        }
+                    });
+                    
+                    // Cooldown
+                    game.powerCooldowns.telekinesis = true;
+                    setTimeout(() => {
+                        delete game.powerCooldowns.telekinesis;
+                        updatePowerAvailability();
+                    }, 15000);
+                    
+                    if (game.tutorialStep === 2) {
+                        game.tutorialStep++;
+                    }
+                    break;
+                    
+                case 'stealth':
+                    addMessage("Stealth Mode activated! Surveillance can't detect you for 15 seconds.", "power");
+                    game.stealthActive = true;
+                    
+                    // End after 15 seconds
+                    setTimeout(() => {
+                        game.stealthActive = false;
+                        addMessage("Stealth Mode has ended.", "system");
+                    }, 15000);
+                    
+                    // Cooldown
+                    game.powerCooldowns.stealth = true;
+                    setTimeout(() => {
+                        delete game.powerCooldowns.stealth;
+                        updatePowerAvailability();
+                    }, 30000);
+                    break;
+                    
+                case 'rebuild':
+                    const buildingsRepaired = repairBuildings();
+                    addMessage(`City Rebuild power used! Repaired ${buildingsRepaired} damaged buildings.`, "power");
+                    
+                    // Score bonus
+                    const bonus = buildingsRepaired * 25;
+                    game.score += bonus;
+                    createParticles(heroX, heroY, bonus, 20, 'var(--primary)');
+                    
+                    // Update stats
+                    updateStats();
+                    
+                    // Cooldown
+                    game.powerCooldowns.rebuild = true;
+                    setTimeout(() => {
+                        delete game.powerCooldowns.rebuild;
+                        updatePowerAvailability();
+                    }, 45000);
+                    break;
+            }
+            
+            // Update power availability
+            updatePowerAvailability();
+        }
+        
+        // Event Listeners
+        elements.startGame.addEventListener('click', initGame);
+        elements.closeIntro.addEventListener('click', () => {
+            elements.introModal.classList.remove('active');
+        });
+        elements.restartGame.addEventListener('click', initGame);
+        elements.newGameBtn.addEventListener('click', () => {
+            elements.introModal.classList.add('active');
+        });
+        elements.endDayBtn.addEventListener('click', endDay);
+        elements.nextLevelBtn.addEventListener('click', nextLevel);
+        
+        // Power card clicks
+        elements.powerCards.speed.addEventListener('click', () => activatePower('speed'));
+        elements.powerCards.telekinesis.addEventListener('click', () => activatePower('telekinesis'));
+        elements.powerCards.stealth.addEventListener('click', () => activatePower('stealth'));
+        elements.powerCards.rebuild.addEventListener('click', () => activatePower('rebuild'));
+        
+        // Hero movement
+        document.addEventListener('mousemove', (e) => {
+            if (!game.heroElement) return;
+            
+            // Get hero center position
+            const heroRect = game.heroElement.getBoundingClientRect();
+            const heroCenterX = heroRect.left + heroRect.width/2;
+            const heroCenterY = heroRect.top + heroRect.height/2;
+            
+            // Calculate angle to mouse
+            const angle = Math.atan2(e.clientY - heroCenterY, e.clientX - heroCenterX);
+            const distance = Math.sqrt(
+                Math.pow(e.clientX - heroCenterX, 2) + 
+                Math.pow(e.clientY - heroCenterY, 2)
+            );
+            
+            // Limit distance for subtle movement
+            const maxDistance = 100;
+            const movementFactor = Math.min(distance, maxDistance) / maxDistance;
+            
+            // Rotate hero slightly toward mouse
+            game.heroElement.style.transform = `rotate(${angle + Math.PI/2}rad) scale(${1 + movementFactor * 0.2})`;
+        });
+        
+        // Show intro modal on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                elements.introModal.classList.add('active');
+            }, 500);
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: absolute; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">This website has been generated by <a href="https://enzostvs-deepsite.hf.space" style="color: #fff;" target="_blank" >DeepSite</a> <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;"></p></body>
+</html>

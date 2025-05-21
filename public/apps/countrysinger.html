@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Country Singer - [Singer's Name]</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .bg-hero-pattern {
+                background-image: url('https://images.unsplash.com/photo-1530446544476-53328401203f?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'); /* Replace with a suitable country background image */
+                background-size: cover;
+                background-position: center;
+                background-attachment: fixed; /* Optional: Parallax effect */
+            }
+             .bg-music-pattern {
+                background-image: url('https://images.unsplash.com/photo-1507874220207-a5f42c6c6df8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'); /* Replace with a suitable guitar/music background */
+                background-size: cover;
+                background-position: center;
+            }
+             .bg-media-pattern {
+                background-image: url('https://images.unsplash.com/photo-1519810755548-fe07fd37f0a5?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'); /* Replace with a suitable light/stage background */
+                background-size: cover;
+                background-position: center;
+            }
+             .bg-about-pattern {
+                background-image: url('https://images.unsplash.com/photo-1517609714467-06f48ed75ec7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'); /* Replace with a suitable field/rustic background */
+                 background-size: cover;
+                background-position: center;
+            }
+            .text-shadow {
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            }
+            .glow-on-hover {
+              box-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px #fff, 0 0 20px #b08968, 0 0 25px #b08968, 0 0 30px #b08968, 0 0 35px #b08968;
+            }
+            /* Custom scrollbar styles */
+            ::-webkit-scrollbar {
+                width: 12px;
+            }
+            ::-webkit-scrollbar-track {
+                background: #f1f1f1; /* Light grey track */
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #b08968; /* Warm brown thumb */
+                border-radius: 6px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #9c7b5e; /* Darker brown on hover */
+            }
+        }
+    </style>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Optional: Custom Font (Example: Lora for body, Playfair Display for headings) -->
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lora', serif;
+            color: #333; /* Default text color */
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Playfair Display', serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full bg-white bg-opacity-90 shadow-md z-50">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center flex-wrap">
+            <div class="text-2xl font-bold text-[#b08968]">
+                [Singer's Name]
+            </div>
+            <button id="nav-toggle" class="block md:hidden px-3 py-2 border border-gray-300 rounded text-gray-600 hover:text-gray-800 hover:border-gray-400">
+                <i class="fas fa-bars"></i>
+            </button>
+            <nav id="nav-menu" class="w-full md:w-auto hidden md:block mt-4 md:mt-0">
+                <ul class="flex flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0 items-center">
+                    <li><a href="#home" class="text-gray-600 hover:text-[#b08968] transition duration-300">Home</a></li>
+                    <li><a href="#music" class="text-gray-600 hover:text-[#b08968] transition duration-300">Music</a></li>
+                    <li><a href="#media" class="text-gray-600 hover:text-[#b08968] transition duration-300">Media</a></li>
+                    <li><a href="#about" class="text-gray-600 hover:text-[#b08968] transition duration-300">About</a></li>
+                    <li><a href="#contact" class="text-gray-600 hover:text-[#b08968] transition duration-300">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="home" class="bg-hero-pattern text-white min-h-screen flex items-center justify-center text-center relative py-24">
+         <div class="absolute inset-0 bg-black opacity-50"></div> <!-- Overlay -->
+        <div class="container mx-auto px-4 relative z-10">
+            <img src="https://via.placeholder.com/150" alt="[Singer's Name] Portrait" class="rounded-full w-40 h-40 mx-auto mb-6 border-4 border-white shadow-lg glow-on-hover"> <!-- Replace with actual image -->
+            <h1 class="text-5xl md:text-7xl font-bold mb-4 text-shadow">[Singer's Name]</h1>
+            <p class="text-xl md:text-2xl mb-8 text-shadow">Authentic Country Music from the Heart</p>
+            <a href="#music" class="bg-[#b08968] text-white font-bold py-3 px-8 rounded-full hover:bg-[#9c7b5e] transition duration-300 text-lg shadow-lg">Listen Now</a>
+        </div>
+    </section>
+
+    <!-- Music Section -->
+    <section id="music" class="py-16 bg-music-pattern text-gray-800">
+         <div class="absolute inset-0 bg-white opacity-70"></div> <!-- Overlay -->
+        <div class="container mx-auto px-4 relative z-10">
+            <h2 class="text-4xl font-bold text-center mb-12 text-[#b08968]">Latest Music</h2>
+
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Song Card 1 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition duration-300">
+                    <img src="https://via.placeholder.com/200x200" alt="Album Art 1" class="rounded-md mb-4 w-full h-48 object-cover"> <!-- Replace with album art -->
+                    <h3 class="text-xl font-bold mb-2">[Song Title 1]</h3>
+                    <p class="text-gray-600 mb-4">[Album Name]</p>
+                    <audio controls class="w-full">
+                        <source src="your-song-1.mp3" type="audio/mpeg"> <!-- Replace with actual song file path -->
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div class="mt-4 space-x-4">
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-spotify"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-apple"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                 <!-- Song Card 2 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition duration-300">
+                    <img src="https://via.placeholder.com/200x200" alt="Album Art 2" class="rounded-md mb-4 w-full h-48 object-cover"> <!-- Replace with album art -->
+                    <h3 class="text-xl font-bold mb-2">[Song Title 2]</h3>
+                    <p class="text-gray-600 mb-4">[Album Name]</p>
+                    <audio controls class="w-full">
+                        <source src="your-song-2.mp3" type="audio/mpeg"> <!-- Replace with actual song file path -->
+                        Your browser does not support the audio element.
+                    </audio>
+                     <div class="mt-4 space-x-4">
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-spotify"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-apple"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+
+                 <!-- Song Card 3 -->
+                <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center text-center hover:shadow-xl transition duration-300">
+                    <img src="https://via.placeholder.com/200x200" alt="Album Art 3" class="rounded-md mb-4 w-full h-48 object-cover"> <!-- Replace with album art -->
+                    <h3 class="text-xl font-bold mb-2">[Song Title 3]</h3>
+                    <p class="text-gray-600 mb-4">[Album Name]</p>
+                    <audio controls class="w-full">
+                        <source src="your-song-3.mp3" type="audio/mpeg"> <!-- Replace with actual song file path -->
+                        Your browser does not support the audio element.
+                    </audio>
+                     <div class="mt-4 space-x-4">
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-spotify"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-apple"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e]"><i class="fab fa-youtube"></i></a>
+                    </div>
+                </div>
+                <!-- Add more song cards as needed -->
+            </div>
+
+            <div class="text-center mt-12">
+                 <a href="#" class="bg-[#b08968] text-white font-bold py-3 px-8 rounded-full hover:bg-[#9c7b5e] transition duration-300 text-lg shadow-lg">View All Music</a> <!-- Link to a full discography page if available -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Media Section -->
+    <section id="media" class="py-16 bg-media-pattern text-white relative">
+         <div class="absolute inset-0 bg-black opacity-60"></div> <!-- Overlay -->
+        <div class="container mx-auto px-4 relative z-10">
+            <h2 class="text-4xl font-bold text-center mb-12 text-[#b08968] text-shadow">Media Gallery</h2>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- Media Item 1 (Image) -->
+                <div class="overflow-hidden rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300 ease-in-out bg-gray-800">
+                    <img src="https://via.placeholder.com/600x400" alt="Media 1" class="w-full h-48 object-cover"> <!-- Replace with actual image -->
+                    <div class="p-4">
+                        <p class="text-sm text-gray-300">[Image Caption or Date]</p>
+                    </div>
+                </div>
+
+                 <!-- Media Item 2 (Image) -->
+                <div class="overflow-hidden rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300 ease-in-out bg-gray-800">
+                    <img src="https://via.placeholder.com/600x400" alt="Media 2" class="w-full h-48 object-cover"> <!-- Replace with actual image -->
+                     <div class="p-4">
+                        <p class="text-sm text-gray-300">[Image Caption or Date]</p>
+                    </div>
+                </div>
+
+                 <!-- Media Item 3 (Video - Placeholder) -->
+                 <div class="overflow-hidden rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300 ease-in-out bg-gray-800">
+                    <div class="relative w-full h-48 bg-black flex items-center justify-center">
+                         <i class="fas fa-play-circle text-white text-5xl opacity-75"></i> <!-- Play icon placeholder -->
+                         <img src="https://via.placeholder.com/600x400?text=Video+Thumbnail" alt="Video Thumbnail" class="absolute inset-0 w-full h-full object-cover opacity-50">
+                    </div>
+                    <div class="p-4">
+                        <p class="text-sm text-gray-300">[Video Title or Date]</p>
+                    </div>
+                 </div>
+
+                 <!-- Media Item 4 (Image) -->
+                <div class="overflow-hidden rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition duration-300 ease-in-out bg-gray-800">
+                    <img src="https://via.placeholder.com/600x400" alt="Media 4" class="w-full h-48 object-cover"> <!-- Replace with actual image -->
+                     <div class="p-4">
+                        <p class="text-sm text-gray-300">[Image Caption or Date]</p>
+                    </div>
+                </div>
+
+                <!-- Add more media items as needed -->
+            </div>
+
+             <div class="text-center mt-12">
+                 <a href="#" class="bg-[#b08968] text-white font-bold py-3 px-8 rounded-full hover:bg-[#9c7b5e] transition duration-300 text-lg shadow-lg">View All Media</a> <!-- Link to a full gallery page if available -->
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-16 bg-about-pattern text-gray-800 relative">
+        <div class="absolute inset-0 bg-white opacity-80"></div> <!-- Overlay -->
+        <div class="container mx-auto px-4 relative z-10">
+            <h2 class="text-4xl font-bold text-center mb-12 text-[#b08968]">About [Singer's Name]</h2>
+
+            <div class="flex flex-col md:flex-row items-center md:space-x-8">
+                <div class="md:w-1/3 mb-8 md:mb-0 flex justify-center">
+                     <img src="https://via.placeholder.com/300x400" alt="[Singer's Name] Bio Photo" class="rounded-lg shadow-lg w-full max-w-xs object-cover"> <!-- Replace with actual bio photo -->
+                </div>
+                <div class="md:w-2/3 text-lg leading-relaxed">
+                    <p class="mb-4">
+                        [Singer's Name] is a country music singer-songwriter known for his heartfelt lyrics, soulful voice, and authentic storytelling. Hailing from [Hometown/Region], his music draws inspiration from the rich traditions of country, folk, and Americana, weaving tales of love, loss, hard work, and the simple beauty of life.
+                    </p>
+                    <p class="mb-4">
+                        From playing small town bars to opening for national acts, [Singer's Name] has built a loyal following with his raw energy and genuine connection with audiences. His latest album, "[Latest Album Name]", released in [Year], showcases his evolving sound and lyrical depth, receiving critical acclaim and charting on [Chart Information, if any].
+                    </p>
+                    <p>
+                        When he's not on the road or in the studio, [Singer's Name] can often be found [Mention a hobby or interest, e.g., fishing, writing, spending time with family]. He continues to write and perform, sharing his unique perspective through the power of music.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+     <!-- Contact/Connect Section -->
+    <section id="contact" class="py-16 bg-[#eaddcf] text-gray-800">
+        <div class="container mx-auto px-4">
+            <h2 class="text-4xl font-bold text-center mb-8 text-[#b08968]">Connect & Contact</h2>
+
+            <div class="flex flex-col md:flex-row justify-center space-y-8 md:space-y-0 md:space-x-12 text-center">
+
+                <!-- Social Media -->
+                <div class="md:w-1/2">
+                    <h3 class="text-2xl font-bold mb-4">Follow [Singer's Name]</h3>
+                    <div class="flex justify-center space-x-6 text-4xl">
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e] transition duration-300"><i class="fab fa-facebook-square"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e] transition duration-300"><i class="fab fa-twitter-square"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e] transition duration-300"><i class="fab fa-instagram-square"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e] transition duration-300"><i class="fab fa-youtube-square"></i></a>
+                        <a href="#" class="text-[#b08968] hover:text-[#9c7b5e] transition duration-300"><i class="fab fa-spotify"></i></a>
+                    </div>
+                </div>
+
+                <!-- Contact Form (Simplified Placeholder) -->
+                <div class="md:w-1/2">
+                     <h3 class="text-2xl font-bold mb-4">Get In Touch</h3>
+                     <form action="#" method="POST" class="max-w-sm mx-auto space-y-4">
+                         <div>
+                             <input type="text" placeholder="Your Name" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#c4a78f]">
+                         </div>
+                         <div>
+                             <input type="email" placeholder="Your Email" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#c4a78f]">
+                         </div>
+                         <div>
+                             <textarea placeholder="Your Message" rows="4" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#c4a78f]"></textarea>
+                         </div>
+                         <button type="submit" class="w-full bg-[#b08968] text-white font-bold py-2 px-4 rounded-md hover:bg-[#9c7b5e] transition duration-300">Send Message</button>
+                     </form>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- Footer -->
+    <footer class="bg-[#6b705d] text-white py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>&copy; 2023 [Singer's Name]. All rights reserved.</p>
+            <p class="mt-2 text-sm">Website designed with <i class="fas fa-heart text-red-500"></i> and built with Tailwind CSS</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                const headerOffset = document.querySelector('header').offsetHeight; // Get header height
+                const elementPosition = targetElement.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+                window.scrollTo({
+                    top: offsetPosition,
+                    behavior: 'smooth'
+                });
+
+                // Close mobile menu after click (optional)
+                if (window.innerWidth < 768) { // Check if it's a mobile view
+                     document.getElementById('nav-menu').classList.add('hidden');
+                }
+            });
+        });
+
+        // Mobile navigation toggle
+        const navToggle = document.getElementById('nav-toggle');
+        const navMenu = document.getElementById('nav-menu');
+
+        navToggle.addEventListener('click', function() {
+            navMenu.classList.toggle('hidden');
+        });
+
+        // Close mobile menu when clicking outside (optional but good UX)
+        document.addEventListener('click', function(event) {
+             const isClickInside = navMenu.contains(event.target) || navToggle.contains(event.target);
+             if (!isClickInside && window.innerWidth < 768 && !navMenu.classList.contains('hidden')) {
+                 navMenu.classList.add('hidden');
+             }
+        });
+    </script>
+
+</body>
+</html>

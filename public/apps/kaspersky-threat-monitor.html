@@ -1,0 +1,232 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"66b2e5424ee6ec452762e585"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRUTALIST CYBER THREAT MONITOR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Space Mono', monospace;
+            background-color: #000;
+            color: #fff;
+        }
+        
+        .brutal-border {
+            border: 8px solid #ff0000;
+            box-shadow: 16px 16px 0px #000000;
+            position: relative;
+            background-color: #000;
+        }
+        
+        .brutal-border::before {
+            content: "";
+            position: absolute;
+            top: -16px;
+            left: -16px;
+            right: -16px;
+            bottom: -16px;
+            border: 4px solid #fff;
+            pointer-events: none;
+        }
+        
+        .terminal-text {
+            color: #ff0000;
+            text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+        }
+        
+        .blink {
+            animation: blink 1s step-end infinite;
+        }
+        
+        @keyframes blink {
+            from, to { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        
+        .scanline {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0.1) 0%,
+                rgba(255, 255, 255, 0.1) 50%,
+                rgba(255, 0, 0, 0.1) 50%,
+                rgba(255, 0, 0, 0.1) 100%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+        }
+        
+        .stat-box {
+            background-color: #111;
+            border: 2px solid #ff0000;
+        }
+        
+        .threat-box {
+            background-color: #111;
+            border: 1px solid #ff0000;
+        }
+        
+        .rss-feed {
+            max-height: 300px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #ff0000 #000;
+        }
+        
+        .rss-feed::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .rss-feed::-webkit-scrollbar-track {
+            background: #000;
+        }
+        
+        .rss-feed::-webkit-scrollbar-thumb {
+            background-color: #ff0000;
+            border-radius: 4px;
+        }
+        
+        .rss-item {
+            border-bottom: 1px solid #333;
+            padding: 12px 0;
+        }
+        
+        .rss-item:last-child {
+            border-bottom: none;
+        }
+        
+        .rss-title {
+            color: #ff0000;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .rss-date {
+            color: #999;
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+        }
+        
+        .rss-description {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        
+        .cybermap-container {
+            width: 100%;
+            height: 317px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-4xl">
+        <div class="bg-black p-6 brutal-border mb-8 relative overflow-hidden">
+            <div class="scanline"></div>
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-3xl font-bold terminal-text">KASPERSKY THREAT MONITOR</h1>
+                <div class="flex items-center">
+                    <span class="terminal-text mr-2">LIVE</span>
+                    <div class="w-3 h-3 bg-red-500 rounded-full blink"></div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-3 gap-4 mb-4">
+                <div class="stat-box p-3">
+                    <div class="text-xs uppercase text-white mb-1">Threats</div>
+                    <div class="text-2xl font-bold terminal-text">24,567</div>
+                </div>
+                <div class="stat-box p-3">
+                    <div class="text-xs uppercase text-white mb-1">Countries</div>
+                    <div class="text-2xl font-bold terminal-text">187</div>
+                </div>
+                <div class="stat-box p-3">
+                    <div class="text-xs uppercase text-white mb-1">Last Update</div>
+                    <div class="text-xl font-bold terminal-text" id="current-time">--:--:--</div>
+                </div>
+            </div>
+            
+            <div class="relative" style="height: 60px;">
+                <rssapp-ticker id="tccUCm0DWwfoAHE1"></rssapp-ticker>
+                <script src="https://widget.rss.app/v1/ticker.js" type="text/javascript" async></script>
+            </div>
+            
+            <!-- Kaspersky Cybermap Section -->
+            <div class="mt-6">
+                <h2 class="text-xl font-bold terminal-text mb-3">GLOBAL CYBER THREAT MAP</h2>
+                <div class="cybermap-container">
+                    <iframe width="100%" height="100%" src="https://cybermap.kaspersky.com/en/widget/dynamic/dark" frameborder="0"></iframe>
+                </div>
+            </div>
+            
+            <div class="mt-4 flex justify-between text-xs">
+                <div class="terminal-text">SYSTEM STATUS: OPERATIONAL</div>
+                <div class="terminal-text">ACCESS: PUBLIC</div>
+                <div class="terminal-text">SECURITY LEVEL: MAXIMUM</div>
+            </div>
+        </div>
+        
+        <div class="bg-black p-4 brutal-border">
+            <div class="flex overflow-x-auto space-x-4">
+                <div class="threat-box flex-shrink-0 p-2">
+                    <div class="text-xs text-white">THREAT TYPE</div>
+                    <div class="terminal-text">MALWARE</div>
+                </div>
+                <div class="threat-box flex-shrink-0 p-2">
+                    <div class="text-xs text-white">THREAT TYPE</div>
+                    <div class="terminal-text">PHISHING</div>
+                </div>
+                <div class="threat-box flex-shrink-0 p-2">
+                    <div class="text-xs text-white">THREAT TYPE</div>
+                    <div class="terminal-text">SPAM</div>
+                </div>
+                <div class="threat-box flex-shrink-0 p-2">
+                    <div class="text-xs text-white">THREAT TYPE</div>
+                    <div class="terminal-text">EXPLOITS</div>
+                </div>
+                <div class="threat-box flex-shrink-0 p-2">
+                    <div class="text-xs text-white">THREAT TYPE</div>
+                    <div class="terminal-text">BOTNETS</div>
+                </div>
+                <div class="threat-box flex-shrink-0 p-2">
+                    <div class="text-xs text-white">THREAT TYPE</div>
+                    <div class="terminal-text">DDoS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString();
+            document.getElementById('current-time').textContent = timeString;
+        }
+        
+        setInterval(updateTime, 1000);
+        updateTime();
+        
+        // Simulate some terminal-like activity
+        const statusElements = document.querySelectorAll('.terminal-text');
+        setInterval(() => {
+            statusElements.forEach(el => {
+                if (Math.random() > 0.8) {
+                    el.style.opacity = '0.7';
+                    setTimeout(() => {
+                        el.style.opacity = '1';
+                    }, 100);
+                }
+            });
+        }, 3000);
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - <a href="https://enzostvs-deepsite.hf.space?remix=222tuesday/cybersecurity-live-threat-rss" style="color: #fff;text-decoration: underline;" target="_blank" >🧬 Remix</a></p></body>
+</html>

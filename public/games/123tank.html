@@ -1,0 +1,951 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"67e9b57563762f259cf57488"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tank Battle Arena</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #222;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #444;
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .health-bar {
+            width: 150px;
+            height: 20px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+            border: 1px solid #555;
+        }
+        
+        .health-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        
+        #health1-fill {
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+        }
+        
+        #health2-fill {
+            background: linear-gradient(to right, #F44336, #FF9800);
+        }
+        
+        .size-display {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #DDD;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #444;
+            z-index: 100;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .player-controls {
+            margin-bottom: 10px;
+        }
+        
+        .player-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #FFD700;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.95));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            color: white;
+        }
+        
+        #title {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700;
+            letter-spacing: 3px;
+        }
+        
+        #start-button {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: linear-gradient(45deg, #4CAF50, #8BC34A);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        #start-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            color: white;
+        }
+        
+        #game-over h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #FFD700;
+        }
+        
+        #restart-button {
+            padding: 12px 30px;
+            background: linear-gradient(45deg, #F44336, #FF9800);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        
+        <div id="ui">
+            <div class="player-info">
+                <div>Player 1 (Green)</div>
+                <div class="health-bar">
+                    <div id="health1-fill" class="health-fill" style="width: 100%"></div>
+                </div>
+                <div id="health1">100%</div>
+                <div class="size-display" id="size1">Size: 100%</div>
+            </div>
+            
+            <div class="player-info">
+                <div>Player 2 (Red)</div>
+                <div class="health-bar">
+                    <div id="health2-fill" class="health-fill" style="width: 100%"></div>
+                </div>
+                <div id="health2">100%</div>
+                <div class="size-display" id="size2">Size: 100%</div>
+            </div>
+        </div>
+        
+        <div id="controls">
+            <div class="player-controls">
+                <div class="player-title">Player 1 Controls:</div>
+                <div>W/S - Forward/Backward</div>
+                <div>A/D - Turn Left/Right</div>
+                <div>SPACE - Fire</div>
+                <div>Q/E - Rotate Turret</div>
+            </div>
+            
+            <div class="player-controls">
+                <div class="player-title">Player 2 Controls:</div>
+                <div>↑/↓ - Forward/Backward</div>
+                <div>←/→ - Turn Left/Right</div>
+                <div>SHIFT - Fire</div>
+                <div>M - Rotate Turret Right</div>
+            </div>
+        </div>
+        
+        <div id="start-screen">
+            <h1 id="title">TANK BATTLE ARENA</h1>
+            <button id="start-button">START BATTLE</button>
+        </div>
+        
+        <div id="game-over">
+            <h1 id="winner-text">Player 1 Wins!</h1>
+            <button id="restart-button">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Game variables
+        let scene, camera, renderer;
+        let tanks = [];
+        let bullets = [];
+        let obstacles = [];
+        let gameActive = false;
+        const mapSize = 200;
+        
+        // Physics constants
+        const friction = 0.95;
+        const gravity = -0.005;
+        
+        // Key states
+        const keys = {
+            w: false, s: false, a: false, d: false, space: false, q: false, e: false,
+            ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false, 
+            Shift: false, m: false
+        };
+        
+        // Tank properties
+        class Tank {
+            constructor(x, z, color, isPlayer1) {
+                this.group = new THREE.Group();
+                this.position = new THREE.Vector3(x, 0, z);
+                this.velocity = new THREE.Vector3();
+                this.rotationY = isPlayer1 ? 0 : Math.PI;
+                this.turretRotation = 0;
+                this.health = 100;
+                this.isPlayer1 = isPlayer1;
+                this.lastShotTime = 0;
+                this.size = 1.0;
+                this.score = 0;
+                
+                // Tank body
+                const bodyGeometry = new THREE.BoxGeometry(5, 3, 8);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ color: color });
+                this.body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                this.body.position.y = 1.5;
+                this.body.castShadow = true;
+                
+                // Turret
+                const turretGeometry = new THREE.CylinderGeometry(1.8, 1.8, 2, 8);
+                const turretMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+                this.turret = new THREE.Mesh(turretGeometry, turretMaterial);
+                this.turret.position.y = 3.5;
+                this.turret.castShadow = true;
+                
+                // Barrel
+                const barrelGeometry = new THREE.CylinderGeometry(0.4, 0.4, 5, 8);
+                const barrelMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 });
+                this.barrel = new THREE.Mesh(barrelGeometry, barrelMaterial);
+                this.barrel.rotation.x = Math.PI / 2;
+                this.barrel.position.set(0, 3.5, -2.5);
+                this.barrel.castShadow = true;
+                
+                // Barrel end marker (for shooting origin)
+                this.barrelEnd = new THREE.Object3D();
+                this.barrelEnd.position.set(0, 0, -2.9);
+                this.barrel.add(this.barrelEnd);
+                
+                // Add parts to tank group
+                this.group.add(this.body);
+                this.group.add(this.turret);
+                this.group.add(this.barrel);
+                
+                // Track parts
+                this.createTracks();
+                
+                // Position tank
+                this.group.position.set(x, 0, z);
+                
+                // Add to scene
+                scene.add(this.group);
+            }
+            
+            createTracks() {
+                const trackGeometry = new THREE.BoxGeometry(0.8, 1, 8);
+                const trackMaterial = new THREE.MeshPhongMaterial({ color: 0x111111 });
+                
+                // Left track
+                const leftTrack = new THREE.Mesh(trackGeometry, trackMaterial);
+                leftTrack.position.set(-2.5, 0.5, 0);
+                leftTrack.castShadow = true;
+                
+                // Right track
+                const rightTrack = new THREE.Mesh(trackGeometry, trackMaterial);
+                rightTrack.position.set(2.5, 0.5, 0);
+                rightTrack.castShadow = true;
+                
+                this.group.add(leftTrack);
+                this.group.add(rightTrack);
+            }
+            
+            resizeTank(newSize) {
+                this.size = Math.max(0.3, Math.min(2.0, newSize));
+                this.group.scale.set(this.size, this.size, this.size);
+                
+                // Update UI
+                const sizeDisplay = this.isPlayer1 ? 
+                    document.getElementById('size1') : document.getElementById('size2');
+                sizeDisplay.textContent = `Size: ${Math.round(this.size * 100)}%`;
+                
+                // Check if tank is too small
+                if (this.size <= 0.35) {
+                    this.respawn();
+                    const otherTank = tanks.find(tank => tank !== this);
+                    if (otherTank) {
+                        otherTank.score++;
+                        
+                        // Check win condition
+                        if (otherTank.score >= 5) {
+                            endGame(otherTank);
+                        }
+                    }
+                }
+            }
+            
+            respawn() {
+                // Reset size
+                this.size = 1.0;
+                this.group.scale.set(1, 1, 1);
+                
+                // Reset position
+                const spawnX = this.isPlayer1 ? -30 : 30;
+                this.position.set(spawnX, 0, 0);
+                this.velocity.set(0, 0, 0);
+                this.rotationY = this.isPlayer1 ? 0 : Math.PI;
+                this.turretRotation = this.isPlayer1 ? 0 : Math.PI;
+                
+                // Update group transforms
+                this.group.position.copy(this.position);
+                this.group.rotation.y = this.rotationY;
+                this.turret.rotation.y = this.turretRotation;
+                
+                // Reset health
+                this.health = 100;
+                
+                // Update UI
+                if (this.isPlayer1) {
+                    document.getElementById('health1').textContent = '100%';
+                    document.getElementById('health1-fill').style.width = '100%';
+                } else {
+                    document.getElementById('health2').textContent = '100%';
+                    document.getElementById('health2-fill').style.width = '100%';
+                }
+            }
+            
+            update(deltaTime) {
+                // Apply friction
+                this.velocity.multiplyScalar(friction);
+                
+                // Apply movement based on current rotation
+                if (this.isPlayer1) {
+                    if (keys.w) {
+                        this.velocity.x -= Math.sin(this.rotationY) * 0.1 * deltaTime * this.size;
+                        this.velocity.z -= Math.cos(this.rotationY) * 0.1 * deltaTime * this.size;
+                    }
+                    if (keys.s) {
+                        this.velocity.x += Math.sin(this.rotationY) * 0.1 * deltaTime * this.size;
+                        this.velocity.z += Math.cos(this.rotationY) * 0.1 * deltaTime * this.size;
+                    }
+                    if (keys.a) {
+                        this.rotationY += 0.05 * deltaTime * (1 + (1 - this.size));
+                    }
+                    if (keys.d) {
+                        this.rotationY -= 0.05 * deltaTime * (1 + (1 - this.size));
+                    }
+                    if (keys.q) {
+                        this.turretRotation += 0.03 * deltaTime;
+                    }
+                    if (keys.e) {
+                        this.turretRotation -= 0.03 * deltaTime;
+                    }
+                    if (keys.space && Date.now() - this.lastShotTime > 800 - (this.size * 100)) {
+                        this.shoot();
+                    }
+                } else {
+                    if (keys.ArrowUp) {
+                        this.velocity.x -= Math.sin(this.rotationY) * 0.1 * deltaTime * this.size;
+                        this.velocity.z -= Math.cos(this.rotationY) * 0.1 * deltaTime * this.size;
+                    }
+                    if (keys.ArrowDown) {
+                        this.velocity.x += Math.sin(this.rotationY) * 0.1 * deltaTime * this.size;
+                        this.velocity.z += Math.cos(this.rotationY) * 0.1 * deltaTime * this.size;
+                    }
+                    if (keys.ArrowLeft) {
+                        this.rotationY += 0.05 * deltaTime * (1 + (1 - this.size));
+                    }
+                    if (keys.ArrowRight) {
+                        this.rotationY -= 0.05 * deltaTime * (1 + (1 - this.size));
+                    }
+                    if (keys.m) {
+                        this.turretRotation -= 0.03 * deltaTime;
+                    }
+                    if (keys.Shift && Date.now() - this.lastShotTime > 800 - (this.size * 100)) {
+                        this.shoot();
+                    }
+                }
+                
+                // Update position
+                this.position.add(this.velocity);
+                
+                // Check boundaries
+                if (Math.abs(this.position.x) > mapSize/2 - 5) {
+                    this.position.x = Math.sign(this.position.x) * (mapSize/2 - 5);
+                    this.velocity.x = 0;
+                }
+                if (Math.abs(this.position.z) > mapSize/2 - 5) {
+                    this.position.z = Math.sign(this.position.z) * (mapSize/2 - 5);
+                    this.velocity.z = 0;
+                }
+                
+                // Apply gravity to vertical position (for future effects)
+                this.position.y = 0;
+                
+                // Update tank model
+                this.group.position.copy(this.position);
+                this.group.rotation.y = this.rotationY;
+                this.turret.rotation.y = this.turretRotation;
+            }
+            
+            shoot() {
+                this.lastShotTime = Date.now();
+                
+                // Get bullet start position
+                const startPos = new THREE.Vector3();
+                this.barrelEnd.getWorldPosition(startPos);
+                
+                // Create muzzle flash
+                this.createMuzzleFlash();
+                
+                // Get bullet direction based on turret rotation (not tank rotation)
+                const direction = new THREE.Vector3(0, 0, -1);
+                direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), this.turretRotation);
+                direction.normalize();
+                
+                // Create bullet mesh
+                const geometry = new THREE.SphereGeometry(0.4 * this.size, 16, 16);
+                const material = new THREE.MeshPhongMaterial({ 
+                    color: this.isPlayer1 ? 0x00FF00 : 0xFF0000,
+                    emissive: this.isPlayer1 ? 0x00AA00 : 0xAA0000,
+                    emissiveIntensity: 0.8
+                });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.copy(startPos);
+                mesh.castShadow = true;
+                scene.add(mesh);
+                
+                // Add glow effect
+                const glow = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.6 * this.size, 16, 16),
+                    new THREE.MeshBasicMaterial({
+                        color: this.isPlayer1 ? 0x00FF00 : 0xFF0000,
+                        transparent: true,
+                        opacity: 0.5
+                    })
+                );
+                mesh.add(glow);
+                
+                // Add light to bullet
+                const light = new THREE.PointLight(this.isPlayer1 ? 0x00FF00 : 0xFF0000, 1, 10);
+                mesh.add(light);
+                
+                // Add to bullets array
+                bullets.push({
+                    mesh: mesh,
+                    position: startPos.clone(),
+                    direction: direction.clone(),
+                    speed: 1.5 * this.size,
+                    tank: this,
+                    spawnTime: Date.now(),
+                    size: this.size,
+                    light: light
+                });
+            }
+            
+            createMuzzleFlash() {
+                const flashSize = 2 * this.size;
+                const flashGeometry = new THREE.SphereGeometry(flashSize * 0.5, 16, 16);
+                const flashMaterial = new THREE.MeshBasicMaterial({
+                    color: 0xFFA500,
+                    transparent: true,
+                    opacity: 1
+                });
+                
+                const flash = new THREE.Mesh(flashGeometry, flashMaterial);
+                this.barrelEnd.add(flash);
+                
+                // Animate flash
+                const initialScale = new THREE.Vector3(1, 1, 1).multiplyScalar(0.5);
+                const maxScale = new THREE.Vector3(2, 2, 2).multiplyScalar(this.size);
+                
+                let lifetime = 0;
+                function animateFlash() {
+                    lifetime += 1;
+                    
+                    if (lifetime > 10) {
+                        this.barrelEnd.remove(flash);
+                        return;
+                    }
+                    
+                    // Expand then fade
+                    if (lifetime < 5) {
+                        const t = lifetime / 5;
+                        flash.scale.lerpVectors(initialScale, maxScale, t);
+                    } else {
+                        const t = (lifetime - 5) / 5;
+                        flash.material.opacity = 1 - t;
+                    }
+                    
+                    requestAnimationFrame(animateFlash.bind(this));
+                }
+                
+                animateFlash.call(this);
+            }
+        }
+
+        // Initialize game
+        function initGame() {
+            // Set up scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.FogExp2(0x87CEEB, 0.003);
+            
+            // Set up camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 60, 100);
+            camera.lookAt(0, 0, 0);
+            
+            // Set up renderer with antialiasing
+            renderer = new THREE.WebGLRenderer({ 
+                canvas: document.getElementById('game-canvas'),
+                antialias: true 
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(50, 100, 50);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+            
+            // Create ground
+            const groundGeometry = new THREE.PlaneGeometry(mapSize, mapSize);
+            const groundTexture = new THREE.TextureLoader().load('https://threejs.org/examples/textures/terrain/grasslight-big.jpg');
+            groundTexture.wrapS = groundTexture.wrapT = THREE.RepeatWrapping;
+            groundTexture.repeat.set(10, 10);
+            groundTexture.anisotropy = 16;
+            
+            const groundMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0x5a3a1e,
+                map: groundTexture
+            });
+            
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+            
+            // Create skybox
+            const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
+            const skyMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x87CEEB,
+                side: THREE.BackSide
+            });
+            const skybox = new THREE.Mesh(skyGeometry, skyMaterial);
+            scene.add(skybox);
+            
+            // Create tanks
+            tanks.push(new Tank(-30, 0, 0x4CAF50, true));  // Player 1 (green)
+            tanks.push(new Tank(30, 0, 0xF44336, false));  // Player 2 (red)
+            
+            // Create obstacles
+            createObstacles();
+            
+            // Start game loop
+            gameActive = true;
+            
+            // Reset UI
+            document.getElementById('health1').textContent = '100%';
+            document.getElementById('health2').textContent = '100%';
+            document.getElementById('health1-fill').style.width = '100%';
+            document.getElementById('health2-fill').style.width = '100%';
+            document.getElementById('size1').textContent = 'Size: 100%';
+            document.getElementById('size2').textContent = 'Size: 100%';
+            
+            let lastTime = 0;
+            function animate(currentTime) {
+                if (!gameActive) return;
+                
+                requestAnimationFrame(animate);
+                
+                const deltaTime = (currentTime - lastTime) / 16; // Normalize to ~60fps
+                lastTime = currentTime;
+                
+                // Update tanks
+                tanks.forEach(tank => tank.update(deltaTime));
+                
+                // Check collisions between tanks
+                checkTankCollisions();
+                
+                // Update bullets
+                updateBullets();
+                
+                // Update camera
+                updateCamera();
+                
+                // Render scene
+                renderer.render(scene, camera);
+            }
+            
+            animate(0);
+        }
+        
+        function createObstacles() {
+            const geometry = new THREE.BoxGeometry(10, 10, 10);
+            const material = new THREE.MeshStandardMaterial({ 
+                color: 0x777777,
+                roughness: 0.7
+            });
+            
+            for (let i = 0; i < 15; i++) {
+                const obstacle = new THREE.Mesh(geometry, material);
+                
+                // Position obstacles in a pattern rather than randomly
+                const angle = (i / 15) * Math.PI * 2;
+                const radius = 40 + (i % 4) * 20;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                
+                obstacle.position.set(x, 5, z);
+                obstacle.rotation.y = Math.random() * Math.PI;
+                obstacle.castShadow = true;
+                obstacle.receiveShadow = true;
+                
+                scene.add(obstacle);
+                obstacles.push(obstacle);
+            }
+        }
+        
+        function checkTankCollisions() {
+            if (tanks.length !== 2) return;
+            
+            const tank1 = tanks[0];
+            const tank2 = tanks[1];
+            
+            const distance = tank1.position.distanceTo(tank2.position);
+            const minDistance = 7 * tank1.size + 7 * tank2.size;
+            
+            if (distance < minDistance * 0.9) {
+                // Push tanks apart
+                const direction = new THREE.Vector3().subVectors(tank1.position, tank2.position).normalize();
+                const pushForce = (minDistance - distance) * 0.1;
+                
+                tank1.velocity.add(direction.clone().multiplyScalar(pushForce * tank2.size));
+                tank2.velocity.add(direction.clone().multiplyScalar(-pushForce * tank1.size));
+            }
+        }
+        
+        function updateBullets() {
+            const currentTime = Date.now();
+            
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const bullet = bullets[i];
+                
+                // Move bullet
+                bullet.position.add(bullet.direction.clone().multiplyScalar(bullet.speed));
+                bullet.mesh.position.copy(bullet.position);
+                
+                // Check for hits
+                let hit = false;
+                
+                // Check boundaries
+                if (Math.abs(bullet.position.x) > mapSize/2 || 
+                    Math.abs(bullet.position.z) > mapSize/2) {
+                    hit = true;
+                }
+                
+                // Check obstacles
+                for (const obstacle of obstacles) {
+                    if (bullet.position.distanceTo(obstacle.position) < 5 + bullet.size) {
+                        hit = true;
+                        
+                        // Explosion effect
+                        createExplosion(bullet.position, bullet.isPlayer1);
+                        break;
+                    }
+                }
+                
+                // Check tanks
+                for (const tank of tanks) {
+                    // Check distance and make sure not hitting the shooter
+                    if (tank !== bullet.tank && bullet.position.distanceTo(tank.position) < 3 * tank.size) {
+                        hit = true;
+                        
+                        // Damage based on bullet size
+                        const damage = 10 * bullet.size;
+                        tank.health -= damage;
+                        
+                        // Update UI
+                        if (tank.isPlayer1) {
+                            document.getElementById('health1').textContent = Math.round(tank.health) + '%';
+                            document.getElementById('health1-fill').style.width = tank.health + '%';
+                        } else {
+                            document.getElementById('health2').textContent = Math.round(tank.health) + '%';
+                            document.getElementById('health2-fill').style.width = tank.health + '%';
+                        }
+                        
+                        // Create explosion
+                        createExplosion(bullet.position, bullet.isPlayer1);
+                        
+                        // Tank size adjustment
+                        if (tank.health <= 0) {
+                            bullet.tank.resizeTank(bullet.tank.size + 0.1);
+                            tank.resizeTank(tank.size - 0.15);
+                            
+                            // Reset health after size change
+                            tank.health = 100;
+                            if (tank.isPlayer1) {
+                                document.getElementById('health1').textContent = '100%';
+                                document.getElementById('health1-fill').style.width = '100%';
+                            } else {
+                                document.getElementById('health2').textContent = '100%';
+                                document.getElementById('health2-fill').style.width = '100%';
+                            }
+                        }
+                        break;
+                    }
+                }
+                
+                // Check lifetime
+                if (currentTime - bullet.spawnTime > 4000) {
+                    hit = true;
+                }
+                
+                // Remove if hit or expired
+                if (hit) {
+                    scene.remove(bullet.mesh);
+                    if (bullet.light) bullet.mesh.remove(bullet.light);
+                    bullets.splice(i, 1);
+                }
+            }
+        }
+        
+        function createExplosion(position, isPlayer1) {
+            const color = isPlayer1 ? 0x00FF00 : 0xFF0000;
+            
+            // Main explosion flash
+            const flashGeometry = new THREE.SphereGeometry(2, 16, 16);
+            const flashMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 1
+            });
+            
+            const flash = new THREE.Mesh(flashGeometry, flashMaterial);
+            flash.position.copy(position);
+            scene.add(flash);
+            
+            // Animate flash
+            let lifetime = 0;
+            function animateFlash() {
+                lifetime += 1;
+                
+                if (lifetime > 20) {
+                    scene.remove(flash);
+                    return;
+                }
+                
+                if (lifetime < 10) {
+                    flash.scale.set(1 + lifetime * 0.2, 1 + lifetime * 0.2, 1 + lifetime * 0.2);
+                } else {
+                    flash.material.opacity = 1 - (lifetime - 10) * 0.1;
+                }
+                
+                requestAnimationFrame(animateFlash);
+            }
+            
+            animateFlash();
+            
+            // Explosion particles
+            const particleCount = 15;
+            const particles = [];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const size = Math.random() * 0.8 + 0.4;
+                const geometry = new THREE.SphereGeometry(size, 8, 8);
+                const material = new THREE.MeshBasicMaterial({ 
+                    color: color,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.copy(position);
+                
+                // Random direction with slight upward bias
+                const dir = new THREE.Vector3(
+                    Math.random() * 2 - 1,
+                    Math.random() * 0.5,
+                    Math.random() * 2 - 1
+                ).normalize();
+                
+                const speed = Math.random() * 0.5 + 0.3;
+                
+                scene.add(particle);
+                particles.push({
+                    mesh: particle,
+                    velocity: dir.multiplyScalar(speed)
+                });
+            }
+            
+            // Animate particles
+            let particleTime = 0;
+            function animateParticles() {
+                particleTime += 1;
+                
+                if (particleTime > 40) {
+                    particles.forEach(p => scene.remove(p.mesh));
+                    return;
+                }
+                
+                particles.forEach(p => {
+                    p.mesh.position.add(p.velocity);
+                    p.velocity.y += gravity;
+                    p.mesh.material.opacity = 0.8 - (particleTime / 40);
+                });
+                
+                requestAnimationFrame(animateParticles);
+            }
+            
+            animateParticles();
+        }
+        
+        function updateCamera() {
+            if (tanks.length !== 2) return;
+            
+            const tank1 = tanks[0];
+            const tank2 = tanks[1];
+            
+            // Calculate midpoint based on size-weighted positions
+            const weightedPos1 = tank1.position.clone().multiplyScalar(tank1.size);
+            const weightedPos2 = tank2.position.clone().multiplyScalar(tank2.size);
+            const totalSize = tank1.size + tank2.size;
+            
+            const midpoint = new THREE.Vector3()
+                .addVectors(weightedPos1, weightedPos2)
+                .divideScalar(totalSize);
+            
+            // Calculate distance between tanks adjusted by their sizes
+            const distance = tank1.position.distanceTo(tank2.position) * (1 + (2 - tank1.size - tank2.size) * 0.3);
+            const cameraHeight = 30 + distance * 0.5;
+            const cameraDistance = 40 + distance * 0.7;
+            
+            // Smooth camera movement
+            camera.position.x += (midpoint.x - camera.position.x) * 0.1;
+            camera.position.y += (cameraHeight - camera.position.y) * 0.1;
+            camera.position.z += (midpoint.z + cameraDistance - camera.position.z) * 0.1;
+            
+            camera.lookAt(midpoint);
+        }
+        
+        function endGame(winner) {
+            gameActive = false;
+            document.getElementById('winner-text').textContent = 
+                winner.isPlayer1 ? "PLAYER 1 WINS THE BATTLE!" : "PLAYER 2 WINS THE BATTLE!";
+            document.getElementById('game-over').style.display = 'flex';
+            
+            // Reset scores
+            tanks.forEach(tank => tank.score = 0);
+        }
+        
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (e.key in keys) keys[e.key] = true;
+            if (e.key === 'Shift') keys.Shift = true;
+            if (e.key === ' ') keys.space = true;
+            
+            if (e.key === 'Enter' && !gameActive) {
+                startGame();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (e.key in keys) keys[e.key] = false;
+            if (e.key === 'Shift') keys.Shift = false;
+            if (e.key === ' ') keys.space = false;
+        });
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Mouse movement for turret rotation
+        let mouseX = 0;
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX / window.innerWidth * 2 - 1;
+        });
+        
+        function startGame() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-over').style.display = 'none';
+            
+            // Clear previous game
+            tanks.forEach(tank => scene.remove(tank.group));
+            bullets.forEach(bullet => scene.remove(bullet.mesh));
+            obstacles.forEach(obstacle => scene.remove(obstacle));
+            
+            tanks = [];
+            bullets = [];
+            obstacles = [];
+            
+            initGame();
+        }
+        
+        document.getElementById('start-button').addEventListener('click', startGame);
+        document.getElementById('restart-button').addEventListener('click', startGame);
+    </script>
+</body>
+</html>

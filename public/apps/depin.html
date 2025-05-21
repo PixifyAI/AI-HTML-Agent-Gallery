@@ -1,0 +1,688 @@
+#Agent:DeepSite,Model:Deepseek
+<!DOCTYPE html>
+<html lang="en">
+<head><script>window.huggingface={variables:{"SPACE_CREATOR_USER_ID":"67e8561c455e93447bd1ff8e"}};</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DePIN & Web3 Best Sellers</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6e45e2;
+            --secondary: #88d3ce;
+            --dark: #1a1a2e;
+            --darker: #16213e;
+            --light: #f1f1f1;
+            --accent: #ff6b6b;
+            --success: #4ade80;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--dark);
+            color: var(--light);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo i {
+            color: var(--primary);
+            font-size: 1.8rem;
+        }
+
+        .logo h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button:hover {
+            background-color: #5a35d1;
+            transform: translateY(-2px);
+        }
+
+        button.secondary {
+            background-color: var(--darker);
+            color: var(--light);
+        }
+
+        button.secondary:hover {
+            background-color: #1e2a5a;
+        }
+
+        .search-bar {
+            display: flex;
+            margin-bottom: 2rem;
+        }
+
+        .search-bar input {
+            flex: 1;
+            padding: 0.8rem 1rem;
+            border-radius: 0.5rem 0 0 0.5rem;
+            border: none;
+            background-color: var(--darker);
+            color: var(--light);
+            font-size: 1rem;
+        }
+
+        .search-bar button {
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        .categories {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            padding-bottom: 0.5rem;
+        }
+
+        .category {
+            padding: 0.5rem 1rem;
+            background-color: var(--darker);
+            border-radius: 2rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+        }
+
+        .category:hover, .category.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .product-card {
+            background-color: var(--darker);
+            border-radius: 0.8rem;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-image {
+            height: 180px;
+            background-color: #2a2a42;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .product-card:hover .product-image img {
+            transform: scale(1.05);
+        }
+
+        .badge {
+            position: absolute;
+            top: 0.5rem;
+            left: 0.5rem;
+            background-color: var(--accent);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.3rem;
+            font-size: 0.7rem;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        .product-info {
+            padding: 1.2rem;
+        }
+
+        .product-title {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-description {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .product-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .product-price {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--secondary);
+        }
+
+        .product-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: #ffc107;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .pagination button {
+            min-width: 40px;
+            padding: 0.5rem;
+            display: flex;
+            justify-content: center;
+        }
+
+        .pagination button.active {
+            background-color: var(--secondary);
+            color: var(--dark);
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal-content {
+            background-color: var(--darker);
+            border-radius: 0.8rem;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-title {
+            margin-bottom: 1.5rem;
+            color: var(--secondary);
+        }
+
+        .modal-body {
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: flex-start;
+            }
+
+            .controls {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .products-grid {
+                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <i class="fas fa-cube"></i>
+                <h1>DePIN Scout</h1>
+            </div>
+            <div class="controls">
+                <button class="secondary" id="refresh-btn">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+                <button id="about-btn">
+                    <i class="fas fa-info-circle"></i>
+                    About
+                </button>
+            </div>
+        </header>
+
+        <div class="search-bar">
+            <input type="text" id="search-input" placeholder="Search for DePIN or Web3 products...">
+            <button id="search-btn">
+                <i class="fas fa-search"></i>
+                Search
+            </button>
+        </div>
+
+        <div class="categories">
+            <div class="category active" data-category="all">All Products</div>
+            <div class="category" data-category="depin">DePIN</div>
+            <div class="category" data-category="web3">Web3</div>
+            <div class="category" data-category="hardware">Hardware</div>
+            <div class="category" data-category="software">Software</div>
+            <div class="category" data-category="nft">NFTs</div>
+            <div class="category" data-category="defi">DeFi</div>
+        </div>
+
+        <div id="products-container">
+            <div class="loading">
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <button id="prev-page" class="secondary"><i class="fas fa-chevron-left"></i></button>
+            <button class="active">1</button>
+            <button>2</button>
+            <button>3</button>
+            <button id="next-page"><i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <div class="modal" id="about-modal">
+        <div class="modal-content">
+            <button class="close-modal" id="close-modal">&times;</button>
+            <h2 class="modal-title">About DePIN Scout</h2>
+            <div class="modal-body">
+                <p>DePIN Scout is a web application designed to help you discover the best-selling products in the decentralized physical infrastructure (DePIN) and Web3 space.</p>
+                <p>Our platform scrapes data from multiple sources to provide you with up-to-date information on trending products, their prices, ratings, and more.</p>
+                <p><strong>Features:</strong></p>
+                <ul>
+                    <li>Real-time product scraping from top Web3 marketplaces</li>
+                    <li>Comprehensive filtering by categories</li>
+                    <li>Detailed product information</li>
+                    <li>User-friendly interface with dark mode</li>
+                </ul>
+                <p>This is a demo application showcasing Web3 product discovery. Actual scraping functionality would require backend integration with appropriate APIs.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mock data for demonstration
+            const mockProducts = [
+                {
+                    id: 1,
+                    title: "Helium Hotspot Miner",
+                    description: "Decentralized wireless network hotspot for IoT devices. Earn HNT tokens by providing coverage.",
+                    price: "$499",
+                    rating: 4.7,
+                    category: "depin",
+                    image: "https://images.unsplash.com/photo-1639762681057-408e52192e55?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                    badge: "BEST SELLER"
+                },
+                {
+                    id: 2,
+                    title: "DIMO Vehicle Adapter",
+                    description: "Connect your car to the DIMO network and earn rewards while maintaining full control of your data.",
+                    price: "$129",
+                    rating: 4.5,
+                    category: "depin",
+                    image: "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                },
+                {
+                    id: 3,
+                    title: "Ledger Nano X",
+                    description: "Secure hardware wallet for your crypto assets with Bluetooth connectivity.",
+                    price: "$149",
+                    rating: 4.8,
+                    category: "web3",
+                    image: "https://images.unsplash.com/photo-1620891549027-942fdc95d3f5?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+                    badge: "TRENDING"
+                },
+                {
+                    id: 4,
+                    title: "ENS Domain NFT",
+                    description: "Secure your Ethereum Name Service domain as an NFT for decentralized identity.",
+                    price: "0.01 ETH",
+                    rating: 4.9,
+                    category: "nft",
+                    image: "https://images.unsplash.com/photo-1626514324486-cd62457098e3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                },
+                {
+                    id: 5,
+                    title: "Arweave Storage Node",
+                    description: "Decentralized storage node for the permaweb. Earn AR tokens by providing storage.",
+                    price: "$899",
+                    rating: 4.6,
+                    category: "depin",
+                    image: "https://images.unsplash.com/photo-1626785774573-4b799315345d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                },
+                {
+                    id: 6,
+                    title: "MetaMask Swaps API",
+                    description: "Developer API for integrating decentralized token swaps into your application.",
+                    price: "Free + 0.3% fee",
+                    rating: 4.4,
+                    category: "software",
+                    image: "https://images.unsplash.com/photo-1624953587687-daf255b6b80a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                },
+                {
+                    id: 7,
+                    title: "Aave Staking Vault",
+                    description: "Earn interest on your crypto assets through decentralized lending protocol.",
+                    price: "0.5% APY",
+                    rating: 4.7,
+                    category: "defi",
+                    image: "https://images.unsplash.com/photo-1639762681057-408e52192e55?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                },
+                {
+                    id: 8,
+                    title: "Filecoin Storage Miner",
+                    description: "Hardware for participating in the Filecoin decentralized storage network.",
+                    price: "$1,299",
+                    rating: 4.5,
+                    category: "depin",
+                    image: "https://images.unsplash.com/photo-1626785774573-4b799315345d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80"
+                }
+            ];
+
+            // DOM elements
+            const productsContainer = document.getElementById('products-container');
+            const searchInput = document.getElementById('search-input');
+            const searchBtn = document.getElementById('search-btn');
+            const refreshBtn = document.getElementById('refresh-btn');
+            const categories = document.querySelectorAll('.category');
+            const aboutBtn = document.getElementById('about-btn');
+            const aboutModal = document.getElementById('about-modal');
+            const closeModal = document.getElementById('close-modal');
+            const prevPageBtn = document.getElementById('prev-page');
+            const nextPageBtn = document.getElementById('next-page');
+            const paginationBtns = document.querySelectorAll('.pagination button:not(#prev-page):not(#next-page)');
+
+            // Current state
+            let currentCategory = 'all';
+            let currentSearch = '';
+            let currentPage = 1;
+            const productsPerPage = 8;
+
+            // Initialize
+            displayProducts(mockProducts);
+
+            // Event listeners
+            searchBtn.addEventListener('click', handleSearch);
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') handleSearch();
+            });
+            
+            refreshBtn.addEventListener('click', function() {
+                // Simulate refresh with loading state
+                productsContainer.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+                setTimeout(() => {
+                    displayProducts(filterProducts(mockProducts, currentSearch, currentCategory));
+                }, 1000);
+            });
+
+            categories.forEach(category => {
+                category.addEventListener('click', function() {
+                    categories.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    currentCategory = this.dataset.category;
+                    displayProducts(filterProducts(mockProducts, currentSearch, currentCategory));
+                });
+            });
+
+            aboutBtn.addEventListener('click', () => aboutModal.classList.add('active'));
+            closeModal.addEventListener('click', () => aboutModal.classList.remove('active'));
+            aboutModal.addEventListener('click', (e) => {
+                if (e.target === aboutModal) aboutModal.classList.remove('active');
+            });
+
+            // Pagination
+            prevPageBtn.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updatePagination();
+                    displayProducts(filterProducts(mockProducts, currentSearch, currentCategory));
+                }
+            });
+
+            nextPageBtn.addEventListener('click', () => {
+                const filteredProducts = filterProducts(mockProducts, currentSearch, currentCategory);
+                const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updatePagination();
+                    displayProducts(filteredProducts);
+                }
+            });
+
+            paginationBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!this.classList.contains('active')) {
+                        currentPage = parseInt(this.textContent);
+                        updatePagination();
+                        displayProducts(filterProducts(mockProducts, currentSearch, currentCategory));
+                    }
+                });
+            });
+
+            // Functions
+            function handleSearch() {
+                currentSearch = searchInput.value.trim().toLowerCase();
+                currentPage = 1;
+                displayProducts(filterProducts(mockProducts, currentSearch, currentCategory));
+                updatePagination();
+            }
+
+            function filterProducts(products, searchTerm, category) {
+                return products.filter(product => {
+                    const matchesSearch = searchTerm === '' || 
+                        product.title.toLowerCase().includes(searchTerm) || 
+                        product.description.toLowerCase().includes(searchTerm);
+                    
+                    const matchesCategory = category === 'all' || product.category === category;
+                    
+                    return matchesSearch && matchesCategory;
+                });
+            }
+
+            function displayProducts(products) {
+                const startIndex = (currentPage - 1) * productsPerPage;
+                const endIndex = startIndex + productsPerPage;
+                const paginatedProducts = products.slice(startIndex, endIndex);
+
+                if (paginatedProducts.length === 0) {
+                    productsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-search"></i>
+                            <h3>No products found</h3>
+                            <p>Try adjusting your search or filter criteria</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                let html = '<div class="products-grid">';
+                
+                paginatedProducts.forEach(product => {
+                    html += `
+                        <div class="product-card">
+                            <div class="product-image">
+                                <img src="${product.image}" alt="${product.title}">
+                                ${product.badge ? `<div class="badge">${product.badge}</div>` : ''}
+                            </div>
+                            <div class="product-info">
+                                <h3 class="product-title">${product.title}</h3>
+                                <p class="product-description">${product.description}</p>
+                                <div class="product-footer">
+                                    <span class="product-price">${product.price}</span>
+                                    <span class="product-rating">
+                                        <i class="fas fa-star"></i>
+                                        ${product.rating}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                productsContainer.innerHTML = html;
+            }
+
+            function updatePagination() {
+                const filteredProducts = filterProducts(mockProducts, currentSearch, currentCategory);
+                const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+                
+                // Update page buttons
+                paginationBtns.forEach((btn, index) => {
+                    if (index < totalPages) {
+                        btn.style.display = 'flex';
+                        btn.textContent = index + 1;
+                        btn.classList.toggle('active', index + 1 === currentPage);
+                    } else {
+                        btn.style.display = 'none';
+                    }
+                });
+
+                // Update prev/next buttons
+                prevPageBtn.disabled = currentPage === 1;
+                nextPageBtn.disabled = currentPage === totalPages;
+            }
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <a href="https://enzostvs-deepsite.hf.space" style="color: #fff;" target="_blank" >DeepSite</a> <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;"></p></body>
+</html>

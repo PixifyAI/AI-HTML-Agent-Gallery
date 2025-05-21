@@ -1,0 +1,4320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="icon" type="image/png" href="/assets/fly_emoji.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <script async src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    <meta charset="UTF-8">
+    <title>alien invasion 2025</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
+            background-color: black; /* Set background to black */
+        }
+        canvas {
+            display: block;
+            touch-action: none;
+        }
+        #metrics {
+            cursor:pointer;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-family: monospace;
+            font-size: 16px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            z-index: 1000;
+        }
+        #startButton {
+            padding: 20px 40px;
+            font-size: 24px;
+            cursor: pointer;
+            background: #4CAF50;
+            border: none;
+            border-radius: 5px;
+            color: white;
+        }
+        #leftJoystick, #rightJoystick {
+            position: fixed;
+            bottom: 50px;
+            width: 120px;
+            height: 120px;
+            z-index: 1000;
+            opacity: 0.7;
+            display: none; /* Hidden by default, shown on mobile */
+        }
+        #leftJoystick {
+            left: 50px;
+        }
+        #rightJoystick {
+            right: 50px;
+        }
+        @media (max-width: 768px) {
+            #leftJoystick, #rightJoystick {
+                display: block;
+            }
+            #metrics {
+                font-size: 12px; /* Smaller metrics on mobile */
+                max-width: 150px;
+            }
+        }
+    </style>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <!-- Add after other style definitions -->
+    <style>
+        #scoreOverlay {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            color: white;
+            font-family: 'Arial', sans-serif;
+            font-size: 24px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 1000;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: transform 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <div id="metrics">
+    </div>
+    <div id="startScreen" style="position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background-color: rgba(0,0,0,0.8); color: white; font-family: Arial, sans-serif; z-index: 1000;">
+        <h1 style="font-size: 36px; margin-bottom: 20px;padding:14px;text-align: center;">alien invasion<br/>FLIGHT SIMULATOR</h1>
+        <button id="startButton" style="padding: 15px 30px; font-size: 24px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 5px;">Start</button>
+        <p style="margin-top: 20px; font-size: 18px;">Press any key to start</p>
+    </div>
+    <div id="leftJoystick"></div>
+    <div id="rightJoystick"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nipplejs/0.10.1/nipplejs.min.js"></script>
+    <script>
+        // Scene, Camera, Renderer
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000); // Black sky
+
+        // Add fog with closer distances
+        const fogColor = new THREE.Color(0x000000); // Match sky color
+        scene.fog = new THREE.Fog(fogColor, 100, 500); // Start fading at 100 units, completely fog out at 500 units (reduced from 1000)
+
+        const camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 10000);
+        const renderer = new THREE.WebGLRenderer();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;  // Enable shadow mapping
+        renderer.shadowMap.type = THREE.BasicShadowMap;
+                document.body.appendChild(renderer.domElement);
+
+
+        // Add these constants near the top with other constants
+        const SPACE_ALTITUDE = 2000; // Height where space darkness begins (80,000 ft)
+        const SPACE_TRANSITION_RANGE = 2000; // Range over which the transition occurs
+
+            // Player
+        const playerGroup = new THREE.Group(); // Create a group for player parts
+
+            // Player materials
+            const bodyMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF }); // White body
+            const wingMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF }); // White wings
+            const trimMaterial = new THREE.MeshPhongMaterial({ color: 0x2244CC }); // Blue trim
+
+            // Main body (fuselage)
+            const bodyGeometry = new THREE.BoxGeometry(0.8, 0.8, 4);
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            playerGroup.add(body);
+
+            // Nose - tapered front
+            const noseGeometry = new THREE.BoxGeometry(0.6, 0.6, 0.8);
+            const nose = new THREE.Mesh(noseGeometry, bodyMaterial);
+            nose.position.z = -2.2;
+            nose.position.y = -0.1;
+            playerGroup.add(nose);
+
+            // High-mounted wings (Cessna characteristic)
+            const wingGeometry = new THREE.BoxGeometry(7, 0.1, 1.2);
+            const wings = new THREE.Mesh(wingGeometry, wingMaterial);
+            wings.position.y = 0.3;
+            playerGroup.add(wings);
+
+            // Tail wings
+            const tailWingGeometry = new THREE.BoxGeometry(2.2, 0.1, 0.8);
+            const tailWing = new THREE.Mesh(tailWingGeometry, wingMaterial);
+            tailWing.position.z = 1.8;
+            tailWing.position.y = 0.2;
+            playerGroup.add(tailWing);
+
+            // Vertical stabilizer
+            const stabilizerGeometry = new THREE.BoxGeometry(0.1, 0.8, 1.2);
+            const stabilizer = new THREE.Mesh(stabilizerGeometry, wingMaterial);
+            stabilizer.position.z = 1.8;
+            stabilizer.position.y = 0.5;
+            playerGroup.add(stabilizer);
+
+            // Windows (cockpit)
+            const windowGeometry = new THREE.BoxGeometry(0.82, 0.82, 1.2);
+            const windowMaterial = new THREE.MeshPhongMaterial({
+                color: 0x87CEEB,
+                transparent: true,
+                opacity: 0.5
+            });
+            const windows = new THREE.Mesh(windowGeometry, windowMaterial);
+            windows.position.z = -0.8;
+            windows.position.y = 0.1;
+            playerGroup.add(windows);
+
+            // Landing gear
+            const wheelGeometry = new THREE.CylinderGeometry(0.2, 0.2, 0.1, 8);
+            const wheelMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+
+            // Main landing gear (under wings)
+            const leftWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            leftWheel.rotation.z = Math.PI / 2;
+            leftWheel.position.set(-1, -0.6, 0); // Adjusted Y position
+            playerGroup.add(leftWheel);
+
+            const rightWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            rightWheel.rotation.z = Math.PI / 2;
+            rightWheel.position.set(1, -0.6, 0); // Adjusted Y position
+            playerGroup.add(rightWheel);
+
+            // Nose wheel
+            const noseWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+            noseWheel.rotation.z = Math.PI / 2;
+            noseWheel.position.set(0, -0.6, -1.5); // Adjusted Y position
+            playerGroup.add(noseWheel);
+
+            scene.add(playerGroup);
+        const player = playerGroup;
+
+        // Ground at 35 units tall (unchanged)
+        const groundGeometry = new THREE.BoxGeometry(1000, 35, 4000);
+        const groundMaterial = new THREE.MeshPhongMaterial({
+            color: 0x2D5A27,  // Darker forest green
+            shininess: 0,     // Remove shininess
+            flatShading: true // Add some texture
+        });
+        const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+        ground.position.y = 17.5; // Half height of 35
+        ground.position.x = 150;
+        ground.receiveShadow = true;
+        scene.add(ground);
+
+        // Runway at exact same level as ground, but only 1px thick
+        const runwayGeometry = new THREE.BoxGeometry(10, 0.001, 200);
+        const runwayMaterial = new THREE.MeshPhongMaterial({ color: 0x404040 });
+        const runway = new THREE.Mesh(runwayGeometry, runwayMaterial);
+        runway.position.x = 0;
+        runway.position.y = 35.01; // Increased from 35.001 to 35.01
+        runway.position.z = 0;
+        runway.receiveShadow = true;
+        scene.add(runway);
+
+        // Runway markings just barely above runway
+        const stripeGeometry = new THREE.BoxGeometry(1, 0.001, 5);
+        const stripeMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
+        for(let i = -90; i <= 90; i += 10) {
+            const stripe = new THREE.Mesh(stripeGeometry, stripeMaterial);
+            stripe.position.set(0, 35.02, i); // Increased from 35.002 to 35.02
+            stripe.receiveShadow = true;
+            scene.add(stripe);
+        }
+
+        // ATC Tower
+        const towerGroup = new THREE.Group();
+
+        // Main tower structure (concrete base) - halved size
+        const towerBaseGeometry = new THREE.BoxGeometry(4, 12.5, 4);
+        const towerBaseMaterial = new THREE.MeshPhongMaterial({
+            color: 0xcccccc,  // Light grey concrete
+            roughness: 0.8
+        });
+        const towerBase = new THREE.Mesh(towerBaseGeometry, towerBaseMaterial);
+        towerBase.position.y = 6.25; // Half of height
+        towerBase.castShadow = true;
+        towerBase.receiveShadow = true;
+        towerGroup.add(towerBase);
+
+        // Control room (glass enclosure) - halved size
+        const controlRoomGeometry = new THREE.BoxGeometry(6, 3, 6);
+        const controlRoomMaterial = new THREE.MeshPhongMaterial({
+            color: 0x87CEEB,  // Sky blue
+            transparent: true,
+            opacity: 0.6,
+            shininess: 90
+        });
+        const controlRoom = new THREE.Mesh(controlRoomGeometry, controlRoomMaterial);
+        controlRoom.position.y = 14; // Base height (12.5) + half control room height (1.5)
+        controlRoom.castShadow = true;
+        towerGroup.add(controlRoom);
+
+        // Roof - halved size
+        const roofGeometry = new THREE.ConeGeometry(4.25, 2, 4);
+        const roofMaterial = new THREE.MeshPhongMaterial({ color: 0x666666 }); // Dark grey
+        const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+        roof.position.y = 16.5; // Control room top (15.5) + half roof height (1)
+        roof.rotation.y = Math.PI / 4; // Rotate 45 degrees to align with base
+        roof.castShadow = true;
+        towerGroup.add(roof);
+
+        // Antenna - halved size
+        const antennaGeometry = new THREE.CylinderGeometry(0.1, 0.1, 3, 8);
+        const antennaMaterial = new THREE.MeshPhongMaterial({ color: 0x333333 });
+        const antenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+        antenna.position.y = 19; // Roof top (17.5) + half antenna height (1.5)
+        antenna.castShadow = true;
+        towerGroup.add(antenna);
+
+        // Position entire tower group next to runway - moved to halfway point
+        towerGroup.position.set(15, 35, 0); // 15 units right of runway, at ground level, centered at z=0
+
+        scene.add(towerGroup);
+
+        // Add some ground details around the tower - halved size
+        const towerBaseDetailGeometry = new THREE.BoxGeometry(8, 0.25, 8);
+        const towerBaseDetailMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 }); // Concrete pad
+        const towerBaseDetail = new THREE.Mesh(towerBaseDetailGeometry, towerBaseDetailMaterial);
+        towerBaseDetail.position.set(15, 35.1, 0); // Slightly above ground, matching tower position
+        towerBaseDetail.receiveShadow = true;
+        scene.add(towerBaseDetail);
+
+        // Windsock
+        const windsockGroup = new THREE.Group();
+
+        // Pole
+        const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 6, 8);
+        const poleMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
+        const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+        pole.position.y = 3; // Half height
+        pole.castShadow = true;
+        windsockGroup.add(pole);
+
+        // Windsock segments (create multiple segments for better animation)
+        const segments = 6;
+        const sockSegments = [];
+        const segmentGeometry = new THREE.CylinderGeometry(0.4, 0.3, 0.6, 8);
+        const sockMaterial = new THREE.MeshPhongMaterial({
+            color: 0xff0000,
+            side: THREE.DoubleSide,
+            flatShading: true
+        });
+
+        for (let i = 0; i < segments; i++) {
+            const segment = new THREE.Mesh(segmentGeometry, sockMaterial);
+            segment.position.set(0, 5.5, i * 0.3); // Position at top of pole
+            segment.rotation.x = Math.PI / 2; // Rotate to horizontal
+            segment.rotation.y = Math.PI / 4; // Add 45-degree rotation (π/4 radians = 45 degrees)
+            segment.castShadow = true;
+            sockSegments.push(segment);
+            windsockGroup.add(segment);
+        }
+
+        // Position windsock near runway but rotated differently
+        windsockGroup.position.set(8, 35, -30); // Keep same position
+        windsockGroup.rotation.y = Math.PI / 4; // Rotate entire group 45 degrees
+
+        scene.add(windsockGroup);
+
+        // Add wind physics variables
+        let windSpeed = 0.2; // Base wind speed
+        let windDirection = 0; // Wind direction in radians
+        let windChangeTimer = 0;
+        const WIND_CHANGE_INTERVAL = 500; // Change wind every 500 frames
+
+        // Enhanced windsock animation
+        function animateWindsock() {
+            // Update wind conditions with deltaTime
+            windChangeTimer += deltaTime * 60;
+            if (windChangeTimer > WIND_CHANGE_INTERVAL) {
+                // Gradually change wind speed and direction
+                windSpeed = Math.max(0.1, Math.min(0.8, windSpeed + (Math.random() - 0.5) * 0.1));
+                windDirection += (Math.random() - 0.5) * 0.1;
+                windChangeTimer = 0;
+            }
+
+            const time = Date.now() * 0.001;
+
+            // Calculate apparent wind based on player speed and direction
+            const playerWindEffect = currentSpeed * 2;
+            const playerDirection = -yawAngle; // Negative because yaw is reversed
+
+            // Combine natural wind and player movement
+            const totalWindSpeed = Math.sqrt(
+                Math.pow(windSpeed * Math.cos(windDirection) + playerWindEffect * Math.cos(playerDirection), 2) +
+                Math.pow(windSpeed * Math.sin(windDirection) + playerWindEffect * Math.sin(playerDirection), 2)
+            );
+
+            const totalWindDirection = Math.atan2(
+                windSpeed * Math.sin(windDirection) + playerWindEffect * Math.sin(playerDirection),
+                windSpeed * Math.cos(windDirection) + playerWindEffect * Math.cos(playerDirection)
+            );
+
+            sockSegments.forEach((segment, index) => {
+                const offset = index * 0.1;
+                const windEffect = totalWindSpeed * (1 + index * 0.1); // Stronger effect on later segments
+
+                // Base position affected by wind strength
+                segment.position.y = 5.5 + Math.sin(time * 2 + offset) * 0.1;
+                segment.position.x = Math.sin(totalWindDirection) * windEffect;
+                segment.position.z = index * 0.3 + Math.cos(totalWindDirection) * windEffect;
+
+                // Rotation based on wind direction and strength
+                segment.rotation.x = Math.PI / 2 + Math.sin(time * 3 + offset) * 0.1;
+                segment.rotation.y = totalWindDirection;
+
+                // Add some waviness
+                segment.rotation.z = Math.sin(time * 4 + offset * 2) * 0.1 * totalWindSpeed;
+            });
+        }
+
+            // Keep initial position
+            player.position.set(0, 36, 90); // This is correct
+
+            // Initial camera setup - position it behind the plane
+            camera.position.set(0, 38, 100); // Start higher and behind the plane
+            camera.lookAt(player.position);
+
+            // Force initial render
+            renderer.render(scene, camera);
+
+            // Add this right after creating the renderer
+            function onWindowResize() {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                // Force a render on resize
+                renderer.render(scene, camera);
+            }
+
+            window.addEventListener('resize', onWindowResize);
+
+            // Create audio context and engine sound
+        let audioContext;
+        let engineOscillator;
+        let gainNode;
+
+        // Add after audio context creation in startGame()
+        let shootSound;
+
+        function createShootSound() {
+            const duration = 0.15;
+            const audioCtx = window.audioContext;
+
+            // Create buffer for the shoot sound
+            const shootBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+            const channelData = shootBuffer.getChannelData(0);
+
+            if (isMobileDevice()) {
+                // diff bassy "doof" sound for mobile
+                for (let i = 0; i < shootBuffer.length; i++) {
+                    const t = i / audioCtx.sampleRate;
+                    // Lower frequency for boom (30Hz)
+                    const baseFreq = 30;
+                    // Faster decay for punchier explosion
+                    const amplitude = Math.exp(-1 * t);
+                    // Add noise for crackle
+                    const noise = (Math.random() * 2 - 1) * Math.exp(-5 * t);
+
+                    channelData[i] = amplitude * (
+                        Math.sin(2 * Math.PI * baseFreq * t) + // Base boom
+                        1.5 * Math.sin(4 * Math.PI * baseFreq * t) + // First harmonic
+                        1.25 * Math.sin(8 * Math.PI * baseFreq * t) + // Second harmonic
+                        1.5 * noise // Noise component
+                    );
+                }
+            } else {
+                // Original bassy "doof" sound for desktop
+                for (let i = 0; i < shootBuffer.length; i++) {
+                    const t = i / audioCtx.sampleRate;
+                    const baseFreq = 50;
+                    const amplitude = Math.exp(-10 * t);
+                    channelData[i] = amplitude * (
+                        Math.sin(2 * Math.PI * baseFreq * t) +
+                        0.7 * Math.sin(4 * Math.PI * baseFreq * t) +
+                        0.5 * Math.sin(6 * Math.PI * baseFreq * t) +
+                        0.3 * Math.sin(8 * Math.PI * baseFreq * t)
+                    );
+                }
+            }
+
+            shootSound = shootBuffer;
+        }
+
+            // Add mobile detection function
+            function isMobileDevice() {
+                return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            }
+
+            // Modify playShootSound function to adjust volume for mobile only
+            function playShootSound() {
+            if (!window.audioContext) return;
+
+            const source = window.audioContext.createBufferSource();
+                source.buffer = shootSound;
+
+                // Create a gain node for volume control
+            const gainNode = window.audioContext.createGain();
+                // Reduce volume only on mobile
+                gainNode.gain.value = isMobileDevice() ? 0.4 : 2.0;
+
+                // Rest of the settings remain the same for both desktop and mobile
+            const filter = window.audioContext.createBiquadFilter();
+                filter.type = 'lowshelf';
+                filter.frequency.value = 100;
+                filter.gain.value = 20;
+
+            const compressor = window.audioContext.createDynamicsCompressor();
+                compressor.threshold.value = -24;
+                compressor.knee.value = 30;
+                compressor.ratio.value = 12;
+                compressor.attack.value = 0.003;
+                compressor.release.value = 0.25;
+
+                source.connect(filter);
+                filter.connect(compressor);
+                compressor.connect(gainNode);
+            gainNode.connect(window.audioContext.destination);
+
+                source.start();
+            }
+
+        // Add after other global variables
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetCameraOffset = new THREE.Vector3(0, 2, 10);
+        let mouseSensitivity = 0.002;
+        let isPointerLocked = false;
+        let lastMouseMoveTime = Date.now();
+        const MOUSE_TIMEOUT = 3000; // Time in ms before camera starts returning to center
+        let isThirdPerson = true; // Track camera mode
+        const COCKPIT_OFFSET = new THREE.Vector3(0, 1.0, -0.6); // Changed from (0, 0.8, -0.8)
+
+        // Add after audio context creation in startGame()
+        let explosionSound;
+
+        function createExplosionSound() {
+            const duration = 0.5;
+            const audioCtx = window.audioContext;
+
+            // Create buffer for explosion sound
+            const explosionBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
+            const channelData = explosionBuffer.getChannelData(0);
+
+            // Generate a deep boom with some noise
+            for (let i = 0; i < explosionBuffer.length; i++) {
+                const t = i / audioCtx.sampleRate;
+                // Lower frequency for boom (30Hz)
+                const baseFreq = 30;
+                // Faster decay for punchier explosion
+                const amplitude = Math.exp(-15 * t);
+                // Add noise for crackle
+                const noise = (Math.random() * 2 - 1) * Math.exp(-5 * t);
+
+                channelData[i] = amplitude * (
+                    Math.sin(2 * Math.PI * baseFreq * t) + // Base boom
+                    0.5 * Math.sin(4 * Math.PI * baseFreq * t) + // First harmonic
+                    0.25 * Math.sin(8 * Math.PI * baseFreq * t) + // Second harmonic
+                    0.5 * noise // Noise component
+                );
+            }
+
+            explosionSound = explosionBuffer;
+        }
+
+        function playExplosionSound() {
+            if (!window.audioContext) return;
+
+            const source = window.audioContext.createBufferSource();
+            source.buffer = explosionSound;
+
+            // Create a gain node for volume control
+            const gainNode = window.audioContext.createGain();
+            gainNode.gain.value = 1.5; // Loud!
+
+            // Create a filter for more bass
+            const filter = window.audioContext.createBiquadFilter();
+            filter.type = 'lowshelf';
+            filter.frequency.value = 150;
+            filter.gain.value = 15; // More bass
+
+            // Add a compressor for more punch
+            const compressor = window.audioContext.createDynamicsCompressor();
+            compressor.threshold.value = -20;
+            compressor.knee.value = 25;
+            compressor.ratio.value = 12;
+            compressor.attack.value = 0.005;
+            compressor.release.value = 0.25;
+
+            // Connect everything
+            source.connect(filter);
+            filter.connect(compressor);
+            compressor.connect(gainNode);
+            gainNode.connect(window.audioContext.destination);
+
+            source.start();
+        }
+
+        // Add after other audio functions (createShootSound, createExplosionSound)
+
+        function setupEngineSound() {
+            const audioCtx = window.audioContext;
+            if (!audioCtx) return;
+
+            // if(isLocalGame) return;
+
+            engineOscillator = window.audioContext.createOscillator();
+            const engineOscillator2 = window.audioContext.createOscillator();
+            const engineOscillator3 = window.audioContext.createOscillator();
+
+            // Create noise generator for jet sound
+            const noiseBuffer = window.audioContext.createBuffer(1, window.audioContext.sampleRate * 2, window.audioContext.sampleRate);
+            const noise = noiseBuffer.getChannelData(0);
+            for (let i = 0; i < noiseBuffer.length; i++) {
+                noise[i] = Math.random() * 2 - 1;
+            }
+            const noiseSource = window.audioContext.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            noiseSource.loop = true;
+
+            // Create gain nodes for mixing
+            gainNode = window.audioContext.createGain();
+            const gainNode2 = window.audioContext.createGain();
+            const gainNode3 = window.audioContext.createGain();
+            const noiseGain = window.audioContext.createGain();
+
+            // Set up filters for shaping the sound
+            const filter = window.audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 400;
+
+            // Configure oscillators
+            engineOscillator.type = 'sawtooth';
+            engineOscillator2.type = 'sine';
+            engineOscillator3.type = 'square';
+
+            // Connect everything
+            engineOscillator.connect(gainNode);
+            engineOscillator2.connect(gainNode2);
+            engineOscillator3.connect(gainNode3);
+            noiseSource.connect(noiseGain);
+
+            gainNode.connect(filter);
+            gainNode2.connect(filter);
+            gainNode3.connect(filter);
+            noiseGain.connect(filter);
+
+            filter.connect(window.audioContext.destination);
+
+            // Set initial values
+            gainNode.gain.setValueAtTime(0, window.audioContext.currentTime);
+            gainNode2.gain.setValueAtTime(0, window.audioContext.currentTime);
+            gainNode3.gain.setValueAtTime(0, window.audioContext.currentTime);
+            noiseGain.gain.setValueAtTime(0, window.audioContext.currentTime);
+
+            // Start all sound sources
+            engineOscillator.start();
+            engineOscillator2.start();
+            engineOscillator3.start();
+            noiseSource.start();
+
+            // Store references for updating
+            window.engineSound = {
+                osc1: engineOscillator,
+                osc2: engineOscillator2,
+                osc3: engineOscillator3,
+                gain1: gainNode,
+                gain2: gainNode2,
+                gain3: gainNode3,
+                noise: noiseGain,
+                filter: filter,
+            };
+        }
+
+        // Add with other global variables at the top
+        let hasStarted = false;
+
+        // Add after other audio setup code
+        let atcAudio;
+
+        function setupAtcAudio() {
+            atcAudio = new Audio('https://pieter.com/lofiatcbrazil.stream');
+            atcAudio.loop = true;
+            atcAudio.volume = 0.3; // Start at 30% volume
+
+            // Create gain node for ATC audio
+            const atcGainNode = window.audioContext.createGain();
+            atcGainNode.gain.value = 0.3;
+
+            // Connect to audio context
+            const audioSource = window.audioContext.createMediaElementSource(atcAudio);
+            audioSource.connect(atcGainNode);
+            atcGainNode.connect(window.audioContext.destination);
+        }
+
+        // Modify startGame function to include ATC audio
+        function startGame() {
+            if (hasStarted) return;
+            hasStarted = true;
+
+            // Create audio context
+            window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Setup all audio
+            createShootSound();
+            createExplosionSound();
+            setupEngineSound();
+            setupAtcAudio();
+
+            // Start ATC audio
+            atcAudio.play().catch(error => {
+                console.log('ATC audio autoplay prevented:', error);
+            });
+
+            // Hide start screen immediately
+            document.getElementById('startScreen').style.display = 'none';
+
+            // Start animation
+            animate();
+        }
+
+        // Replace Enter key and button click listeners with a single keydown listener
+        window.addEventListener('keydown', function(event) {
+            if (document.getElementById('startScreen').style.display !== 'none') {
+                startGame();
+            }
+        });
+
+        // Keep button click listener for mobile users
+        document.getElementById('startButton').addEventListener('click', startGame);
+
+        // Add keyboard listener for Enter key
+        window.addEventListener('keydown', function(event) {
+            if (event.code === 'Enter' && document.getElementById('startScreen').style.display !== 'none') {
+                startGame();
+            }
+        });
+
+        // Player movement constants
+        let currentSpeed = 0; // Changed from minSpeed to 0
+        // const minSpeed = 0.006;
+        const minSpeed = 0;
+        const maxSpeed = 2.5; // 1,260 km/h when multiplied by 525
+        const takeoffSpeed = 0.28; // Keep this the same for takeoff physics
+        const speedIncrement = 0.02;  // Increased from 0.036 to reach max speed faster
+        const rollSpeed = 1.44;        // 1.5x from 0.96
+        const maxRoll = Math.PI / 2; // Limit bank angle to 60 degrees
+        const yawRate = 1.44;          // 1.5x from 0.96
+        const pitchSpeed = 0.9;        // 1.5x from 0.
+        const maxPitch = 1.5;  // Remove this
+
+        let yawAngle = 0;
+        let currentRoll = 0;
+        let currentPitch = 0;
+        const rollRecoverySpeed = 0.9; // 1.5x from 0.6
+
+        // Modify these constants for more dramatic effects
+        const liftFactor = 0.0015; // Increased from 0.001 (1.5x)
+        const gravityFactor = 0.036; // Increased from 0.016 (2.25x for more dramatic effect)
+        const minLiftSpeed = 0.2115; // Increased from 0.141 (1.5x to match takeoffSpeed)
+
+        // Create ocean (on the left side)
+        const oceanGeometry = new THREE.PlaneGeometry(2000, 4000);
+        const oceanMaterial = new THREE.MeshPhongMaterial({
+            color: 0x006994,
+            shininess: 60
+        });
+        const ocean = new THREE.Mesh(oceanGeometry, oceanMaterial);
+        ocean.rotation.x = -Math.PI / 2;
+        ocean.position.y = 35; // Changed from -20 to match terrain height
+        ocean.position.x = -1450;
+        ocean.receiveShadow = true;
+        scene.add(ocean);
+
+        // Create beach along the coast
+        const beachGeometry = new THREE.PlaneGeometry(100, 4000);
+        const beachMaterial = new THREE.MeshPhongMaterial({
+            color: 0xf2d16b
+        });
+        const beach = new THREE.Mesh(beachGeometry, beachMaterial);
+            beach.rotation.x = -Math.PI / 2;
+            beach.position.y = 35; // Changed from -19.9 to match terrain height
+            beach.position.x = -400;
+            beach.receiveShadow = true;
+            scene.add(beach);
+
+        // Add after projectiles array declaration
+        const buildings = []; // Array to store building references
+
+        // Modify createBuilding function
+        function createBuilding() {
+            // these are the square flat buildings
+            const height = Math.random() * 5 + 3;  // Lower buildings
+            const width = Math.random() * 4 + 3;
+            const depth = Math.random() * 4 + 3;
+
+            // Create building geometry
+            const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+
+            // Create wall texture
+            const wallCanvas = document.createElement('canvas');
+            wallCanvas.width = 128;
+            wallCanvas.height = 128;
+            const wallCtx = wallCanvas.getContext('2d');
+
+            // White walls
+            wallCtx.fillStyle = '#FFFFFF';
+            wallCtx.fillRect(0, 0, 128, 128);
+
+            // Windows
+            const windowGeometry = new THREE.BoxGeometry(width * 0.2, height * 0.2, 0.1);
+            const windowMaterial = new THREE.MeshPhongMaterial({
+                color: 0xaaaaff,
+                emissive: 0x444444
+            });
+
+            const wallTexture = new THREE.CanvasTexture(wallCanvas);
+
+            // Create materials array for each face of the cube
+            const materials = [
+                new THREE.MeshPhongMaterial({ map: wallTexture }), // right
+                new THREE.MeshPhongMaterial({ map: wallTexture }), // left
+                new THREE.MeshPhongMaterial({ color: 0xFF8C44 }), // top (orange roof)
+                new THREE.MeshPhongMaterial({ map: wallTexture }), // bottom
+                new THREE.MeshPhongMaterial({ map: wallTexture }), // front
+                new THREE.MeshPhongMaterial({ map: wallTexture })  // back
+            ];
+
+            const building = new THREE.Mesh(buildingGeometry, materials);
+
+            building.castShadow = true;
+            building.receiveShadow = true;
+
+            // Position buildings on top of ground
+            building.position.x = Math.random() * 400 - 200;
+            building.position.y = height/2 + 35; // Center + ground height
+            building.position.z = Math.random() * 800 - 400;
+
+            // Keep buildings away from runway and approach lights
+            while (Math.abs(building.position.x) < 30 && Math.abs(building.position.z) < 150) { // Increased z clearance to 150
+                building.position.x = Math.random() * 400 - 200;
+                building.position.z = Math.random() * 800 - 400;
+            }
+
+            // Add windows that emit light - adjusted positions to be lower on building
+            const windowPositions = [
+                [-width/4, height * 0.05, depth/2],  // Lower row
+                [width/4, height * 0.05, depth/2],
+                [-width/4, height * 0.25, depth/2],  // Upper row
+                [width/4, height * 0.25, depth/2]
+            ];
+
+            windowPositions.forEach(pos => {
+                const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                window.position.set(...pos);
+                building.add(window);
+            });
+            // Create collision box
+            const boundingBox = new THREE.Box3().setFromObject(building);
+            building.boundingBox = boundingBox;
+
+            buildings.push(building);
+            scene.add(building);
+        }
+
+        // Create multiple buildings
+        for (let i = 0; i < 100; i++) {  // More buildings for a denser town
+            createBuilding();
+        }
+
+        // Directional light setup for softer shadows
+        const sunLight = new THREE.DirectionalLight(0xfff0e0, 0.7);
+        sunLight.position.set(100, 100, 50);
+        sunLight.castShadow = true;
+
+        // Increase shadow map size and coverage area
+        sunLight.shadow.mapSize.width = 4096;  // Increased from 2048
+        sunLight.shadow.mapSize.height = 4096; // Increased from 2048
+        sunLight.shadow.camera.near = 0.1;
+        sunLight.shadow.camera.far = 1000;     // Increased from 500
+        sunLight.shadow.camera.left = -500;    // Increased from -100
+        sunLight.shadow.camera.right = 500;    // Increased from 100
+        sunLight.shadow.camera.top = 500;      // Increased from 100
+        sunLight.shadow.camera.bottom = -500;  // Increased from -100
+        sunLight.shadow.radius = 0;            // Keep sharp shadows
+        sunLight.shadow.bias = -0.001;
+        sunLight.shadow.darkness = 0.5;
+
+        // Add slightly warmer ambient light
+        const ambientLight = new THREE.AmbientLight(0xfff6e6, 0.5); // Less intense, slightly warm ambient
+        scene.add(ambientLight);
+
+        // Adjust shadow darkness
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        sunLight.shadow.bias = -0.001;
+        sunLight.shadow.darkness = 0.5;
+
+        // Update all objects to cast/receive shadows
+        player.traverse((object) => {
+            if (object instanceof THREE.Mesh) {
+                object.castShadow = true;
+            }
+        });
+
+        ground.receiveShadow = true;
+        runway.receiveShadow = true;
+
+        scene.add(sunLight);
+
+        // Controls
+        let keys = {};
+        window.addEventListener('keydown', (event) => { keys[event.code] = true; });
+        window.addEventListener('keyup', (event) => { keys[event.code] = false; });
+
+        // Add after player constants
+        const projectiles = [];
+        const PROJECTILE_SPEED = 2.0; // Increased from 0.6 to match new game speeds
+        const MAX_PROJECTILES = 1000; // Massively increased from 30 to 1000
+        const FIRE_RATE = 50;
+        const MAX_PROJECTILE_DISTANCE = 1000;
+        let lastFireTime = 0;
+
+        // Create foam dart geometry - increased sizes
+        const dartGeometry = new THREE.CylinderGeometry(0.2, 0.2, 2.0, 8); // Doubled length to 2.0
+        const dartTipGeometry = new THREE.ConeGeometry(0.2, 0.4, 8); // Kept tip size
+        const dartMaterial = new THREE.MeshPhongMaterial({
+            color: 0xff4444,
+            roughness: 0.8,  // Make it look more like foam
+            metalness: 0.1   // Slight sheen like nerf foam
+        });
+        const dartTipMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffaa44,
+            roughness: 0.7,
+            metalness: 0.2
+        });
+
+        function shootFoamDart() {
+            const dart = new THREE.Group();
+
+            // Create dart body with more detail
+            const body = new THREE.Mesh(dartGeometry, dartMaterial);
+            body.rotation.x = Math.PI / 2; // Rotate to align with flight direction
+
+            const tip = new THREE.Mesh(dartTipGeometry, dartTipMaterial);
+            tip.position.z = 1.2; // Adjusted for longer body
+            tip.rotation.x = Math.PI / 2; // Align with body
+
+            // Add foam texture details - rings along the longer body
+            const ringGeometry = new THREE.TorusGeometry(0.21, 0.05, 8, 16);
+            const ringCount = 5; // More rings for longer body
+            for(let i = 0; i < ringCount; i++) {
+                const ring = new THREE.Mesh(ringGeometry, dartMaterial);
+                ring.position.z = (i * 0.4) - 0.8; // Spread rings along body
+                dart.add(ring);
+            }
+
+            dart.add(body);
+            dart.add(tip);
+
+            // Position dart at plane's nose and align with flight direction
+            dart.position.copy(player.position);
+            dart.rotation.copy(player.rotation);
+            dart.translateZ(-2.5);
+
+            // Calculate projectile velocity
+            const baseVelocity = new THREE.Vector3(0, 0, -PROJECTILE_SPEED);
+            baseVelocity.applyQuaternion(player.quaternion);
+
+            // Add plane's velocity
+            const planeVelocity = new THREE.Vector3(0, 0, -currentSpeed);
+            planeVelocity.applyQuaternion(player.quaternion);
+
+            // Combine velocities
+            dart.velocity = baseVelocity.add(planeVelocity);
+
+            playShootSound();
+
+            scene.add(dart);
+            projectiles.push(dart);
+
+            // Add some "recoil" effect
+            if(!isMobileDevice()) {
+                currentPitch -= 0.02;
+            }
+        }
+
+        // Base turbulence variables
+        const baseTurbulenceIntensity = 0.001; // Base intensity
+        const baseTurbulenceFrequency = 0.02; // Base frequency
+
+        // Add this helper function to ensure audio values are valid
+        function clampAudioValue(value) {
+            // Ensure the value is finite and within reasonable bounds
+            if (!isFinite(value)) return 0;
+            return Math.max(0, Math.min(value, 100));
+        }
+
+        // Add this helper function at the top
+        function isValidAudioValue(value) {
+            return typeof value === 'number' && isFinite(value) && !isNaN(value);
+        }
+
+        // Add time system variables at the top with other constants
+        // start time of game
+        let gameTime = 12000; // Start at 18:00 (6 PM - sunset)
+        // let gameTime = 24000; // Start at 18:00 (6 PM - sunset)
+        const dayLength = 1200; // 1200 seconds = 20 minutes per day
+        const timeScale = 1; // We'll increment by 1 tick per frame
+
+        // Add after other global variables
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let currentFps = 0;
+
+        // Modify updateMetrics function to include FPS
+        function updateMetrics() {
+            const metricsDiv = document.getElementById('metrics');
+
+            // Calculate FPS
+            const currentTime = performance.now();
+            frameCount++;
+
+            if (currentTime - lastTime >= 1000) {
+                currentFps = frameCount;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+
+            // Add FPS to the start of metrics display with color coding
+            const fpsColor = currentFps > 50 ? '#00ff00' : // Green for good FPS
+                             currentFps > 30 ? '#ffff00' : // Yellow for okay FPS
+                             '#ff0000';                    // Red for poor FPS
+
+            // Add health
+            const healthColor = currentHealth > 50 ? '#00ff00' :
+            currentHealth > 30 ? '#ffff00' :
+                             '#ff0000';
+            const healthDisplay = `<span style="color: ${healthColor}">Health: ${currentHealth}%</span><br>`;
+
+            const fpsDisplay = `<span style="color: ${fpsColor}">FPS: ${currentFps}</span><br>`;
+
+            // Convert game time to hours and minutes
+            const gameHours = Math.floor((gameTime / 24000) * 24);
+            const gameMinutes = Math.floor(((gameTime / 24000) * 24 % 1) * 60);
+            const timeString = `${gameHours.toString().padStart(2, '0')}:${gameMinutes.toString().padStart(2, '0')}`;
+            const altitude = Math.round((player.position.y - 35.2) * 33.33);
+            const speedKmh = Math.round(currentSpeed * 525); // Allow speed to go higher than maxSpeed, but maxSpeed is still 1235 km/h
+            const takeoffSpeedKmh = Math.round(takeoffSpeed * 525); // Changed from 2100 to 525
+            const pitch = Math.round(currentPitch * (180/Math.PI));
+            const roll = Math.round(currentRoll * (180/Math.PI));
+            const heading = Math.round(((yawAngle * (180/Math.PI)) + 180) % 360);
+            const windSpeedKmh = Math.round(windSpeed * 100);
+            const windDegrees = Math.round((windDirection * (180/Math.PI) + 180) % 360);
+            const throttlePercent = Math.round((currentSpeed / maxSpeed) * 100);
+
+            metricsDiv.innerHTML =
+                fpsDisplay +  // Add FPS at the top
+                (isLocalGame ?
+                '<span style="color: #ffff00">LOCAL DEBUG MODE</span><br>' :
+                `<span style="color: #ff0000">Players Here: ${Object.keys(connections).length+1}</span><br>`) +
+                healthDisplay +
+                `<span style="color: #00ff00">Balloons Hit: ${targetsHit}</span><br>` +
+                `<span style="color: #ff00ff">Balloons Left: ${targets.length}</span><br>` +
+                `Time: ${timeString}<br>` +
+                `<span style="color: #ffff00">Score: ${score}</span><br>` +
+                `<br>` +
+                `Altitude: ${altitude} ft<br>` +
+                `Speed: ${speedKmh} km/h<br>` +
+                `Throttle: ${throttlePercent}%<br>` +
+                // `Pitch: ${pitch}°<br>` +
+                // `Roll: ${roll}°<br>` +
+                // `Heading: ${heading}°<br>` +
+                // `Wind: ${windSpeedKmh} km/h at ${windDegrees}°<br>` +
+                `<br>` +
+                // `Controls:<br>` +
+                `W/S - Throttle Up/Down<br>` +
+                `←/→ or A/D - Turn Left/Right<br>` +
+                `↑/↓ - Pitch Up/Down<br>` +
+                `SPACE - Shoot Missiles<br>` +
+                `V - Toggle Camera View<br>` +
+                `<br>` +
+                `by @levelsio (tap to hide)
+            `;
+        }
+
+        // Update time and lighting update function
+        function updateDayNightCycle() {
+           // It's always night time
+            gameTime = 20000;  // Example: Force night time (adjust as needed)
+
+            // Keep moon visible
+            moonMaterial.opacity = 1;
+
+            // Set colors and intensities for night
+            const nightColor = 0x2b4c8c;
+            const nightSkyColor = 0x000000; // Always black
+
+            // Apply colors
+            sunLight.color.set(nightColor);
+            sunLight.intensity = 0; // Turn off sunlight
+            ambientLight.intensity = 0.2; // Dim ambient light
+            scene.background.set(nightSkyColor);
+            scene.fog.color.set(nightSkyColor);
+
+            // Always have runway lights on
+            runwayLights.forEach(light => {
+                light.mesh.material.emissiveIntensity = 1;
+                light.light.intensity = 2;
+            });
+        }
+
+        // Create different types of clouds
+        function createLowCloud() {
+            const cloudGroup = new THREE.Group();
+            const blockGeometry = new THREE.BoxGeometry(4, 2, 4);
+            const cloudMaterial = new THREE.MeshPhongMaterial({
+                color: 0xFFFFFF,
+                transparent: true,
+                opacity: 0.9,
+                flatShading: true
+            });
+
+            // Larger, denser cumulus-style clouds
+            const width = 4 + Math.floor(Math.random() * 3);
+            const length = 5 + Math.floor(Math.random() * 4);
+
+            for (let x = 0; x < width; x++) {
+                for (let z = 0; z < length; z++) {
+                    const height = Math.random() > 0.5 ? 2 : 3;
+                    for (let y = 0; y < height; y++) {
+                        const block = new THREE.Mesh(blockGeometry, cloudMaterial);
+                        block.position.set(
+                            x * 3.5 + (Math.random() - 0.5) * 0.5,
+                            y * 1.5,
+                            z * 3.5 + (Math.random() - 0.5) * 0.5
+                        );
+                        cloudGroup.add(block);
+                    }
+                }
+            }
+
+            // Position between 2,000-6,500 feet
+            cloudGroup.position.y = 60 + Math.random() * 60; // ~2000-6500 feet
+            return cloudGroup;
+        }
+
+        function createMidCloud() {
+            const cloudGroup = new THREE.Group();
+            const blockGeometry = new THREE.BoxGeometry(4, 1.5, 4);
+            const cloudMaterial = new THREE.MeshPhongMaterial({
+                color: 0xFFFFFF,
+                transparent: true,
+                opacity: 0.8,
+                flatShading: true
+            });
+
+            // Flatter, more spread out alto-style clouds
+            const width = 5 + Math.floor(Math.random() * 4);
+            const length = 6 + Math.floor(Math.random() * 5);
+
+            for (let x = 0; x < width; x++) {
+                for (let z = 0; z < length; z++) {
+                    if (Math.random() > 0.3) { // Some gaps
+                        const block = new THREE.Mesh(blockGeometry, cloudMaterial);
+                        block.position.set(
+                            x * 4 + (Math.random() - 0.5),
+                            0,
+                            z * 4 + (Math.random() - 0.5)
+                        );
+                        cloudGroup.add(block);
+                    }
+                }
+            }
+
+            // Position between 6,500-15,000 feet
+            cloudGroup.position.y = 195 + Math.random() * 255; // ~6500-15000 feet
+            return cloudGroup;
+        }
+
+        function createHighCloud() {
+            const cloudGroup = new THREE.Group();
+            const blockGeometry = new THREE.BoxGeometry(5, 0.5, 5);
+            const cloudMaterial = new THREE.MeshPhongMaterial({
+                color: 0xFFFFFF,
+                transparent: true,
+                opacity: 0.6,
+                flatShading: true
+            });
+
+            // Thin, wispy cirrus-style clouds
+            const width = 8 + Math.floor(Math.random() * 5);
+            const length = 10 + Math.floor(Math.random() * 6);
+
+            for (let x = 0; x < width; x++) {
+                for (let z = 0; z < length; z++) {
+                    if (Math.random() > 0.5) { // Very sparse
+                        const block = new THREE.Mesh(blockGeometry, cloudMaterial);
+                        block.position.set(
+                            x * 5 + (Math.random() - 0.5) * 2,
+                            0,
+                            z * 5 + (Math.random() - 0.5) * 2
+                        );
+                        cloudGroup.add(block);
+                    }
+                }
+            }
+
+            // Position above 15,000 feet
+            cloudGroup.position.y = 450 + Math.random() * 150; // ~15000-20000 feet
+            return cloudGroup;
+        }
+
+        // Create multiple clouds at different levels
+        const clouds = [];
+
+        // Low-level clouds (more numerous)
+        for (let i = 0; i < 50; i++) {  // Increased from 20 to 50
+            const cloud = createLowCloud();
+            cloud.position.x = Math.random() * 1400 - 700;  // Wider spread
+            cloud.position.z = Math.random() * 1400 - 700;
+            clouds.push(cloud);
+            scene.add(cloud);
+        }
+
+        // Mid-level clouds
+        for (let i = 0; i < 40; i++) {  // Increased from 15 to 40
+            const cloud = createMidCloud();
+            cloud.position.x = Math.random() * 1600 - 800;  // Even wider spread
+            cloud.position.z = Math.random() * 1600 - 800;
+            clouds.push(cloud);
+            scene.add(cloud);
+        }
+
+        // High-level clouds (fewer)
+        for (let i = 0; i < 30; i++) {  // Increased from 10 to 30
+            const cloud = createHighCloud();
+            cloud.position.x = Math.random() * 1800 - 900;  // Widest spread
+            cloud.position.z = Math.random() * 1800 - 900;
+            clouds.push(cloud);
+            scene.add(cloud);
+        }
+
+        // Update clouds with different speeds based on altitude
+        function updateClouds() {
+            clouds.forEach((cloud) => {
+                // Higher clouds move faster, make speed frame-rate independent
+                const speed = (cloud.position.y > 400 ? 0.2 :
+                              cloud.position.y > 200 ? 0.15 : 0.1) * deltaTime * 60;
+
+                cloud.position.x += speed;
+
+                // Reset cloud position when it goes too far
+                if (cloud.position.x > 700) {
+                    cloud.position.x = -700;
+                    cloud.position.z = Math.random() * 1400 - 700;
+                }
+            });
+        }
+
+        // Update projectile movement with smarter cleanup
+        function updateProjectiles() {
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+
+                // Check collisions with targets (balloons)
+                for (let j = targets.length - 1; j >= 0; j--) {
+                    const target = targets[j];
+                    target.boundingBox.setFromObject(target);
+
+                    if (target.boundingBox.containsPoint(projectile.position)) {
+                        // Create hit effect
+                        createHitEffect(projectile.position);
+
+                        // Remove projectile and target
+                        scene.remove(projectile);
+                        scene.remove(target);
+                        projectiles.splice(i, 1);
+                        targets.splice(j, 1);
+
+                        // Update score ONLY in the overlay
+                        targetsHit++;
+                        updateScoreDisplay();
+
+                        // Add points
+                        score += TARGET_SCORE;
+                        break;
+                    }
+                }
+
+                // Move projectile based on its velocity and deltaTime
+                projectile.position.x += projectile.velocity.x * deltaTime * 60;
+                projectile.position.y += projectile.velocity.y * deltaTime * 60;
+                projectile.position.z += projectile.velocity.z * deltaTime * 60;
+
+                // Add gravity effect (make frame-rate independent)
+                projectile.velocity.y -= 0.0005 * deltaTime * 60;
+
+                // Check if projectile has gone too far
+                if (projectile.position.distanceTo(player.position) > MAX_PROJECTILE_DISTANCE) {
+                    scene.remove(projectile);
+                    projectiles.splice(i, 1);
+                    continue;
+                }
+
+                // Rotate dart to face direction of travel
+                const direction = new THREE.Vector3().copy(projectile.velocity).normalize();
+                projectile.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+
+                // Create bounding box for dart
+                const dartBox = new THREE.Box3().setFromObject(projectile);
+
+                // Check collisions with ships
+                for (let j = ships.length - 1; j >= 0; j--) {
+                    const ship = ships[j];
+                    const shipBox = new THREE.Box3().setFromObject(ship);
+
+                    if (dartBox.intersectsBox(shipBox)) {
+                        createExplosionEffect(ship.position.clone());
+                        scene.remove(ship);
+                        scene.remove(projectile);
+                        ships.splice(j, 1);
+                        projectiles.splice(i, 1);
+                        score += 1000; // Changed from 100 to 1000
+                        break;
+                    }
+                }
+
+                // Check collisions with buildings (flat roof)
+                for (let j = buildings.length - 1; j >= 0; j--) {
+                    const building = buildings[j];
+                    const buildingBox = new THREE.Box3().setFromObject(building);
+
+                    if (dartBox.intersectsBox(buildingBox)) {
+                        createExplosionEffect(building.position.clone(), true);
+                        scene.remove(building);
+                        scene.remove(projectile);
+                        buildings.splice(j, 1);
+                        projectiles.splice(i, 1);
+                        score += 250; // Changed from 150 to 250
+                        break;
+                    }
+                }
+
+                // Check collisions with houses (curved roof)
+                for (let j = houses.length - 1; j >= 0; j--) {
+                    const house = houses[j];
+                    const houseBox = new THREE.Box3().setFromObject(house);
+
+                    if (dartBox.intersectsBox(houseBox)) {
+                        createExplosionEffect(house.position.clone(), true);
+                        scene.remove(house);
+                        scene.remove(projectile);
+                        houses.splice(j, 1);
+                        projectiles.splice(i, 1);
+                        score += 250; // Changed from 150 to 250
+                        break;
+                    }
+                }
+
+                // Check castle part collisions
+                for (let j = castle.parts.length - 1; j >= 0; j--) {
+                    const part = castle.parts[j];
+                    const partBox = new THREE.Box3().setFromObject(part);
+                    const dartBox = new THREE.Box3().setFromObject(projectile);
+
+                    if (dartBox.intersectsBox(partBox)) {
+                        // Remove projectile
+                        scene.remove(projectile);
+                        projectiles.splice(i, 1);
+
+                        // Damage castle part
+                        part.health--;
+
+                        // If part is destroyed
+                        if (part.health <= 0) {
+                            // Create appropriate explosion effect
+                            createExplosionEffect(part.position.clone(), true);
+
+                            // Remove the part
+                            scene.remove(part);
+                            castle.parts.splice(j, 1);
+
+                            // Add score based on part type
+                            switch(part.castlePartType) {
+                                case 'keep':
+                                    score += 5000;
+                                    break;
+                                case 'tower':
+                                    score += 2000;
+                                    break;
+                                case 'roof':
+                                    score += 1000;
+                                    break;
+                                case 'merlon':
+                                    score += 500;
+                                    break;
+                            }
+                        } else {
+                            // Visual feedback for hit but not destroyed
+                            createHitEffect(projectile.position.clone());
+                        }
+
+                        break; // Exit the castle parts loop
+                    }
+                }
+            }
+        }
+
+        // Add gameOver function
+        function gameOver(message) {
+            // Prevent multiple calls to gameOver
+            if (window.gameEnded) return;
+            window.gameEnded = true;
+            isGameOver = true;
+
+            // set health 0
+            currentHealth=0;
+
+            // Play wasted sound
+            if (wastedSound) {
+                wastedSound.currentTime = 0;
+                wastedSound.play().catch(error => console.log('Wasted sound play error:', error));
+            }
+
+            // Stop the game loop
+            cancelAnimationFrame(animationFrameId);
+
+            // Reset all controls and movement
+            keys = {};
+            currentSpeed = 0;
+            currentRoll = 0;
+            currentPitch = 0;
+            leftJoystickData = { x: 0, y: 0 };
+            rightJoystickData = { x: 0, y: 0 };
+
+            // Stop all audio safely
+            try {
+                if (window.engineSound) {
+                    window.engineSound.osc1.stop();
+                    window.engineSound.osc2.stop();
+                    window.engineSound.osc3.stop();
+                }
+
+                if (atcAudio) {
+                    atcAudio.pause();
+                }
+
+                if (window.audioContext && window.audioContext.state !== 'closed') {
+                    window.audioContext.close();
+                }
+            } catch (error) {
+                console.log('Audio cleanup error:', error);
+            }
+
+            // Apply grayscale filter
+            const canvas = renderer.domElement;
+            canvas.style.filter = 'grayscale(100%) brightness(70%)';
+            canvas.style.transition = 'filter 1s';
+
+            // Create game over screen
+            const gameOverScreen = document.createElement('div');
+            gameOverScreen.id = 'gameOverScreen';  // Add this line to set the ID
+            gameOverScreen.style.position = 'fixed';
+            gameOverScreen.style.top = '0';
+            gameOverScreen.style.left = '0';
+            gameOverScreen.style.width = '100%';
+            gameOverScreen.style.height = '100%';
+            gameOverScreen.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+            gameOverScreen.style.display = 'flex';
+            gameOverScreen.style.flexDirection = 'column';
+            gameOverScreen.style.justifyContent = 'center';
+            gameOverScreen.style.alignItems = 'center';
+            gameOverScreen.style.zIndex = '1000';
+            gameOverScreen.style.fontFamily = 'Arial, sans-serif';
+
+            // Add WASTED text
+            const wastedText = document.createElement('h1');
+            wastedText.textContent = 'WASTED';
+            wastedText.style.fontSize = '96px';
+            wastedText.style.fontWeight = 'bold';
+            wastedText.style.color = '#ff0000';
+            wastedText.style.textShadow = '4px 4px 0px #000000';
+            wastedText.style.letterSpacing = '10px';
+            wastedText.style.marginBottom = '40px';
+            wastedText.style.animation = 'fadeIn 2s';
+            wastedText.style.opacity = '0';
+            gameOverScreen.appendChild(wastedText);
+
+            wastedText.style.opacity = '1';
+            wastedText.style.transition = 'opacity 1s';
+
+            // Add press any key message
+            const restartText = document.createElement('div');
+            restartText.textContent = 'Press SPACE to continue';
+            restartText.style.fontSize = '24px';
+            restartText.style.color = '#ffffff';
+            restartText.style.marginTop = '20px';
+            gameOverScreen.appendChild(restartText);
+
+            document.body.appendChild(gameOverScreen);
+
+            // Add keydown listener for restart
+            const restartHandler = (event) => {
+                // Only restart if Space key is pressed
+                if (event.code !== 'Space') return;
+
+                // Safely remove game over screen if it exists
+                const existingGameOverScreen = document.getElementById('gameOverScreen');
+                if (existingGameOverScreen) {
+                    existingGameOverScreen.remove();
+                }
+
+                // reset health 
+                currentHealth=maxHealth;
+
+                // Reset canvas filter
+                canvas.style.filter = 'none';
+
+                // Reset game state
+                window.gameEnded = false;
+                isGameOver = false;
+
+                // Reset player position and orientation
+                player.position.set(0, 36, 90);
+                player.rotation.set(0, 0, 0);
+                yawAngle = 0;
+                currentRoll = 0;
+                currentPitch = 0;
+                player.rotation.x = 0; // Reset pitch rotation
+                currentSpeed = minSpeed;
+
+                // Reinitialize audio
+                window.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+                setupEngineSound();
+
+                // Start game directly
+                startGame();
+
+                // Remove the listener
+                window.removeEventListener('keydown', restartHandler);
+            };
+            window.addEventListener('keydown', restartHandler);
+        }
+
+        function handleCrash() {
+            // Stop the plane and engine sound
+            currentSpeed = 0;
+            if (window.engineSound) {
+                window.engineSound.gain1.gain.setValueAtTime(0, window.audioContext.currentTime);
+                window.engineSound.gain2.gain.setValueAtTime(0, window.audioContext.currentTime);
+                window.engineSound.gain3.gain.setValueAtTime(0, window.audioContext.currentTime);
+                window.engineSound.noise.gain.setValueAtTime(0, window.audioContext.currentTime);
+            }
+
+            // Disable controls temporarily
+            const oldKeys = {...keys};
+            Object.keys(keys).forEach(key => keys[key] = false);
+
+            // Create explosion effect
+            createExplosionEffect(player.position.clone());
+
+            // Hide the plane temporarily
+            player.visible = false;
+
+            // Show start screen again
+            document.getElementById('startScreen').style.display = 'flex';
+
+            // Reset after 2 seconds
+            setTimeout(() => {
+                // Reset position to runway surface
+                player.position.set(0, 36, 90); // Update reset height
+                player.rotation.set(0, 0, 0);
+                yawAngle = 0;
+                currentRoll = 0;
+                currentPitch = 0;
+                currentSpeed = minSpeed;
+
+                // Show plane again
+                player.visible = true;
+
+                // Stop animation loop
+                cancelAnimationFrame(animationFrameId);
+
+                // Clear any remaining projectiles
+                projectiles.forEach(dart => scene.remove(dart));
+                projectiles.length = 0;
+
+                // Restore controls
+                Object.assign(keys, oldKeys);
+            }, 2000);
+        }
+
+        // Modified explosion effect to handle different sizes
+        function createExplosionEffect(position, isHouse = false) {
+            // Play explosion sound
+            playExplosionSound();
+
+            const particleCount = isHouse ? 100 : 50; // More particles for houses
+            const particles = new THREE.Group();
+
+            for (let i = 0; i < particleCount; i++) {
+                const geometry = new THREE.SphereGeometry(isHouse ? 0.3 : 0.2, 8, 8);
+                const material = new THREE.MeshPhongMaterial({
+                    color: Math.random() > 0.5 ? 0xff4400 : 0xff8800,
+                    emissive: 0xff0000,
+                    emissiveIntensity: 0.5
+                });
+
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.copy(position);
+
+                // Stronger explosion for houses
+                const velocityMultiplier = isHouse ? 0.5 : 0.3;
+                particle.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * velocityMultiplier,
+                    Math.random() * velocityMultiplier,
+                    (Math.random() - 0.5) * velocityMultiplier
+                );
+
+                particles.add(particle);
+            }
+
+            scene.add(particles);
+
+            animateExplosion();
+        }
+
+        // Add after other global variables
+        let lastFrameTime = performance.now();
+        let deltaTime = 1/60; // Default to 60fps timing if first frame
+        let maxHealth = 100;
+        let currentHealth = 100; // For smooth visual transitions
+
+
+        // Modify animate function to include delta time
+        function animate() {
+            animationFrameId = requestAnimationFrame(animate);
+
+            // Calculate delta time
+            const currentTime = performance.now();
+            deltaTime = (currentTime - lastFrameTime) / 1000;
+            lastFrameTime = currentTime;
+
+            deltaTime = Math.min(deltaTime, 1/30);
+
+            // Update game with delta time
+            updatePlayer();
+            updateProjectiles();
+            checkProjectileCollisions(); // Check projectile hits
+            checkCollisions(); // Check player collisions with objects
+            updateClouds();
+            updateDayNightCycle();
+            updateStars();
+            updateApproachLights();
+            animateWindsock();
+            updateMetrics();
+            updateMothership();     // Add this
+            updateAlienShips();    // Add this
+
+            renderer.render(scene, camera);
+        }
+
+        // Add animationFrameId variable at the top with other globals
+        let animationFrameId;
+
+        // Add escape key handler to exit pointer lock
+        window.addEventListener('keydown', (event) => {
+            if (event.code === 'Escape') {
+                document.exitPointerLock = document.exitPointerLock ||
+                                         document.mozExitPointerLock;
+                document.exitPointerLock();
+            }
+        });
+
+
+        // main updatePlayer() function
+        function updatePlayer() {
+            // ✅ Handle Speed Control (W/S keys or Right Joystick)
+            if (keys['KeyW'] || rightJoystickData.y > 0.3) {
+                const speedInc = speedIncrement * deltaTime;
+                // Apply turbo multiplier if Shift is held
+                const turboMultiplier = keys['ShiftLeft'] ? TURBO_SPEED_MULTIPLIER : 1;
+                currentSpeed += speedInc * turboMultiplier;
+                // Cap speed at maxSpeed * turboMultiplier
+                const maxAllowedSpeed = maxSpeed * (keys['ShiftLeft'] ? TURBO_SPEED_MULTIPLIER : 1);
+                currentSpeed = Math.min(currentSpeed, maxAllowedSpeed);
+            } else if (keys['KeyS'] || rightJoystickData.y < -0.3) {
+                currentSpeed = Math.max(currentSpeed - speedIncrement * 2 * deltaTime, minSpeed);
+            } else if (keys['ShiftLeft']) {
+                // Apply turbo when Shift is held, even without W
+                const speedInc = speedIncrement * deltaTime;
+                currentSpeed += speedInc * TURBO_SPEED_MULTIPLIER;
+                // Cap speed at maxSpeed * turboMultiplier
+                const maxAllowedSpeed = maxSpeed * TURBO_SPEED_MULTIPLIER;
+                currentSpeed = Math.min(currentSpeed, maxAllowedSpeed);
+            }
+
+
+
+            // Update FOV based on speed and turbo state
+            const speedRatio = (currentSpeed - minSpeed) / (maxSpeed - minSpeed);
+            const baseFovIncrease = speedRatio * MAX_FOV_INCREASE;
+            const turboFovIncrease = keys['ShiftLeft'] ? TURBO_EXTRA_FOV * speedRatio : 0;
+            const targetFOV = MIN_FOV + baseFovIncrease + turboFovIncrease;
+
+            // Faster interpolation
+            camera.fov += (targetFOV - camera.fov) * 0.2;
+            camera.updateProjectionMatrix();
+
+            const isAirborne = player.position.y > 36.1;
+
+            // ✅ Handle Roll and Yaw (Turning)
+            if (isAirborne) {
+                if (keys['ArrowLeft'] || keys['KeyA'] || leftJoystickData.x < -0.3) {
+                    currentRoll = Math.min(currentRoll + rollSpeed * deltaTime, maxRoll);
+                    yawAngle += yawRate * deltaTime * (currentSpeed / maxSpeed);
+                } else if (keys['ArrowRight'] || keys['KeyD'] || leftJoystickData.x > 0.3) {
+                    currentRoll = Math.max(currentRoll - rollSpeed * deltaTime, -maxRoll);
+                    yawAngle -= yawRate * deltaTime * (currentSpeed / maxSpeed);
+                } else {
+                    currentRoll = Math.abs(currentRoll) > 0.01 ? currentRoll - Math.sign(currentRoll) * rollRecoverySpeed * deltaTime : 0;
+                }
+            } else {
+                currentRoll = 0;
+                if (keys['ArrowLeft'] || keys['KeyA'] || leftJoystickData.x < -0.3) {
+                    yawAngle += (yawRate * 2 * (currentSpeed / maxSpeed)) * deltaTime;
+                } else if (keys['ArrowRight'] || keys['KeyD'] || leftJoystickData.x > 0.3) {
+                    yawAngle -= (yawRate * 2 * (currentSpeed / maxSpeed)) * deltaTime;
+                }
+            }
+
+            // ✅ Handle Pitch (Up/Down)
+            if (keys['ArrowUp'] || leftJoystickData.y > 0.3) {
+                currentPitch = Math.max(currentPitch - pitchSpeed * deltaTime, -maxPitch);
+            }
+            if (keys['ArrowDown'] || leftJoystickData.y < -0.3) {
+                currentPitch = Math.min(currentPitch + pitchSpeed * deltaTime, maxPitch);
+            }
+
+            // ✅ Move Forward
+            player.translateZ(-currentSpeed);
+
+            // ✅ Handle Lift and Gravity
+            const speedKmh = currentSpeed * 525; // Convert speed to km/h
+            if (speedKmh >= 74) { // Takeoff speed check
+                const liftAmount = (currentSpeed * liftFactor * deltaTime * 60) * Math.cos(currentRoll);
+                player.position.y += liftAmount;
+            }
+
+            // ✅ Apply Gravity if Above Ground
+            player.position.y = Math.max(player.position.y - gravityFactor * deltaTime * 60, 36);
+
+            // ✅ Update Camera
+            if (isThirdPerson) {
+                const currentTime = Date.now();
+                if (currentTime - lastMouseMoveTime > MOUSE_TIMEOUT) {
+                    const lerpFactor = 0.02 * deltaTime * 60;
+                    mouseX *= (1 - lerpFactor);
+                    mouseY *= (1 - lerpFactor);
+                }
+
+                const idealOffset = new THREE.Vector3(
+                    Math.sin(mouseX) * 10,
+                    Math.max(2 + Math.sin(mouseY) * 5, 1),
+                    Math.cos(mouseX) * 10
+                ).applyMatrix4(player.matrixWorld);
+
+                camera.position.lerp(idealOffset, 0.1);
+                camera.position.y = Math.max(camera.position.y, 35.5);
+                camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+            } else {
+                const cockpitPos = player.localToWorld(COCKPIT_OFFSET.clone());
+                camera.position.copy(cockpitPos);
+                camera.quaternion.copy(player.quaternion);
+                camera.rotateY(mouseX);
+                camera.rotateX(mouseY);
+            }
+
+            // ✅ Update Engine Sound (Only if Initialized)
+            if (window.engineSound) {
+                const normalizedSpeed = Math.pow((currentSpeed - minSpeed) / (maxSpeed - minSpeed), 0.5);
+                const baseFreq = 40 + normalizedSpeed * 100;
+
+                // Apply turbo multiplier to frequency when Shift is held
+                const turboMultiplier = keys['ShiftLeft'] ? 2 : 1;
+
+                window.engineSound.osc1.frequency.setValueAtTime(baseFreq * turboMultiplier, window.audioContext.currentTime);
+                window.engineSound.osc2.frequency.setValueAtTime(baseFreq * 1.5 * turboMultiplier, window.audioContext.currentTime);
+                window.engineSound.osc3.frequency.setValueAtTime(baseFreq * 2 * turboMultiplier, window.audioContext.currentTime);
+
+                // Increase gain during turbo for more intense sound
+                const gainMultiplier = keys['ShiftLeft'] ? 1.5 : 1;
+                window.engineSound.gain1.gain.setValueAtTime((0.1 + normalizedSpeed * 0.3) * gainMultiplier, window.audioContext.currentTime);
+                window.engineSound.gain2.gain.setValueAtTime((0.05 + normalizedSpeed * 0.15) * gainMultiplier, window.audioContext.currentTime);
+                window.engineSound.gain3.gain.setValueAtTime((0.02 + normalizedSpeed * 0.06) * gainMultiplier, window.audioContext.currentTime);
+                window.engineSound.noise.gain.setValueAtTime((0.1 + normalizedSpeed * 0.3) * gainMultiplier, window.audioContext.currentTime);
+
+                // Increase filter frequency during turbo for a sharper sound
+                window.engineSound.filter.frequency.setValueAtTime(800 + normalizedSpeed * 3000 * turboMultiplier, window.audioContext.currentTime);
+            }
+
+            // ✅ Apply Rotations
+            player.rotation.set(0, 0, 0);
+            player.rotateY(yawAngle);
+            player.rotateX(currentPitch);
+            player.rotateZ(currentRoll);
+
+            // ✅ Handle Shooting
+            if (keys['Space']) {
+                const currentTime = Date.now();
+                if (currentTime - lastFireTime >= FIRE_RATE && projectiles.length < MAX_PROJECTILES) {
+                    shootFoamDart();
+                    lastFireTime = currentTime;
+                }
+            }
+
+            // ✅ Add Turbulence
+            let turbulenceIntensity = baseTurbulenceIntensity * (currentSpeed / maxSpeed) * deltaTime * 60;
+            let turbulenceFrequency = baseTurbulenceFrequency * (currentSpeed / maxSpeed) * deltaTime * 60;
+
+            // Add extra turbulence when using turbo boost (Shift key)
+            if (keys['ShiftLeft']) {
+                turbulenceIntensity *= 5;  // Significantly increase turbulence intensity during boost
+                turbulenceFrequency *= 5;  // Increase turbulence frequency during boost
+            }
+
+            if (keys['Space']) {
+                turbulenceIntensity *= 3;
+                turbulenceFrequency *= 2;
+            }
+
+            // Increase base turbulence values
+            player.position.x += (Math.random() - 0.5) * turbulenceIntensity * 3;  // Tripled
+            player.position.y += (Math.random() - 0.5) * turbulenceIntensity * 3;  // Tripled
+            player.position.z += (Math.random() - 0.5) * turbulenceIntensity * 3;  // Tripled
+
+            player.rotation.x += (Math.random() - 0.5) * turbulenceFrequency * 2;  // Doubled
+            player.rotation.y += (Math.random() - 0.5) * turbulenceFrequency * 2;  // Doubled
+            player.rotation.z += (Math.random() - 0.5) * turbulenceFrequency * 2;  // Doubled
+
+            // ✅ Broadcast Position to Other Players
+            const updateTime = Date.now();
+            if (updateTime - lastPositionUpdate > POSITION_UPDATE_INTERVAL) {
+                broadcastPosition();
+                lastPositionUpdate = updateTime;
+            }
+        }
+
+        // After runway creation, add runway lights
+        function createRunwayLights() {
+            const edgeLightGeometry = new THREE.BoxGeometry(0.2, 0.5, 0.2);
+            const edgeLightMaterial = new THREE.MeshPhongMaterial({
+                color: 0xffffff,
+                emissive: 0xffffff,
+                emissiveIntensity: 0
+            });
+
+            // Create runway edge lights
+            for(let z = -95; z <= 95; z += 10) {
+                // Left edge lights
+                const leftLight = new THREE.Mesh(edgeLightGeometry, edgeLightMaterial.clone());
+                leftLight.position.set(-5, 35.2, z);
+                scene.add(leftLight);
+
+                // Right edge lights
+                const rightLight = new THREE.Mesh(edgeLightGeometry, edgeLightMaterial.clone());
+                rightLight.position.set(5, 35.2, z);
+                scene.add(rightLight);
+
+                // Add point lights for glow effect
+                const leftPointLight = new THREE.PointLight(0xffffff, 0, 10);
+                leftPointLight.position.copy(leftLight.position);
+                scene.add(leftPointLight);
+
+                const rightPointLight = new THREE.PointLight(0xffffff, 0, 10);
+                rightPointLight.position.copy(rightLight.position);
+                scene.add(rightPointLight);
+
+                // Store references for updating
+                runwayLights.push({
+                    mesh: leftLight,
+                    light: leftPointLight
+                }, {
+                    mesh: rightLight,
+                    light: rightPointLight
+                });
+            }
+
+            // Create approach lights (before runway) - in createRunwayLights function
+            for(let z = 150; z >= 100; z -= 10) {  // Changed direction: start from 150 and go down to 100
+                const approachLight = new THREE.Mesh(edgeLightGeometry, edgeLightMaterial.clone());
+                approachLight.position.set(0, 35.2, z);
+                scene.add(approachLight);
+
+                const pointLight = new THREE.PointLight(0xffffff, 0, 10);
+                pointLight.position.copy(approachLight.position);
+                scene.add(pointLight);
+
+                approachLights.push({
+                    mesh: approachLight,
+                    light: pointLight,
+                    baseIntensity: 0
+                });
+            }
+        }
+
+        // Add to global variables
+        const runwayLights = [];
+        const approachLights = [];
+        let lastApproachLightUpdate = 0;
+        const APPROACH_LIGHT_INTERVAL = 100; // Time between light transitions in ms
+        let currentApproachLightIndex = 0;
+
+        // Call createRunwayLights after scene setup
+        createRunwayLights();
+
+        // Add new function to animate approach lights
+        function updateApproachLights() {
+            const currentTime = Date.now();
+            const isNight = gameTime < 6000 || gameTime > 18000;
+            const isDusk = gameTime >= 17000 && gameTime <= 19000;
+            const isDawn = gameTime >= 5000 && gameTime <= 7000;
+
+            // Only animate when it's dark or twilight
+            if (isNight || isDusk || isDawn) {
+                if (currentTime - lastApproachLightUpdate > APPROACH_LIGHT_INTERVAL) {
+                    // Reset all lights to base intensity
+                    approachLights.forEach(light => {
+                        light.mesh.material.emissiveIntensity = light.baseIntensity;
+                        light.light.intensity = light.baseIntensity * 2;
+                    });
+
+                    // Illuminate current light at full intensity
+                    if (approachLights[currentApproachLightIndex]) {
+                        approachLights[currentApproachLightIndex].mesh.material.emissiveIntensity = 1;
+                        approachLights[currentApproachLightIndex].light.intensity = 2;
+                    }
+
+                    // Move to next light
+                    currentApproachLightIndex = (currentApproachLightIndex + 1) % approachLights.length;
+                    lastApproachLightUpdate = currentTime;
+                }
+            } else {
+                // During day, turn off all approach lights
+                approachLights.forEach(light => {
+                    light.mesh.material.emissiveIntensity = 0;
+                    light.light.intensity = 0;
+                });
+            }
+        }
+
+        // Add to keyboard event listener setup
+        window.addEventListener('keydown', (event) => { keys[event.code] = true; });
+        window.addEventListener('keyup', (event) => { keys[event.code] = false; });
+
+        // Add after other global variables
+        let score = 0;
+        let lastAltitude = 35;
+        let successfulLandings = 0;
+        let targetsHit = 0;
+        let currentMission = null;
+        let missionStartTime = 0;
+        const LANDING_SCORE = 100;
+        const TARGET_SCORE = 50;
+        const SMOOTH_LANDING_BONUS = 50;
+        const PERFECT_LANDING_BONUS = 100;
+
+        // Add these balloon target functions
+        function createBalloonTarget() {
+            const balloonGroup = new THREE.Group();
+
+            // Array of balloon colors with alpha
+            const balloonColors = [
+                0xff0000, // red
+                0xffff00, // yellow
+                0x00ff00, // green
+                0xff69b4, // pink
+                0x0000ff, // blue
+                0x800080, // purple
+                0xffffff, // white
+                0x000000  // black
+            ];
+
+            const sizeScale = 0.8 + Math.random() * 2.2;
+            const balloonGeometry = new THREE.SphereGeometry(2, 16, 16);
+            const balloonMaterial = new THREE.MeshPhongMaterial({
+                color: balloonColors[Math.floor(Math.random() * balloonColors.length)],
+                shininess: 50,
+                transparent: true,
+                opacity: 0.85, // Make balloons slightly transparent
+                depthWrite: true // Keep this true to avoid sorting issues
+            });
+            const balloon = new THREE.Mesh(balloonGeometry, balloonMaterial);
+            balloon.scale.set(sizeScale, sizeScale, sizeScale);
+            balloonGroup.add(balloon);
+
+            // Adjust height based on balloon size to prevent tiny ones from being too high
+            const minHeight = 50 + (sizeScale * 10); // Bigger balloons float higher
+            const maxHeight = Math.min(450, minHeight + 200); // Cap maximum height
+
+            balloonGroup.position.set(
+                Math.random() * 1600 - 800,  // Wide spread
+                minHeight + Math.random() * (maxHeight - minHeight), // Height varies with size
+                Math.random() * 1600 - 800   // Wide spread
+            );
+
+            balloonGroup.boundingBox = new THREE.Box3();
+            scene.add(balloonGroup);
+            return balloonGroup;
+        }
+
+        // Create array for targets
+        const targets = [];
+        for(let i = 0; i < 100; i++) {  // Increased from 10 to 100 balloons
+            const target = createBalloonTarget();
+
+            // Spread balloons out more widely
+            target.position.set(
+                Math.random() * 1600 - 800,  // Doubled spread from ±400 to ±800
+                50 + Math.random() * 400,    // Height range from 50 to 450
+                Math.random() * 1600 - 800   // Doubled spread from ±400 to ±800
+            );
+
+            targets.push(target);
+        }
+
+        // Add message display function
+        function showMessage(text) {
+            const message = document.createElement('div');
+            message.style.position = 'fixed';
+            message.style.top = '50%';
+            message.style.left = '50%';
+            message.style.transform = 'translate(-50%, -50%)';
+            message.style.color = 'white';
+            message.style.fontSize = '24px';
+            message.style.fontFamily = 'Arial';
+            message.style.padding = '20px';
+            message.style.background = 'rgba(0,0,0,0.5)';
+            message.style.borderRadius = '10px';
+            message.style.zIndex = '1000';
+            message.textContent = text;
+
+            document.body.appendChild(message);
+
+            setTimeout(() => {
+                message.style.transition = 'opacity 1s';
+                message.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(message), 1000);
+            }, 2000);
+        }
+
+        // Add hit effect function
+        function createHitEffect(position) {
+            const particles = new THREE.Group();
+
+            for(let i = 0; i < 20; i++) {
+                const geometry = new THREE.SphereGeometry(0.2, 8, 8);
+                const material = new THREE.MeshPhongMaterial({
+                    color: 0xffff00,
+                    emissive: 0xffaa00
+                });
+
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.copy(position);
+
+                // Random velocity
+                particle.velocity = new THREE.Vector3(
+                    (Math.random() - 0.5) * 0.3,
+                    (Math.random() - 0.5) * 0.3,
+                    (Math.random() - 0.5) * 0.3
+                );
+
+                particles.add(particle);
+            }
+
+            scene.add(particles);
+
+            // Animate particles
+            let elapsedTime = 0;
+            function animateHit() {
+                elapsedTime += deltaTime;
+
+                particles.children.forEach(particle => {
+                    particle.position.add(particle.velocity.clone().multiplyScalar(deltaTime * 60));
+                    particle.material.opacity = 1 - elapsedTime;
+                    particle.material.transparent = true;
+                });
+
+                if(elapsedTime < 1) {
+                    requestAnimationFrame(animateHit);
+                } else {
+                    scene.remove(particles);
+                }
+            }
+            animateHit();
+        }
+
+        // After other global variables
+        const ships = [];
+
+        // Add after other creation functions
+        function createShip() {
+            const shipGroup = new THREE.Group();
+
+            // Random ship size
+            const length = 10 + Math.random() * 20; // Ships 10-30 units long
+            const width = length * 0.2; // Width proportional to length
+            const height = length * 0.15; // Height proportional to length
+
+            // Hull
+            const hullGeometry = new THREE.BoxGeometry(width, height, length);
+            const hullMaterial = new THREE.MeshPhongMaterial({
+                color: Math.random() > 0.5 ? 0x334455 : 0x445566 // Dark blue/grey variations
+            });
+            const hull = new THREE.Mesh(hullGeometry, hullMaterial);
+            hull.position.y = height/2;
+            shipGroup.add(hull);
+
+            // Deck structures (random number of them)
+            const deckCount = Math.floor(Math.random() * 3) + 1;
+            for(let i = 0; i < deckCount; i++) {
+                const deckWidth = width * 0.8;
+                const deckLength = length * (0.2 + Math.random() * 0.2);
+                const deckHeight = height * 0.8;
+
+                const deckGeometry = new THREE.BoxGeometry(deckWidth, deckHeight, deckLength);
+                const deckMaterial = new THREE.MeshPhongMaterial({ color: 0xffffff }); // White deck
+                const deck = new THREE.Mesh(deckGeometry, deckMaterial);
+
+                deck.position.y = height + deckHeight/2;
+                deck.position.z = (length/3) * (i - 1);
+                shipGroup.add(deck);
+            }
+
+            // Add a chimney/smokestack
+            const stackRadius = width * 0.15;
+            const stackHeight = height * 2;
+            const stackGeometry = new THREE.CylinderGeometry(stackRadius, stackRadius, stackHeight);
+            const stackMaterial = new THREE.MeshPhongMaterial({
+                color: Math.random() > 0.5 ? 0xdd3311 : 0x333333 // Red or black smokestack
+            });
+            const stack = new THREE.Mesh(stackGeometry, stackMaterial);
+            stack.position.y = height + stackHeight/2;
+            stack.position.z = -length/4;
+            shipGroup.add(stack);
+
+            // Position ship on ocean only (negative X values)
+            shipGroup.position.set(
+                Math.random() * 500 - 1200, // Keep ships between x=-1200 and x=-700
+                35.5, // Just above water level
+                Math.random() * 1400 - 700 // Z spread
+            );
+
+            // Random rotation for variety
+            shipGroup.rotation.y = Math.random() * Math.PI * 2;
+
+            // Add shadow casting
+            shipGroup.traverse((object) => {
+                if (object instanceof THREE.Mesh) {
+                    object.castShadow = true;
+                    object.receiveShadow = true;
+                }
+            });
+
+            scene.add(shipGroup);
+            return shipGroup;
+        }
+
+        // Create initial ships
+        for(let i = 0; i < 20; i++) { // Create 20 ships
+            ships.push(createShip());
+        }
+
+        // Add ship movement update function
+        function updateShips() {
+            ships.forEach(ship => {
+                const time = performance.now() * 0.001;
+                // Make bobbing frame-rate independent
+                ship.position.y = 35.5 + Math.sin(time) * 0.1;
+                ship.rotation.x = Math.sin(time) * 0.02;
+            });
+        }
+
+        // Create houses function
+        function createHouse() {
+            // houses with pointy roofs
+            const houseGroup = new THREE.Group();
+
+            // Random house size
+            const width = 4 + Math.random() * 4;
+            const height = 6 + Math.random() * 8;
+            const depth = 4 + Math.random() * 4;
+
+            // Main building
+            const buildingGeometry = new THREE.BoxGeometry(width, height, depth);
+            const buildingMaterial = new THREE.MeshPhongMaterial({
+                color: new THREE.Color(
+                    0.7 + Math.random() * 0.3,
+                    0.7 + Math.random() * 0.3,
+                    0.7 + Math.random() * 0.3
+                )
+            });
+            const building = new THREE.Mesh(buildingGeometry, buildingMaterial);
+            building.position.y = height/2;
+            houseGroup.add(building);
+
+            // Roof (pyramid style)
+            const roofHeight = height * 0.3;
+            const roofGeometry = new THREE.ConeGeometry(width * 0.8, roofHeight, 4);
+            const roofMaterial = new THREE.MeshPhongMaterial({
+                color: Math.random() > 0.5 ? 0x8B4513 : 0xA0522D // Brown variations
+            });
+            const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+            roof.position.y = height + roofHeight/2;
+            roof.rotation.y = Math.PI/4; // Rotate 45 degrees for better look
+            houseGroup.add(roof);
+
+            // Windows
+            const windowSize = width * 0.2;
+            const windowGeometry = new THREE.BoxGeometry(windowSize, windowSize, 0.1);
+            const windowMaterial = new THREE.MeshPhongMaterial({
+                color: 0xaaaaff,
+                emissive: 0x444444
+            });
+
+            // Add multiple windows
+            const windowPositions = [
+                [-width/4, height/2, depth/2],
+                [width/4, height/2, depth/2],
+                [-width/4, height*0.75, depth/2],
+                [width/4, height*0.75, depth/2]
+            ];
+
+            windowPositions.forEach(pos => {
+                const window = new THREE.Mesh(windowGeometry, windowMaterial);
+                window.position.set(...pos);
+                houseGroup.add(window);
+            });
+
+            // Door
+            const doorWidth = width * 0.3;
+            const doorHeight = height * 0.4;
+            const doorGeometry = new THREE.BoxGeometry(doorWidth, doorHeight, 0.1);
+            const doorMaterial = new THREE.MeshPhongMaterial({
+                color: 0x8B4513
+            });
+            const door = new THREE.Mesh(doorGeometry, doorMaterial);
+            door.position.set(0, doorHeight/2, depth/2);
+            houseGroup.add(door);
+
+            // Add shadow casting
+            houseGroup.traverse((object) => {
+                if (object instanceof THREE.Mesh) {
+                    object.castShadow = true;
+                    object.receiveShadow = true;
+                }
+            });
+
+            return houseGroup;
+        }
+
+        // Create multiple houses
+        const houses = [];
+        // Create houses both along coast and inland
+        for(let i = 0; i < 80; i++) {  // 80 houses total
+            const house = createHouse();
+
+            // Generate initial position
+            let x = -400 + Math.random() * 600; // From coast (-400) to inland (+200)
+            let z = Math.random() * 1600 - 800; // Spread along Z axis
+
+            // Keep houses away from runway and approach path
+            // Runway is at x=0, so check distance from center
+            while (Math.abs(x) < 30 && Math.abs(z) < 150) { // Increased clearance area
+                x = -400 + Math.random() * 600;
+                z = Math.random() * 1600 - 800;
+            }
+
+            house.position.set(
+                x,
+                35, // Ground level
+                z
+            );
+            house.rotation.y = Math.random() * Math.PI * 2; // Random rotation
+            houses.push(house);
+            scene.add(house);
+        }
+
+        // Add house collision detection to checkCollisions function
+        function checkCollisions() {
+            // Create bounding box for player with a small buffer to crash into things
+            const COLLISION_BUFFER = 0.6;
+
+            const playerBox = new THREE.Box3().setFromObject(player);
+            playerBox.expandByScalar(-playerBox.getSize(new THREE.Vector3()).length() * (1 - COLLISION_BUFFER));
+
+            // Check collision with moon
+            if (moon) {
+                const moonBox = new THREE.Box3().setFromObject(moon);
+                if (playerBox.intersectsBox(moonBox)) {
+                    gameOver("You crashed into the moon!");
+                    return;
+                }
+            }
+
+            // Check collision with buildings (flat houses)
+            for (let i = 0; i < buildings.length; i++) {
+                const building = buildings[i];
+                const buildingBox = new THREE.Box3().setFromObject(building);
+                if (playerBox.intersectsBox(buildingBox)) {
+                    gameOver("You crashed into a building!");
+                    return;
+                }
+            }
+
+            // Check castle collision
+            const castleBox = new THREE.Box3().setFromObject(castle);
+            if (playerBox.intersectsBox(castleBox)) {
+                gameOver("CRASHED INTO CASTLE!");
+                return; // Important: Stop checking after a collision
+            }
+
+            // Check balloon collisions
+            targets.forEach(target => {
+                target.boundingBox.setFromObject(target);
+                if (playerBox.intersectsBox(target.boundingBox)) {
+                    gameOver("CRASHED INTO BALLOON!");
+                    return; // Important: Stop checking after a collision
+                }
+            });
+
+            // Check tower collision
+            const towerBox = new THREE.Box3().setFromObject(towerGroup);
+            if (playerBox.intersectsBox(towerBox)) {
+                gameOver("CRASHED INTO CONTROL TOWER!");
+                return; // Important: Stop checking after a collision
+            }
+
+            // Check house collisions
+            for (let house of houses) {
+                const houseBox = new THREE.Box3().setFromObject(house);
+                if (playerBox.intersectsBox(houseBox)) {
+                    gameOver("CRASHED INTO HOUSE!");
+                    return; // Important: Stop checking after a collision
+                }
+            }
+
+            //Check alien ship collision
+            for (let i = 0; i < alienShips.length; i++){
+                const ship = alienShips[i];
+                const shipBox = new THREE.Box3().setFromObject(ship);
+                if (playerBox.intersectsBox(shipBox)) {
+                     gameOver("CRASHED INTO ALIEN SPACESHIP!");
+                     return;
+                }
+            }
+            // Check ground collision with impact detection
+            if (player.position.y < 36) {
+                // Calculate vertical speed (change in height over time)
+                const verticalSpeed = (player.position.y - lastAltitude) / deltaTime;
+
+                // Calculate impact angle (how level is the plane)
+                const impactAngle = Math.abs(currentPitch);
+
+                // Define crash thresholds
+                const HARD_LANDING_SPEED = -10; // Units per second
+                const MAX_SAFE_ANGLE = 0.3; // Radians (about 17 degrees)
+
+                // Check if it's a crash
+                if (verticalSpeed < HARD_LANDING_SPEED || impactAngle > MAX_SAFE_ANGLE) {
+                    gameOver("CRASHED INTO GROUND!");
+                    return;
+                } else {
+                    // Safe landing - just keep plane at ground level
+                    player.position.y = 36;
+                }
+            }
+
+            // Update last altitude for next frame
+            lastAltitude = player.position.y;
+        }
+
+        // Add after other global variables
+        let leftJoystick, rightJoystick;
+        let leftJoystickData = { x: 0, y: 0 };
+        let rightJoystickData = { x: 0, y: 0 };
+
+        // Modify joystick initialization
+        window.addEventListener('load', () => {
+            // Create joysticks regardless of touch capability (for testing)
+            leftJoystick = nipplejs.create({
+                zone: document.getElementById('leftJoystick'),
+                mode: 'static',
+                position: { left: '50px', bottom: '50px' },
+                color: 'white',
+                size: 120
+            });
+
+            rightJoystick = nipplejs.create({
+                zone: document.getElementById('rightJoystick'),
+                mode: 'static',
+                position: { right: '50px', bottom: '50px' },
+                color: 'white',
+                size: 120
+            });
+
+            // Left joystick handlers
+            leftJoystick.on('move', (evt, data) => {
+                const forward = data.vector.y;
+                const side = data.vector.x;
+
+                // Normalize the values
+                leftJoystickData.x = side;
+                leftJoystickData.y = forward;
+
+                console.log('Left Joystick:', leftJoystickData); // Debug output
+            });
+
+            leftJoystick.on('end', () => {
+                leftJoystickData = { x: 0, y: 0 };
+                console.log('Left Joystick Reset'); // Debug output
+            });
+
+            // Right joystick handlers
+            rightJoystick.on('move', (evt, data) => {
+                const forward = data.vector.y;
+
+                // Only use Y axis for throttle
+                rightJoystickData.y = forward;
+                rightJoystickData.x = 0;
+
+                console.log('Right Joystick:', rightJoystickData); // Debug output
+            });
+
+            rightJoystick.on('end', () => {
+                rightJoystickData = { x: 0, y: 0 };
+                console.log('Right Joystick Reset'); // Debug output
+            });
+        });
+
+
+        // Add touch controls for shooting
+        document.addEventListener('touchstart', (event) => {
+            // Only handle touches not on joysticks
+            if (!event.target.closest('#leftJoystick') &&
+                !event.target.closest('#rightJoystick')) {
+                keys['Space'] = true;
+            }
+        });
+
+        document.addEventListener('touchend', (event) => {
+            if (!event.target.closest('#leftJoystick') &&
+                !event.target.closest('#rightJoystick')) {
+                keys['Space'] = false;
+            }
+        });
+
+        // Modify WebRTC setup
+        let peer;
+        let localPeerId;
+        let connections = {};
+
+        // Add after other global variables
+        function getPeerId() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('id');
+        }
+
+        function setPeerId(id) {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('id', id);
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        // Add after other global variables
+        const HEARTBEAT_INTERVAL = 5000; // Send heartbeat every 5 seconds
+        let heartbeatTimer = null;
+
+        // Add at the top with other constants
+        const isLocalGame = window.location.protocol === 'file:';
+
+        // Modify showConnectionUI to include share link
+        function showConnectionUI() {
+            const connectionUI = document.createElement('div');
+            connectionUI.style.position = 'fixed';
+            connectionUI.style.top = '20px';
+            connectionUI.style.right = '20px';
+            connectionUI.style.padding = '15px';
+            connectionUI.style.background = 'rgba(0,0,0,0.8)';
+            connectionUI.style.color = 'white';
+            connectionUI.style.borderRadius = '10px';
+            connectionUI.style.zIndex = '1000';
+            connectionUI.style.display = 'flex';
+            connectionUI.style.flexDirection = 'column';
+            connectionUI.style.gap = '10px';
+            connectionUI.style.minWidth = '200px';
+            connectionUI.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+            connectionUI.style.transition = 'opacity 0.3s ease';
+            connectionUI.id = 'connectionUI';
+
+            // Check if we're joining via an ID
+            const joiningId = getPeerId();
+
+            // Only show share link section if we're the host (no id in URL)
+            if (!joiningId) {
+                const shareSection = document.createElement('div');
+                shareSection.id = 'shareSection'; // Add ID for easier selection
+                shareSection.style.padding = '8px';
+                shareSection.style.background = 'rgba(255,255,255,0.1)';
+                shareSection.style.borderRadius = '5px';
+
+                const shareLink = `${window.location.origin}${window.location.pathname}?id=${localPeerId}`;
+
+                const linkDisplay = document.createElement('div');
+                linkDisplay.textContent = 'Share this link to play with a friend:';
+                linkDisplay.style.marginBottom = '5px';
+                linkDisplay.style.fontSize = '12px';
+                shareSection.appendChild(linkDisplay);
+
+                const linkInput = document.createElement('input');
+                linkInput.value = shareLink;
+                linkInput.readOnly = true;
+                linkInput.style.width = '100%';
+                linkInput.style.padding = '4px';
+                linkInput.style.borderRadius = '3px';
+                linkInput.style.border = '1px solid #ddd';
+                linkInput.style.fontSize = '12px';
+                shareSection.appendChild(linkInput);
+
+                const copyLinkButton = document.createElement('button');
+                copyLinkButton.textContent = 'Copy Link';
+                copyLinkButton.style.marginTop = '5px';
+                copyLinkButton.style.padding = '4px 8px';
+                copyLinkButton.style.cursor = 'pointer';
+                copyLinkButton.style.border = 'none';
+                copyLinkButton.style.borderRadius = '3px';
+                copyLinkButton.style.background = '#4CAF50';
+                copyLinkButton.style.color = 'white';
+                copyLinkButton.style.fontSize = '12px';
+                copyLinkButton.onclick = () => {
+                    navigator.clipboard.writeText(shareLink);
+                    copyLinkButton.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyLinkButton.textContent = 'Copy Link';
+                    }, 2000);
+                };
+                shareSection.appendChild(copyLinkButton);
+
+                connectionUI.appendChild(shareSection);
+            }
+
+            document.body.appendChild(connectionUI);
+        }
+
+        // Modify connectToPeer function
+        function connectToPeer(peerId) {
+            if (!peer || peerId === localPeerId) {
+                console.log('⚠️ Invalid connection attempt:', { peer: !!peer, peerId, localPeerId });
+                return;
+            }
+
+            console.log('🔄 Initiating connection to peer:', peerId);
+            const conn = peer.connect(peerId);
+            stopHeartbeat(); // Stop heartbeat when we connect to a peer
+            handleNewConnection(conn);
+        }
+
+
+        // Update the connection status display
+        function updateConnectionUI(message) {
+            const status = document.getElementById('connectionStatus');
+            if (status) {
+                status.textContent = message;
+            }
+        }
+
+        // Handle incoming peer data
+        function handlePeerData(data, peerId) {
+            if (data.type === 'position') {
+                console.log('Received position from peer', peerId, ':', data.data);
+
+                // Create or update other player's plane
+                let otherPlane = otherPlayers.get(peerId);
+                if (!otherPlane) {
+                    otherPlane = createOtherPlayerPlane();
+                    scene.add(otherPlane);
+                    otherPlayers.set(peerId, otherPlane);
+                }
+
+                // Update position and rotation
+                otherPlane.position.set(data.data.x, data.data.y, data.data.z);
+                otherPlane.rotation.set(data.data.rotationX, data.data.rotationY, data.data.rotationZ);
+
+                // Update reference to new function name
+                updateOtherPlayerIdentifierTooltip(otherPlane, peerId);
+
+                const sprite = otherPlane.children.find(child => child instanceof THREE.Sprite);
+                if (sprite) {
+                    sprite.quaternion.copy(camera.quaternion);
+                }
+            }
+        }
+
+        // Initialize WebRTC when the game starts
+        window.addEventListener('load', () => {
+            setupWebRTC().catch(error => {
+                console.error('Failed to setup WebRTC:', error);
+                updateConnectionUI('Connection failed');
+            });
+        });
+
+        // Add after other global variables
+        let metricsVisible = true;
+
+        // Add click handler to metrics div
+        document.getElementById('metrics').addEventListener('click', function() {
+            metricsVisible = !metricsVisible;
+            this.style.opacity = metricsVisible ? '1' : '0';
+            this.style.pointerEvents = metricsVisible ? 'auto' : 'none';
+        });
+
+        // Modify the metrics div style to add smooth transition
+        document.getElementById('metrics').style.transition = 'opacity 0.3s ease';
+        document.getElementById('metrics').style.cursor = 'pointer';
+
+        // Add volume control with M key
+        window.addEventListener('keydown', (event) => {
+            if (event.code === 'KeyM') {
+                if (atcAudio) {
+                    atcAudio.muted = !atcAudio.muted;
+                }
+            }
+        });
+
+        // Add after other global variables
+        let balloonsHit = 0;
+        const totalBalloons = 100;
+
+        // Modify the balloon hit detection code
+        function checkBalloonCollisions() {
+            // ... existing collision detection code ...
+
+            if (collision) {
+                // ... existing collision handling ...
+
+                balloonsHit++;
+                updateScoreDisplay();
+            }
+        }
+
+        // Add this right after creating the metrics div, near the start of the game setup
+        function createScoreOverlay() {
+            // Add styles
+            const styleBlock = document.createElement('style');
+            styleBlock.textContent = `
+                #scoreOverlay {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    color: white;
+                    font-family: 'Arial', sans-serif;
+                    font-size: 24px;
+                    background: rgba(0, 0, 0, 0.5);
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    z-index: 1000;
+                    user-select: none;
+                    -webkit-user-select: none;
+                    transition: transform 0.2s;
+                }
+            `;
+            document.head.appendChild(styleBlock);
+
+            // Create score div
+            const scoreDiv = document.createElement('div');
+            scoreDiv.id = 'scoreOverlay';
+            document.body.appendChild(scoreDiv);
+
+            // Set initial score
+            updateScoreDisplay();
+        }
+
+        // Call this in the init function or where other UI elements are created
+        createScoreOverlay();
+
+        // Make sure updateScoreDisplay can find the element
+        function updateScoreDisplay() {
+            const scoreDiv = document.getElementById('scoreOverlay');
+            if (scoreDiv) {
+                scoreDiv.textContent = `🎈${balloonsHit}/${totalBalloons}`;
+
+                // Visual feedback
+                scoreDiv.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    scoreDiv.style.transform = 'scale(1)';
+                }, 200);
+            }
+        }
+
+        // Initialize score display
+        updateScoreDisplay();
+
+
+        // Add after other key handlers
+        window.addEventListener('keydown', (event) => {
+            // ... existing key handlers ...
+
+            // Debug shortcut - Press P to instantly start flying
+            if (event.code === 'KeyP') {
+                // Random position between -500 and 500 for x and z
+                // Random height between 36 and 200
+                const randomX = (Math.random() - 0.5) * 1000;
+                const randomY = Math.random() * (200 - 36) + 36;
+                const randomZ = (Math.random() - 0.5) * 1000;
+                player.position.set(randomX, randomY, randomZ);
+
+                // Random speed between 25% and 100% of max speed
+                // currentSpeed = maxSpeed * (Math.random() * 0.75 + 0.25);
+                currentSpeed = maxSpeed*0.8;
+
+                // Keep plane level - reset all rotations
+                currentPitch = 0;
+                currentRoll = 0;
+                yawAngle = 0;
+                player.rotation.set(0, 0, 0);
+
+                // Reset camera view
+                mouseX = 0;
+                mouseY = 0;
+
+                // Make sure plane is visible
+                player.visible = true;
+
+                console.log('Debug: Teleported to random position');
+            }
+        });
+
+        // Add after other global variables
+        let lastPositionUpdate = 0;
+        const POSITION_UPDATE_INTERVAL = 50; // Send position updates every 50ms (20 times per second)
+
+        // Modify broadcastPosition function
+        function broadcastPosition() {
+            // Skip broadcasting if running locally
+            if (isLocalGame) return;
+
+            if (!peer || !localPeerId) {
+                if (Math.random() < 0.01) { // Log only occasionally
+                    console.log('⏳ Waiting for peer connection...');
+                }
+                return;
+            }
+
+            const positionData = {
+                type: 'position',
+                data: {
+                    x: player.position.x,
+                    y: player.position.y,
+                    z: player.position.z,
+                    rotationX: player.rotation.x,
+                    rotationY: player.rotation.y,
+                    rotationZ: player.rotation.z,
+                    speed: currentSpeed,
+                    timestamp: Date.now()
+                }
+            };
+
+            // Log position updates occasionally
+            if (Math.random() < 0.01) {
+                console.log('📡 Broadcasting position:', positionData);
+                console.log('🔌 Active connections:', Object.keys(connections).length);
+            }
+
+            Object.values(connections).forEach(conn => {
+                try {
+                    conn.send(positionData);
+                } catch (err) {
+                    console.error('❌ Failed to send position to peer:', conn.peer, err);
+                }
+            });
+        }
+
+        // Add after other global variables
+        const otherPlayers = new Map(); // Store other players' models
+
+        // Add function to create other player's plane
+        function createOtherPlayerPlane() {
+            const otherPlane = new THREE.Group();
+
+            // Simplified plane model (similar to player plane but different color)
+            const fuselage = new THREE.Mesh(
+                new THREE.BoxGeometry(1, 1, 4),
+                new THREE.MeshPhongMaterial({ color: 0xff0000,fog: false }) // Red color to distinguish
+            );
+
+            const wings = new THREE.Mesh(
+                new THREE.BoxGeometry(7, 0.2, 2),
+                new THREE.MeshPhongMaterial({ color: 0xff0000,fog: false })
+            );
+            wings.position.y = 0.1;
+
+            const tail = new THREE.Mesh(
+                new THREE.BoxGeometry(2, 0.8, 0.5),
+                new THREE.MeshPhongMaterial({ color: 0xff0000,fog: false })
+            );
+            tail.position.z = -1.8;
+            tail.position.y = 0.4;
+
+            otherPlane.add(fuselage);
+            otherPlane.add(wings);
+            otherPlane.add(tail);
+
+            return otherPlane;
+        }
+
+        // Add after other global variables
+        let isMouseDown = false;
+        let lastMouseX = 0;
+        let lastMouseY = 0;
+
+        // Add after other event listeners
+        document.addEventListener('mousedown', (event) => {
+            isMouseDown = true;
+            lastMouseX = event.clientX;
+            lastMouseY = event.clientY;
+        });
+
+        document.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+
+
+        // Add touch event handlers for mobile camera control
+        document.addEventListener('touchstart', (event) => {
+            // Only handle touches not on joysticks
+            if (!event.target.closest('#leftJoystick') &&
+                !event.target.closest('#rightJoystick')) {
+                isMouseDown = true;
+                lastMouseX = event.touches[0].clientX;
+                lastMouseY = event.touches[0].clientY;
+            }
+        });
+
+        document.addEventListener('touchend', () => {
+            isMouseDown = false;
+        });
+
+
+        // Update touch controls to work without requiring initial touch
+        document.addEventListener('touchmove', (event) => {
+            // Only handle touches not on joysticks
+            if (!event.target.closest('#leftJoystick') &&
+                !event.target.closest('#rightJoystick')) {
+
+                const touch = event.touches[0];
+
+                // Calculate touch movement from center of screen
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const deltaX = (touch.clientX - centerX) * 0.01; // Adjust sensitivity here
+                const deltaY = (touch.clientY - centerY) * 0.01; // Adjust sensitivity here
+
+                // Update camera angles
+                mouseX = -deltaX;
+                mouseY = -deltaY;
+
+                // Update last mouse move time for auto-centering
+                lastMouseMoveTime = Date.now();
+
+                // Prevent default scrolling
+                event.preventDefault();
+            }
+        }, { passive: false });
+
+        // Remove or comment out the old mouse/touch event listeners
+
+        // Add pointer lock setup
+        document.addEventListener('click', () => {
+            // Only request pointer lock if game has started and we're not already locked
+            if (hasStarted && !isPointerLocked) {
+                // Request pointer lock on the document body
+                document.body.requestPointerLock = document.body.requestPointerLock ||
+                                                 document.body.mozRequestPointerLock ||
+                                                 document.body.webkitRequestPointerLock;
+                document.body.requestPointerLock();
+            }
+        });
+
+        // Track pointer lock state
+        document.addEventListener('pointerlockchange', () => {
+            isPointerLocked = document.pointerLockElement === document.body;
+        }, false);
+
+        document.addEventListener('mozpointerlockchange', () => {
+            isPointerLocked = document.mozPointerLockElement === document.body;
+        }, false);
+
+        // Single mouse move handler for both locked and unlocked states
+        document.addEventListener('mousemove', (event) => {
+            if (!hasStarted) return;
+
+            if (isPointerLocked) {
+                // Use movementX/Y when pointer is locked
+                mouseX -= event.movementX * mouseSensitivity;
+                mouseY -= event.movementY * mouseSensitivity;
+            } else {
+                // Use regular mouse position when unlocked
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                mouseX = -(event.clientX - centerX) * 0.001;
+                mouseY = -(event.clientY - centerY) * 0.001;
+            }
+
+            // Update last mouse move time for auto-centering
+            lastMouseMoveTime = Date.now();
+        });
+
+        // Add escape key handler to exit pointer lock
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Escape') {
+                document.exitPointerLock = document.exitPointerLock ||
+                                         document.mozExitPointerLock ||
+                                         document.webkitExitPointerLock;
+                document.exitPointerLock();
+            }
+        });
+
+
+        // Add after other scene setup code, before the animation loop
+        // Create moon
+        const moonTextureLoader = new THREE.TextureLoader();
+        const moonGeometry = new THREE.SphereGeometry(500, 9000, 532);
+        const moonMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFFFFFF,
+            transparent: true,
+            opacity: 0, // Start invisible
+            fog: false  // Make moon ignore scene fog
+        });
+
+        // Increase the base color brightness
+        moonMaterial.color.multiplyScalar(1.5); // Makes the base color twice as bright
+
+
+        moonTextureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/moon_1024.jpg', (texture) => {
+            // Flip the texture horizontally
+            texture.repeat.x = -1;
+            texture.offset.x = 1;
+            moonMaterial.map = texture;
+            moonMaterial.needsUpdate = true;
+        });
+
+        const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+        moon.position.set(5000, 5000, -7000);
+        // Rotate the moon to show the desired side
+        moon.rotation.y = Math.PI;
+        scene.add(moon);
+
+        // Add after other building creation functions
+        function createCastle() {
+            const castleGroup = new THREE.Group();
+
+            // Keep track of castle parts for destruction
+            castleGroup.parts = [];
+
+            // Main castle body - large central keep
+            const keepGeometry = new THREE.BoxGeometry(40, 60, 40);
+            const stoneMaterial = new THREE.MeshPhongMaterial({
+                color: 0x808080,
+                flatShading: true
+            });
+            const keep = new THREE.Mesh(keepGeometry, stoneMaterial);
+            keep.position.y = 30;
+            keep.castlePartType = 'keep';
+            keep.health = 10; // Takes multiple hits to destroy
+            castleGroup.parts.push(keep);
+            castleGroup.add(keep);
+
+            // Four corner towers
+            const towerGeometry = new THREE.CylinderGeometry(6, 8, 70, 8);
+            const towerPositions = [
+                [-22, 35, -22],
+                [22, 35, -22],
+                [-22, 35, 22],
+                [22, 35, 22]
+            ];
+
+            towerPositions.forEach((pos, index) => {
+                const tower = new THREE.Mesh(towerGeometry, stoneMaterial);
+                tower.position.set(...pos);
+                tower.castlePartType = 'tower';
+                tower.health = 5; // Takes several hits
+                castleGroup.parts.push(tower);
+                castleGroup.add(tower);
+
+                // Add conical roof to each tower
+                const roofGeometry = new THREE.ConeGeometry(8, 15, 8);
+                const roofMaterial = new THREE.MeshPhongMaterial({
+                    color: 0x8B4513
+                });
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.set(pos[0], pos[1] + 42, pos[2]);
+                roof.castlePartType = 'roof';
+                roof.health = 2; // Easy to destroy
+                castleGroup.parts.push(roof);
+                castleGroup.add(roof);
+            });
+
+            // Add crenellations that can be shot off individually
+            for(let x = -18; x <= 18; x += 4) {
+                for(let z = -18; z <= 18; z += 4) {
+                    if(x === -18 || x === 18 || z === -18 || z === 18) {
+                        const merlon = new THREE.Mesh(
+                            new THREE.BoxGeometry(3, 4, 3),
+                            stoneMaterial
+                        );
+                        merlon.position.set(x, 62, z);
+                        merlon.castlePartType = 'merlon';
+                        merlon.health = 1; // One hit destroys
+                        castleGroup.parts.push(merlon);
+                        castleGroup.add(merlon);
+                    }
+                }
+            }
+
+            // Position the castle
+            castleGroup.position.set(100, 35.2, -300);
+
+            return castleGroup;
+        }
+
+        // Add after other scene setup code
+        const castle = createCastle();
+        scene.add(castle);
+
+
+        // Modify checkProjectileCollisions function
+        function checkProjectileCollisions() {
+            // Check each projectile
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+                const projectileBox = new THREE.Box3().setFromObject(projectile);
+                let projectileHit = false;
+
+                // Check castle part collisions first
+                for (let j = castle.parts.length - 1; j >= 0; j--) {
+                    const part = castle.parts[j];
+                    const partBox = new THREE.Box3().setFromObject(part);
+
+                    if (projectileBox.intersectsBox(partBox)) {
+                        // Remove projectile
+                        scene.remove(projectile);
+                        projectiles.splice(i, 1);
+                        projectileHit = true;
+
+                        // Damage castle part
+                        part.health--;
+
+                        // If part is destroyed
+                        if (part.health <= 0) {
+                            // Create explosion effect at the correct position
+                            const explosionPosition = new THREE.Vector3();
+                            part.getWorldPosition(explosionPosition); // Get world position of the part
+                            createExplosionEffect(explosionPosition, true);
+
+                            // Play explosion sound
+                            playExplosionSound();
+
+                            // Remove the part
+                            scene.remove(part);
+                            castle.parts.splice(j, 1);
+
+                            // Add score based on part type
+                            switch(part.castlePartType) {
+                                case 'keep':
+                                    score += 5000;
+                                    break;
+                                case 'tower':
+                                    score += 2000;
+                                    break;
+                                case 'roof':
+                                    score += 1000;
+                                    break;
+                                case 'merlon':
+                                    score += 500;
+                                    break;
+                            }
+                        } else {
+                            // Visual feedback for hit but not destroyed
+                            createHitEffect(projectile.position.clone());
+                        }
+
+                        break; // Exit the castle parts loop
+                    }
+                }
+
+                // If projectile hasn't hit castle, check balloon collisions
+                if (!projectileHit) {
+                    for (let j = targets.length - 1; j >= 0; j--) {
+                        const target = targets[j];
+                        target.boundingBox.setFromObject(target);
+
+                        if (projectileBox.intersectsBox(target.boundingBox)) {
+                            // Existing balloon hit code
+                            createExplosionEffect(target.position.clone());
+                            playExplosionSound();
+                            scene.remove(target);
+                            scene.remove(projectile);
+                            targets.splice(j, 1);
+                            projectiles.splice(i, 1);
+                            targetsHit++;
+                            score += 100;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Modify createExplosionEffect to handle larger castle explosions
+        function createExplosionEffect(position, isCastle = false) {
+            const particles = new THREE.Group();
+            const particleCount = isCastle ? 50 : 20; // More particles for castle explosions
+            const particleSize = isCastle ? 2 : 0.5; // Larger particles for castle
+            const explosionRadius = isCastle ? 10 : 3; // Larger radius for castle
+            const explosionSpeed = isCastle ? 30 : 10; // Faster particles for castle
+
+            for (let i = 0; i < particleCount; i++) {
+                const geometry = new THREE.BoxGeometry(particleSize, particleSize, particleSize);
+                const material = new THREE.MeshPhongMaterial({
+                    color: isCastle ? 0xff4400 : 0xff0000,
+                    emissive: isCastle ? 0xff4400 : 0xff0000,
+                    emissiveIntensity: 0.5
+                });
+
+                const particle = new THREE.Mesh(geometry, material);
+                particle.position.copy(position);
+
+                // Random velocity in sphere
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                const speed = Math.random() * explosionSpeed;
+
+                particle.velocity = new THREE.Vector3(
+                    Math.sin(phi) * Math.cos(theta),
+                    Math.cos(phi),
+                    Math.sin(phi) * Math.sin(theta)
+                ).multiplyScalar(speed);
+
+                particles.add(particle);
+            }
+
+            scene.add(particles);
+
+            // Animate explosion
+            let elapsedTime = 0;
+            function animateExplosion() {
+                elapsedTime += deltaTime;
+
+                particles.children.forEach((particle) => {
+                    particle.position.add(particle.velocity.clone().multiplyScalar(deltaTime * 60));
+                    particle.velocity.y -= 0.1 * deltaTime * 60; // More gravity for castle debris
+                    particle.material.opacity = 1 - (elapsedTime);
+                    particle.material.transparent = true;
+
+                    // Add rotation to the particles
+                    particle.rotation.x += 0.1 * deltaTime * 60;
+                    particle.rotation.y += 0.1 * deltaTime * 60;
+                });
+
+                if (elapsedTime < 1) {
+                    requestAnimationFrame(animateExplosion);
+                } else {
+                    scene.remove(particles);
+                }
+            }
+            animateExplosion();
+        }
+
+        // Rename function to be more descriptive
+        function updateOtherPlayerIdentifierTooltip(plane, peerId) {
+            const sprite = plane.children.find(child => child instanceof THREE.Sprite);
+            if (!sprite) return;
+
+            const canvas = sprite.userData.canvas;
+            const context = sprite.userData.context;
+
+            // Clear canvas
+            context.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Set text style
+            context.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            context.roundRect(0, 0, canvas.width, canvas.height, 10);
+            context.fill();
+
+            context.font = '24px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+
+            // Add glow effect
+            context.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            context.lineWidth = 4;
+            context.strokeText(peerId, canvas.width/2, canvas.height/2);
+
+            // Main text
+            context.fillStyle = 'white';
+            context.fillText(peerId, canvas.width/2, canvas.height/2);
+
+            // Update texture
+            sprite.material.map.needsUpdate = true;
+        }
+
+        // Add heartbeat functions
+        function startHeartbeat(peerId) {
+            // Clear any existing heartbeat
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+            }
+
+            // Send initial heartbeat
+            sendHeartbeat(peerId);
+
+            // Set up regular heartbeat interval
+            heartbeatTimer = setInterval(() => sendHeartbeat(peerId), HEARTBEAT_INTERVAL);
+        }
+
+        function stopHeartbeat() {
+            if (heartbeatTimer) {
+                clearInterval(heartbeatTimer);
+                heartbeatTimer = null;
+            }
+        }
+
+        function sendHeartbeat(peerId) {
+            const formData = new FormData();
+            formData.append('peerId', peerId);
+
+            fetch('https://fly.pieter.com/matchmaker?heartbeat=1', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.match) {
+                    // If we get a match during heartbeat, connect to them
+                    console.log("✅ Found match during heartbeat:", data.match);
+                    stopHeartbeat(); // Stop heartbeat once we have a match
+                    connectToPeer(data.match);
+                }
+            })
+            .catch(error => {
+                console.error("❌ Heartbeat error:", error);
+                // Don't stop heartbeat on error, keep trying
+            });
+        }
+
+        // Add at the top with other constants
+        const MATCHMAKING_INTERVAL = 3000; // Check every 3 seconds
+        let matchmakingTimer = null;
+        let isInSession = false;
+        // Add function to check for opponents
+        function checkForOpponents() {
+            if (isInSession) return; // Don't look for opponents if we're already in a session
+
+            const formData = new FormData();
+            formData.append('peerId', localPeerId);
+
+            fetch('https://fly.pieter.com/matchmaker', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.match && data.match !== localPeerId) { // Add check to prevent self-matching
+                        console.log("✅ Found opponent:", data.match);
+                        isInSession = true;
+                        clearInterval(matchmakingTimer);
+                        connectToPeer(data.match);
+                    } else {
+                        console.log("⏳ Still waiting for opponent...");
+                        updateConnectionUI("Waiting for an opponent...");
+                    }
+                })
+                .catch(error => {
+                    console.error("❌ Matchmaking error:", error);
+                });
+        }
+
+        // Modify setupWebRTC function
+        async function setupWebRTC() {
+            // Skip WebRTC setup if running locally
+            if (isLocalGame) {
+                console.log('🔧 Running in local debug mode - multiplayer disabled');
+                return;
+            }
+
+            try {
+                console.log('🌐 Initializing WebRTC...');
+
+                peer = new Peer(undefined, {
+                    host: '0.peerjs.com',
+                    secure: true,
+                    port: 443,
+                    path: '/',
+                    debug: 3,
+                    config: {
+                        'iceServers': [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' }
+                        ]
+                    }
+                });
+
+                peer.on('open', (id) => {
+                    console.log('🎮 My peer ID:', id);
+                    localPeerId = id;
+                    showConnectionUI();
+
+                    // Start checking for opponents
+                    matchmakingTimer = setInterval(checkForOpponents, MATCHMAKING_INTERVAL);
+
+                    // Initial check right away
+                    checkForOpponents();
+                });
+
+                peer.on('connection', (conn) => {
+                    console.log('📥 Incoming connection from:', conn.peer);
+                    isInSession = true; // Set session flag when connection established
+                    clearInterval(matchmakingTimer); // Stop looking for opponents
+                    handleNewConnection(conn);
+                });
+
+                /**
+                 * Attempts to find a match via matchmaking.
+                 */
+                function findMatch(myPeerId) {
+                    const formData = new FormData();
+                    formData.append('peerId', myPeerId);
+
+                    fetch('https://fly.pieter.com/matchmaker', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.match && data.match !== myPeerId) { // Add check to prevent self-matching
+                            console.log("✅ Found match:", data.match);
+                            connectToPeer(data.match);
+                        } else {
+                            console.log("⏳ Waiting for an opponent...");
+                        }
+                    })
+                    .catch(error => console.error("❌ Matchmaking error:", error));
+                }
+
+
+                peer.on('connection', (conn) => {
+                    console.log('📥 Incoming connection from:', conn.peer);
+                    isInSession = true; // Set session flag when connection established
+                    clearInterval(matchmakingTimer); // Stop looking for opponents
+                    handleNewConnection(conn);
+                });
+
+                peer.on('error', (err) => {
+                    console.error('❌ PeerJS error:', err.type, err.message);
+                    updateConnectionUI('Connection error: ' + err.message);
+                });
+
+            } catch (error) {
+                console.error('❌ Failed to initialize PeerJS:', error);
+                updateConnectionUI('Connection failed');
+            }
+        }
+
+        // Modify handleNewConnection function to set session flag
+        function handleNewConnection(conn) {
+            if (!conn) {
+                console.warn('⚠️ Received null connection');
+                return;
+            }
+
+            isInSession = true; // Set session flag
+            clearInterval(matchmakingTimer); // Stop looking for opponents
+
+            console.log('🤝 Setting up connection with:', conn.peer);
+
+            conn.on('open', () => {
+                console.log('✅ Connected successfully to:', conn.peer);
+                connections[conn.peer] = conn;
+                updateConnectionUI('Connected to: ' + conn.peer);
+                stopHeartbeat(); // Stop heartbeat when connection is established
+
+                const peerInput = document.querySelector('input[placeholder="Enter other player\'s ID"]');
+                if (peerInput) {
+                    peerInput.value = conn.peer;
+                }
+
+                conn.on('data', (data) => {
+                    if (data.type === 'position') {
+                        // Only log every 100th position update to avoid console spam
+                        if (Math.random() < 0.01) {
+                            console.log('📍 Position update from', conn.peer, data.data);
+                        }
+                    } else {
+                        console.log('📨 Received data from', conn.peer, ':', data);
+                    }
+                    handlePeerData(data, conn.peer);
+                });
+            });
+
+            conn.on('close', () => {
+                console.log('👋 Peer disconnected:', conn.peer);
+                delete connections[conn.peer];
+                updateConnectionUI('Connection closed');
+            });
+
+            conn.on('error', (err) => {
+                console.error('❌ Connection error with', conn.peer, ':', err);
+            });
+        }
+
+        // Modify the mouse/touch movement handlers
+        function handleMouseMove(event) {
+            if (isMouseDown) {
+                const deltaX = event.clientX - lastMouseX;
+                const deltaY = event.clientY - lastMouseY;
+
+                // Update angles without any clamping/limits
+                cameraAngleHorizontal += deltaX * 0.01;
+                cameraAngleVertical += deltaY * 0.01;
+
+                // No angle limits - allow full 360° rotation
+                lastMouseX = event.clientX;
+                lastMouseY = event.clientY;
+            }
+        }
+
+        // Update camera position in the animation loop
+        function updateCamera() {
+            const distance = 20;
+            const heightOffset = 3;
+
+            // Calculate camera position using spherical coordinates
+            // No clamping on vertical angle
+            const x = Math.cos(cameraAngleHorizontal) * Math.cos(cameraAngleVertical) * distance;
+            const y = Math.sin(cameraAngleVertical) * distance + heightOffset;
+            const z = Math.sin(cameraAngleHorizontal) * Math.cos(cameraAngleVertical) * distance;
+
+            camera.position.copy(player.position);
+            camera.position.x += x;
+            camera.position.y += y;
+            camera.position.z += z;
+
+            camera.lookAt(player.position);
+        }
+
+        // Add after other global variables
+        // Define named event handlers
+        function handleKeyDown(event) {
+            keys[event.code] = true;
+        }
+
+        function handleKeyUp(event) {
+            keys[event.code] = false;
+        }
+
+        function handleTouchStart(event) {
+            if (!event.target.closest('#leftJoystick') &&
+                !event.target.closest('#rightJoystick')) {
+                keys['Space'] = true;
+            }
+        }
+
+        function handleTouchMove(event) {
+            // Only handle touches not on joysticks
+            if (!event.target.closest('#leftJoystick') &&
+                !event.target.closest('#rightJoystick')) {
+                const touch = event.touches[0];
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                const deltaX = (touch.clientX - centerX) * 0.01;
+                const deltaY = (touch.clientY - centerY) * 0.01;
+
+                mouseX = -deltaX;
+                mouseY = -deltaY;
+
+                lastMouseMoveTime = Date.now();
+                event.preventDefault();
+            }
+        }
+
+        function handleTouchEnd(event) {
+            if (!event.target.closest('#leftJoystick') &&
+                !event.target.closest('#rightJoystick')) {
+                keys['Space'] = false;
+            }
+        }
+
+        // Replace anonymous event listeners with named functions
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        document.addEventListener('touchstart', handleTouchStart);
+        document.addEventListener('touchmove', handleTouchMove, { passive: false });
+        document.addEventListener('touchend', handleTouchEnd);
+
+        // Add after other global variables
+        let wastedSound;
+
+        // Add function to load wasted sound
+        function loadWastedSound() {
+            wastedSound = new Audio('/assets/fly_wasted.mp3');
+            wastedSound.volume = 0.7; // Set volume to 70%
+        }
+
+        // Call this after audio context creation in startGame
+        loadWastedSound();
+
+        // Add with other keyboard event listeners
+        window.addEventListener('keydown', function(event) {
+            if (event.code === 'KeyV') {
+                isThirdPerson = !isThirdPerson;  // Toggle camera view
+
+                // Reset mouse position when switching views to prevent sudden camera jumps
+                mouseX = 0;
+                mouseY = 0;
+
+                // Reset last mouse move time to prevent auto-centering immediately
+                lastMouseMoveTime = Date.now();
+            }
+        });
+
+        // Add after other constants
+        const TURBO_SPEED_MULTIPLIER = 5;  // 50% speed boost
+        const TURBO_FOV_INCREASE = 15;  // Increase FOV by 15 degrees during turbo
+        const normalFOV = 75;  // Store normal FOV value
+
+        // Add after other constants
+        const MIN_FOV = normalFOV;  // Base FOV when stationary
+        const MAX_FOV_INCREASE = 30;  // Increased from 20 to 30 for more dramatic effect
+        const TURBO_EXTRA_FOV = 25;  // Increased from 10 to 15 for more dramatic effect
+
+        // Remove the old FOV update code from the keyboard handlers
+        window.addEventListener('keydown', (event) => {
+            keys[event.code] = true;
+        });
+
+        window.addEventListener('keyup', (event) => {
+            keys[event.code] = false;
+
+            // Only reset engine sound when releasing shift
+            if (event.code === 'ShiftLeft') {
+                // Reset engine sound
+                if (window.engineSound) {
+                    const normalizedSpeed = Math.pow((currentSpeed - minSpeed) / (maxSpeed - minSpeed), 0.5);
+                    window.engineSound.gain1.gain.setValueAtTime(0.1 + normalizedSpeed * 0.3, window.audioContext.currentTime);
+                    window.engineSound.osc1.frequency.setValueAtTime(40 + normalizedSpeed * 100, window.audioContext.currentTime);
+                }
+            }
+        });
+
+        // Add after other scene setup code, before the animation loop
+        // Create star field
+        const starGeometry = new THREE.BufferGeometry();
+        const starMaterial = new THREE.PointsMaterial({
+            color: 0xFFFFFF,
+            size: 2.5,
+            transparent: true,
+            opacity: 0, // Start invisible
+            fog: false,
+            sizeAttenuation: false
+        });
+
+        const starVertices = [];
+        for(let i = 0; i < 500; i++) {
+            const r = 10000;
+            const theta = 2 * Math.PI * Math.random();
+            const phi = Math.acos(2 * Math.random() - 1);
+            const x = r * Math.sin(phi) * Math.cos(theta);
+            const y = r * Math.sin(phi) * Math.sin(theta);
+            const z = r * Math.cos(phi);
+            starVertices.push(x, y, z);
+        }
+
+        starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+        const stars = new THREE.Points(starGeometry, starMaterial);
+        stars.renderOrder = 1;
+        scene.add(stars);
+
+        // Add this to your animation loop or update function
+        function updateStars() {
+            const HIGH_ALTITUDE = 5000;
+            const NIGHT_START = 18000; // 6 PM in game time
+            const NIGHT_END = 6000;    // 6 AM in game time
+
+            // Calculate star visibility based on altitude
+            const altitudeRatio = Math.max(0, Math.min(1, (player.position.y - 1000) / HIGH_ALTITUDE));
+
+            // Calculate star visibility based on time
+            let timeRatio = 0;
+            if (gameTime > NIGHT_START || gameTime < NIGHT_END) {
+                // At night
+                timeRatio = 1;
+            } else if (gameTime > NIGHT_START - 2000 && gameTime <= NIGHT_START) {
+                // Dusk transition (2000 units before night)
+                timeRatio = (gameTime - (NIGHT_START - 2000)) / 2000;
+            } else if (gameTime >= NIGHT_END && gameTime < NIGHT_END + 2000) {
+                // Dawn transition (2000 units after night)
+                timeRatio = 1 - ((gameTime - NIGHT_END) / 2000);
+            }
+
+            // Use the maximum of both ratios for final opacity
+            const targetOpacity = Math.max(altitudeRatio, timeRatio);
+
+            // Smooth transition
+            starMaterial.opacity += (targetOpacity - starMaterial.opacity) * 0.1;
+
+        }
+
+
+        // --- Alien Spacecraft ---
+
+        // 1. Mothership
+
+        let mothership;
+        let aliensDeployed = false;
+
+        function createMothership() {
+            const mothershipGroup = new THREE.Group();
+
+            // Main body
+            const bodyGeometry = new THREE.CylinderGeometry(50, 50, 10, 32);
+            const bodyMaterial = new THREE.MeshPhongMaterial({
+                color: 0xaaaaaa,
+                emissive: 0x444444,
+                flatShading: true
+            });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            mothershipGroup.add(body);
+
+            const glowGeometry = new THREE.CylinderGeometry( 52, 52, 10, 32 );
+            const glowMaterial = new THREE.MeshBasicMaterial( {
+                color: 0x00ff00,
+                transparent: true,
+                opacity: 0.5,
+                blending: THREE.AdditiveBlending
+            });
+            const glow = new THREE.Mesh( glowGeometry, glowMaterial );
+            glow.position.y=1
+            mothershipGroup.add( glow );
+
+            // Central dome
+            const domeGeometry = new THREE.SphereGeometry(15, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2);
+            const domeMaterial = new THREE.MeshPhongMaterial({
+                color: 0x888888,
+                emissive: 0x666666,
+                flatShading: true,
+                transparent: true,
+                opacity: 0.7
+            });
+
+            const dome = new THREE.Mesh(domeGeometry, domeMaterial);
+            dome.position.y = 5;
+            mothershipGroup.add(dome);
+
+            // Dome glow
+            const domeGlowGeometry = new THREE.SphereGeometry( 16, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2 );
+            const domeGlowMaterial = new THREE.MeshBasicMaterial({
+                color: 0x00ffff,
+                transparent: true,
+                opacity: 0.7,
+                blending: THREE.AdditiveBlending
+            });
+            const domeGlow = new THREE.Mesh( domeGlowGeometry, domeGlowMaterial );
+            domeGlow.position.y = 5;
+            mothershipGroup.add( domeGlow );
+
+            // Lights around the rim
+            const lightGeometry = new THREE.SphereGeometry(1.5, 8, 8);
+            const lightMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+              for (let i = 0; i < 20; i++) {
+                const angle = (i / 20) * Math.PI * 2;
+                const x = Math.cos(angle) * 48;
+                const z = Math.sin(angle) * 48;
+
+                const light = new THREE.Mesh(lightGeometry, lightMaterial);
+                light.position.set(x, 5, z);
+                mothershipGroup.add(light);
+            }
+
+            // Point lights
+            for ( let i=0; i < 20; i++ ) {
+                const angle = ( i / 20 ) * Math.PI * 2;
+                const x = Math.cos( angle ) * 48;
+                const z = Math.sin( angle ) * 48;
+
+                const pointLight = new THREE.PointLight( 0xffffff, 0.5, 20 );
+                pointLight.position.set( x, 5.2, z );
+                mothershipGroup.add( pointLight );
+            }
+
+            mothershipGroup.position.set(0, 400, -500);
+            mothershipGroup.rotation.y = Math.PI / 4;
+
+            mothership = mothershipGroup;
+            scene.add(mothershipGroup);
+        }
+
+
+        function updateMothership() {
+            if (!mothership) return;
+
+            const time = performance.now() * 0.0001;
+            mothership.rotation.y = time;
+            mothership.position.y = 400 + Math.sin(time * 2) * 10;
+
+            const glow = mothership.children.find(child => child.material.blending === THREE.AdditiveBlending);
+            if (glow) {
+                glow.material.opacity = 0.5 + Math.sin(time * 5) * 0.2;
+            }
+        }
+
+
+
+        // 2. Alien Ship Types
+
+        const alienShips = [];
+        const ALIEN_SHIP_COUNT = 30;
+        const ALIEN_SPEED = 0.3;       // Reduced speed
+        const PLAYER_ENGAGE_DISTANCE = 150; // Reduced engage distance
+        const HOUSE_ENGAGE_DISTANCE = 150;
+        const SHOOT_COOLDOWN = 1500; // Increased cooldown
+        const DEPLOY_ALTITUDE = 100;
+        const PATROL_RADIUS = 200; // For random patrol movement
+
+
+        function createAlienShip(type) {
+            const shipGroup = new THREE.Group();
+            let geometry;
+            let material;
+
+            switch (type) {
+                case 'scout':
+                    geometry = new THREE.SphereGeometry(3, 16, 16);
+                    material = new THREE.MeshPhongMaterial({
+                        color: 0x00ff00,
+                        emissive: 0x00cc00,
+                        flatShading: true
+                    });
+
+                    const tailGeometry = new THREE.ConeGeometry(1, 5, 8);
+                    const tailMaterial = new THREE.MeshPhongMaterial({
+                        color: 0x00ff00,
+                        emissive: 0x009900,
+                    });
+                    const tail = new THREE.Mesh(tailGeometry, tailMaterial);
+                    tail.position.z = 3;
+                    tail.rotation.x = Math.PI;
+                    shipGroup.add(tail);
+                    break;
+                case 'fighter':
+                    geometry = new THREE.CylinderGeometry(2, 4, 6, 4);
+                    material = new THREE.MeshPhongMaterial({
+                        color: 0xff0000,
+                        emissive: 0xcc0000,
+                        flatShading: true
+                    });
+
+                    const wingGeometry = new THREE.BoxGeometry(8, 0.5, 2);
+                    const wingMaterial = new THREE.MeshPhongMaterial({
+                        color: 0xff0000,
+                        emissive: 0x990000
+                    });
+                    const wings = new THREE.Mesh(wingGeometry, wingMaterial);
+                    wings.position.y = 1;
+                    shipGroup.add(wings);
+
+                    break;
+                case 'interceptor':
+                    geometry = new THREE.ConeGeometry(3, 8, 8);
+                    material = new THREE.MeshPhongMaterial({
+                        color: 0x0000ff,
+                        emissive: 0x0000cc,
+                        flatShading: true
+                    });
+
+                    const finGeometry = new THREE.BoxGeometry(1, 6, 0.5);
+                    const finMaterial = new THREE.MeshPhongMaterial({
+                        color: 0x0000ff,
+                        emissive: 0x000099,
+                    });
+                    for (let i = 0; i < 4; i++) {
+                        const fin = new THREE.Mesh(finGeometry, finMaterial);
+                        fin.position.x = Math.cos(i * Math.PI / 2) * 2;
+                        fin.position.z = Math.sin(i * Math.PI / 2) * 2;
+                        fin.rotation.y = i * Math.PI / 2;
+                        shipGroup.add(fin);
+                    }
+                    break;
+                default:
+                    return null;
+            }
+
+            function createGlow(geometry, color) {
+                const glowGeometry = geometry.clone();
+                const glowMaterial = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending
+                });
+
+                const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
+                glowMesh.scale.multiplyScalar(1.2);
+                return glowMesh;
+
+            }
+            const shipMesh = new THREE.Mesh(geometry, material);
+            shipGroup.add(shipMesh);
+
+            const glowMesh = createGlow(geometry, material.color);
+            shipGroup.add(glowMesh);
+            shipGroup.lastShotTime = 0;
+
+            shipGroup.visible = false;
+            shipGroup.position.copy(mothership.position);
+
+            // Add a patrolOffset property for more varied patrol movement.
+            shipGroup.patrolOffset = new THREE.Vector3(
+                (Math.random() - 0.5) * 2 * PATROL_RADIUS,
+                (Math.random() - 0.5) * 2 * 50,  // Less vertical variation
+                (Math.random() - 0.5) * 2 * PATROL_RADIUS
+            );
+
+            return shipGroup;
+        }
+
+
+    function createAlienShips() {
+        if (!mothership) return;
+
+        for (let i = 0; i < ALIEN_SHIP_COUNT; i++) {
+            const type = i % 3 === 0 ? 'scout' : (i % 3 === 1 ? 'fighter' : 'interceptor');
+            const ship = createAlienShip(type);
+            if (ship) {
+                alienShips.push(ship);
+                scene.add(ship);
+            }
+        }
+    }
+
+    function deployAlienShips() {
+        if (aliensDeployed) return;
+        aliensDeployed = true;
+
+        for (const ship of alienShips) {
+            ship.visible = true;
+            const angle = Math.random() * Math.PI * 2;
+            const dist = 50 + Math.random() * 100;
+            ship.position.set(
+                mothership.position.x + Math.cos(angle) * dist,
+                mothership.position.y + Math.random() * 50 - 25,
+                mothership.position.z + Math.sin(angle) * dist
+            );
+        }
+    }
+
+
+
+        function alienShoot(ship) {
+            const now = performance.now();
+            if (now - ship.lastShotTime < SHOOT_COOLDOWN) {
+                return;
+            }
+
+            ship.lastShotTime = now;
+
+            const projectileGeometry = new THREE.SphereGeometry(0.5, 8, 8);
+            const projectileMaterial = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+            const projectile = new THREE.Mesh(projectileGeometry, projectileMaterial);
+
+            projectile.position.copy(ship.position);
+
+            let targetPosition;
+            if (ship.target === player) {
+                targetPosition = player.position
+            } else {
+                targetPosition = ship.target.position
+            }
+            const direction = new THREE.Vector3().subVectors(targetPosition, ship.position).normalize();
+
+            projectile.velocity = direction.multiplyScalar(PROJECTILE_SPEED);
+
+            scene.add(projectile);
+            alienProjectiles.push(projectile);
+        }
+
+
+
+      function updateAlienShips() {
+        if (!mothership || !aliensDeployed) return;
+
+        const time = performance.now() * 0.001;
+
+        for (const ship of alienShips) {
+            let target = null;
+            let distanceToPlayer = Infinity;
+
+            // Target Selection
+            if (player.visible) {
+                distanceToPlayer = ship.position.distanceTo(player.position);
+                if (distanceToPlayer <= PLAYER_ENGAGE_DISTANCE) {
+                    target = player;
+                }
+            }
+            if (!target) {
+                let nearestHouse = null;
+                let minDistance = Infinity;
+                for (const house of houses) {
+                    const distance = ship.position.distanceTo(house.position);
+                    if (distance < HOUSE_ENGAGE_DISTANCE && distance < minDistance) {
+                        nearestHouse = house;
+                        minDistance = distance;
+                    }
+                }
+                target = nearestHouse;
+            }
+            ship.target = target;
+
+
+            // Movement
+            if (target) {
+                const direction = new THREE.Vector3().subVectors(target.position, ship.position).normalize();
+                const speed = ALIEN_SPEED * deltaTime * 60;
+                ship.position.add(direction.multiplyScalar(speed));
+                ship.lookAt(target.position);
+
+                if (target === player || target instanceof THREE.Group) {
+                    alienShoot(ship);
+                }
+
+            } else {
+                // Patrol behavior (more varied, less "clumped")
+                const patrolX = mothership.position.x + ship.patrolOffset.x + Math.sin(time + ship.id) * 50;  // Add time-based variation
+                const patrolY = mothership.position.y + ship.patrolOffset.y;  // Use the offset for base height
+                const patrolZ = mothership.position.z + ship.patrolOffset.z + Math.cos(time + ship.id) * 50;
+
+                ship.position.set(patrolX, patrolY, patrolZ);
+                ship.lookAt(mothership.position); // Still look at mothership while patrolling
+            }
+
+            // Pulsating Glow
+            const glow = ship.children.find(child => child.material && child.material.blending === THREE.AdditiveBlending);
+            if (glow) {
+                glow.material.opacity = 0.6 + Math.sin(time * 5) * 0.3;
+            }
+        }
+    }
+
+
+        const alienProjectiles = [];
+
+        function updateAlienProjectiles() {
+            for (let i = alienProjectiles.length - 1; i >= 0; i--) {
+                const projectile = alienProjectiles[i];
+
+                projectile.position.add(projectile.velocity.clone().multiplyScalar(deltaTime * 60));
+
+                const projectileBox = new THREE.Box3().setFromObject(projectile);
+
+                if (player.visible) {
+                    const playerBox = new THREE.Box3().setFromObject(player);
+                    playerBox.expandByScalar(-playerBox.getSize(new THREE.Vector3()).length() * (1 - 0.6));
+                    if (projectileBox.intersectsBox(playerBox)) {
+                        scene.remove(projectile);
+                        alienProjectiles.splice(i, 1);
+                        currentHealth -= 10;
+                        if (currentHealth <= 0) {
+                            gameOver("Destroyed by aliens!");
+                        }
+                        continue;
+                    }
+                }
+
+                for (let j = houses.length - 1; j >= 0; j--) {
+                    const house = houses[j];
+                    const houseBox = new THREE.Box3().setFromObject(house);
+
+                    if (projectileBox.intersectsBox(houseBox))
+                    {
+                        createExplosionEffect(projectile.position);
+                        scene.remove(projectile);
+                        alienProjectiles.splice(i, 1);
+                        scene.remove(house)
+                        houses.splice(j, 1);
+                        continue;
+                    }
+                }
+
+                if (projectile.position.distanceTo(mothership.position) > MAX_PROJECTILE_DISTANCE * 2) {
+                    scene.remove(projectile);
+                    alienProjectiles.splice(i, 1);
+                }
+            }
+        }
+        
+        // Add to updateProjectiles() function, right before the loop:
+        function updateProjectiles() {
+
+            // --- Existing projectile loop ---
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                const projectile = projectiles[i];
+
+                // --- Existing collision checks with balloons, ships, buildings, houses, castle ---
+                // ... (All your existing collision checks for targets, ships, buildings, houses, castle) ...
+                // Check collisions with targets (balloons)
+                for (let j = targets.length - 1; j >= 0; j--) {
+                    const target = targets[j];
+                    target.boundingBox.setFromObject(target);
+
+                    if (target.boundingBox.containsPoint(projectile.position)) {
+                        // Create hit effect
+                        createHitEffect(projectile.position);
+
+                        // Remove projectile and target
+                        scene.remove(projectile);
+                        scene.remove(target);
+                        projectiles.splice(i, 1);
+                        targets.splice(j, 1);
+
+                        // Update score ONLY in the overlay
+                        targetsHit++;
+                        updateScoreDisplay();
+
+                        // Add points
+                        score += TARGET_SCORE;
+                        break;
+                    }
+                }
+
+                // Move projectile based on its velocity and deltaTime
+                projectile.position.x += projectile.velocity.x * deltaTime * 60;
+                projectile.position.y += projectile.velocity.y * deltaTime * 60;
+                projectile.position.z += projectile.velocity.z * deltaTime * 60;
+
+                // Add gravity effect (make frame-rate independent)
+                projectile.velocity.y -= 0.0005 * deltaTime * 60;
+
+                // Check if projectile has gone too far
+                if (projectile.position.distanceTo(player.position) > MAX_PROJECTILE_DISTANCE) {
+                    scene.remove(projectile);
+                    projectiles.splice(i, 1);
+                    continue;
+                }
+
+                // Rotate dart to face direction of travel
+                const direction = new THREE.Vector3().copy(projectile.velocity).normalize();
+                projectile.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+
+                // Create bounding box for dart
+                const dartBox = new THREE.Box3().setFromObject(projectile);
+
+                // Check collisions with ships
+                for (let j = ships.length - 1; j >= 0; j--) {
+                    const ship = ships[j];
+                    const shipBox = new THREE.Box3().setFromObject(ship);
+
+                    if (dartBox.intersectsBox(shipBox)) {
+                        createExplosionEffect(ship.position.clone());
+                        scene.remove(ship);
+                        scene.remove(projectile);
+                        ships.splice(j, 1);
+                        projectiles.splice(i, 1);
+                        score += 1000; // Changed from 100 to 1000
+                        break;
+                    }
+                }
+
+                // Check collisions with buildings (flat roof)
+                for (let j = buildings.length - 1; j >= 0; j--) {
+                    const building = buildings[j];
+                    const buildingBox = new THREE.Box3().setFromObject(building);
+
+                    if (dartBox.intersectsBox(buildingBox)) {
+                        createExplosionEffect(building.position.clone(), true);
+                        scene.remove(building);
+                        scene.remove(projectile);
+                        buildings.splice(j, 1);
+                        projectiles.splice(i, 1);
+                        score += 250; // Changed from 150 to 250
+                        break;
+                    }
+                }
+
+                // Check collisions with houses (curved roof)
+                for (let j = houses.length - 1; j >= 0; j--) {
+                    const house = houses[j];
+                    const houseBox = new THREE.Box3().setFromObject(house);
+
+                    if (dartBox.intersectsBox(houseBox)) {
+                        createExplosionEffect(house.position.clone(), true);
+                        scene.remove(house);
+                        scene.remove(projectile);
+                        houses.splice(j, 1);
+                        projectiles.splice(i, 1);
+                        score += 250; // Changed from 150 to 250
+                        break;
+                    }
+                }
+
+                // Check castle part collisions
+                for (let j = castle.parts.length - 1; j >= 0; j--) {
+                    const part = castle.parts[j];
+                    const partBox = new THREE.Box3().setFromObject(part);
+                    const dartBox = new THREE.Box3().setFromObject(projectile);
+
+                    if (dartBox.intersectsBox(partBox)) {
+                        // Remove projectile
+                        scene.remove(projectile);
+                        projectiles.splice(i, 1);
+
+                        // Damage castle part
+                        part.health--;
+
+                        // If part is destroyed
+                        if (part.health <= 0) {
+                            // Create appropriate explosion effect
+                            createExplosionEffect(part.position.clone(), true);
+
+                            // Remove the part
+                            scene.remove(part);
+                            castle.parts.splice(j, 1);
+
+                            // Add score based on part type
+                            switch(part.castlePartType) {
+                                case 'keep':
+                                    score += 5000;
+                                    break;
+                                case 'tower':
+                                    score += 2000;
+                                    break;
+                                case 'roof':
+                                    score += 1000;
+                                    break;
+                                case 'merlon':
+                                    score += 500;
+                                    break;
+                            }
+                        } else {
+                            // Visual feedback for hit but not destroyed
+                            createHitEffect(projectile.position.clone());
+                        }
+
+                        break; // Exit the castle parts loop
+                    }
+                }
+                
+                //NEW: Alien Ship Collisions
+                for (let j = alienShips.length - 1; j >= 0; j--) {
+                    const alienShip = alienShips[j];
+                    const alienShipBox = new THREE.Box3().setFromObject(alienShip);
+
+                     if (dartBox.intersectsBox(alienShipBox)) {
+                        createExplosionEffect(alienShip.position.clone());
+                        scene.remove(alienShip);
+                        scene.remove(projectile);
+                        alienShips.splice(j, 1);
+                        projectiles.splice(i, 1);
+                        score += 500; // Score for hitting an alien ship
+                        break; // Exit alien ship loop after hit
+                     }
+                }
+            }
+        }
+
+    function updatePlayer() {
+
+        // --- EXISTING CODE (Speed Control) ---
+        if (keys['KeyW'] || rightJoystickData.y > 0.3) {
+            const speedInc = speedIncrement * deltaTime;
+            const turboMultiplier = keys['ShiftLeft'] ? TURBO_SPEED_MULTIPLIER : 1;
+            currentSpeed += speedInc * turboMultiplier;
+            const maxAllowedSpeed = maxSpeed * (keys['ShiftLeft'] ? TURBO_SPEED_MULTIPLIER : 1);
+            currentSpeed = Math.min(currentSpeed, maxAllowedSpeed);
+        } else if (keys['KeyS'] || rightJoystickData.y < -0.3) {
+            currentSpeed = Math.max(currentSpeed - speedIncrement * 2 * deltaTime, minSpeed);
+        } else if (keys['ShiftLeft']) {
+            const speedInc = speedIncrement * deltaTime;
+            currentSpeed += speedInc * TURBO_SPEED_MULTIPLIER;
+            const maxAllowedSpeed = maxSpeed * TURBO_SPEED_MULTIPLIER;
+            currentSpeed = Math.min(currentSpeed, maxAllowedSpeed);
+        }
+
+        const speedRatio = (currentSpeed - minSpeed) / (maxSpeed - minSpeed);
+        const baseFovIncrease = speedRatio * MAX_FOV_INCREASE;
+        const turboFovIncrease = keys['ShiftLeft'] ? TURBO_EXTRA_FOV * speedRatio : 0;
+        const targetFOV = MIN_FOV + baseFovIncrease + turboFovIncrease;
+        camera.fov += (targetFOV - camera.fov) * 0.2;
+        camera.updateProjectionMatrix();
+
+        const isAirborne = player.position.y > 36.1;
+
+        // --- DEPLOY ALIENS AFTER TAKEOFF ---
+        if (isAirborne && !aliensDeployed) {
+            deployAlienShips();
+        }
+
+        // --- EXISTING CODE (Roll, Yaw, Pitch, etc.) ---
+        if (isAirborne) {
+            if (keys['ArrowLeft'] || keys['KeyA'] || leftJoystickData.x < -0.3) {
+                currentRoll = Math.min(currentRoll + rollSpeed * deltaTime, maxRoll);
+                yawAngle += yawRate * deltaTime * (currentSpeed / maxSpeed);
+            } else if (keys['ArrowRight'] || keys['KeyD'] || leftJoystickData.x > 0.3) {
+                currentRoll = Math.max(currentRoll - rollSpeed * deltaTime, -maxRoll);
+                yawAngle -= yawRate * deltaTime * (currentSpeed / maxSpeed);
+            } else {
+                currentRoll = Math.abs(currentRoll) > 0.01 ? currentRoll - Math.sign(currentRoll) * rollRecoverySpeed * deltaTime : 0;
+            }
+        } else {
+            currentRoll = 0;
+            if (keys['ArrowLeft'] || keys['KeyA'] || leftJoystickData.x < -0.3) {
+                yawAngle += (yawRate * 2 * (currentSpeed / maxSpeed)) * deltaTime;
+            } else if (keys['ArrowRight'] || keys['KeyD'] || leftJoystickData.x > 0.3) {
+                yawAngle -= (yawRate * 2 * (currentSpeed / maxSpeed)) * deltaTime;
+            }
+        }
+
+        if (keys['ArrowUp'] || leftJoystickData.y > 0.3) {
+            currentPitch = Math.max(currentPitch - pitchSpeed * deltaTime, -maxPitch);
+        }
+        if (keys['ArrowDown'] || leftJoystickData.y < -0.3) {
+            currentPitch = Math.min(currentPitch + pitchSpeed * deltaTime, maxPitch);
+        }
+
+        player.translateZ(-currentSpeed);
+
+        const speedKmh = currentSpeed * 525;
+        if (speedKmh >= 74) {
+            const liftAmount = (currentSpeed * liftFactor * deltaTime * 60) * Math.cos(currentRoll);
+            player.position.y += liftAmount;
+        }
+
+        player.position.y = Math.max(player.position.y - gravityFactor * deltaTime * 60, 36);
+
+        if (isThirdPerson) {
+            const currentTime = Date.now();
+            if (currentTime - lastMouseMoveTime > MOUSE_TIMEOUT) {
+                const lerpFactor = 0.02 * deltaTime * 60;
+                mouseX *= (1 - lerpFactor);
+                mouseY *= (1 - lerpFactor);
+            }
+
+            const idealOffset = new THREE.Vector3(
+                Math.sin(mouseX) * 10,
+                Math.max(2 + Math.sin(mouseY) * 5, 1),
+                Math.cos(mouseX) * 10
+            ).applyMatrix4(player.matrixWorld);
+
+            camera.position.lerp(idealOffset, 0.1);
+            camera.position.y = Math.max(camera.position.y, 35.5);
+            camera.lookAt(player.position.clone().add(new THREE.Vector3(0, 1, 0)));
+        } else {
+            const cockpitPos = player.localToWorld(COCKPIT_OFFSET.clone());
+            camera.position.copy(cockpitPos);
+            camera.quaternion.copy(player.quaternion);
+            camera.rotateY(mouseX);
+            camera.rotateX(mouseY);
+        }
+
+        if (window.engineSound) {
+            const normalizedSpeed = Math.pow((currentSpeed - minSpeed) / (maxSpeed - minSpeed), 0.5);
+            const baseFreq = 40 + normalizedSpeed * 100;
+            const turboMultiplier = keys['ShiftLeft'] ? 2 : 1;
+
+            window.engineSound.osc1.frequency.setValueAtTime(baseFreq * turboMultiplier, window.audioContext.currentTime);
+            window.engineSound.osc2.frequency.setValueAtTime(baseFreq * 1.5 * turboMultiplier, window.audioContext.currentTime);
+            window.engineSound.osc3.frequency.setValueAtTime(baseFreq * 2 * turboMultiplier, window.audioContext.currentTime);
+
+            const gainMultiplier = keys['ShiftLeft'] ? 1.5 : 1;
+            window.engineSound.gain1.gain.setValueAtTime((0.1 + normalizedSpeed * 0.3) * gainMultiplier, window.audioContext.currentTime);
+            window.engineSound.gain2.gain.setValueAtTime((0.05 + normalizedSpeed * 0.15) * gainMultiplier, window.audioContext.currentTime);
+            window.engineSound.gain3.gain.setValueAtTime((0.02 + normalizedSpeed * 0.06) * gainMultiplier, window.audioContext.currentTime);
+            window.engineSound.noise.gain.setValueAtTime((0.1 + normalizedSpeed * 0.3) * gainMultiplier, window.audioContext.currentTime);
+
+            window.engineSound.filter.frequency.setValueAtTime(800 + normalizedSpeed * 3000 * turboMultiplier, window.audioContext.currentTime);
+        }
+
+        player.rotation.set(0, 0, 0);
+        player.rotateY(yawAngle);
+        player.rotateX(currentPitch);
+        player.rotateZ(currentRoll);
+
+        if (keys['Space']) {
+            const currentTime = Date.now();
+            if (currentTime - lastFireTime >= FIRE_RATE && projectiles.length < MAX_PROJECTILES) {
+                shootFoamDart();
+                lastFireTime = currentTime;
+            }
+        }
+
+        let turbulenceIntensity = baseTurbulenceIntensity * (currentSpeed / maxSpeed) * deltaTime * 60;
+        let turbulenceFrequency = baseTurbulenceFrequency * (currentSpeed / maxSpeed) * deltaTime * 60;
+
+        if (keys['ShiftLeft']) {
+            turbulenceIntensity *= 5;
+            turbulenceFrequency *= 5;
+        }
+
+        if (keys['Space']) {
+            turbulenceIntensity *= 3;
+            turbulenceFrequency *= 2;
+        }
+
+        player.position.x += (Math.random() - 0.5) * turbulenceIntensity * 3;
+        player.position.y += (Math.random() - 0.5) * turbulenceIntensity * 3;
+        player.position.z += (Math.random() - 0.5) * turbulenceIntensity * 3;
+
+        player.rotation.x += (Math.random() - 0.5) * turbulenceFrequency * 2;
+        player.rotation.y += (Math.random() - 0.5) * turbulenceFrequency * 2;
+        player.rotation.z += (Math.random() - 0.5) * turbulenceFrequency * 2;
+        
+        const updateTime = Date.now();
+            if (updateTime - lastPositionUpdate > POSITION_UPDATE_INTERVAL) {
+                broadcastPosition();
+                lastPositionUpdate = updateTime;
+            }
+    }
+
+
+
+        // Call these after other scene setup
+        createMothership();
+        createAlienShips();
+
+    </script>
+</body>
+</html>
