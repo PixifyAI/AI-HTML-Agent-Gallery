@@ -1,11 +1,12 @@
 # AI-Generated Web Gallery
 
-This project is a Next.js application designed to showcase single-file web applications and games created with agentic AI tools. It provides a gallery view with tabs for "Apps" and "Games", allowing users to browse and interact with the generated HTML files.
+This project is a Next.js application designed to showcase single-file web applications and games created with agentic AI tools, and also provides HTMLAgent for creating new content using AI models. It features a gallery view with sections for "Apps" and "Games", allowing users to browse and interact with the generated HTML files, and a dedicated page for creating content with Gemini models.
 
 ## Features
 
 - Gallery view for AI-generated web apps and games.
-- Tabs to switch between Apps and Games.
+- Separate pages for browsing Apps and Games.
+- Dedicated page for creating content using Gemini models.
 - Displays metadata (AI Tool, Model, Date Added) extracted from HTML file comments.
 - Option to add new apps and games (via file upload).
 
@@ -26,6 +27,15 @@ To set up the project locally, follow these steps:
     npm install --legacy-peer-deps
     ```
     _Note: `--legacy-peer-deps` is used to resolve potential dependency conflicts._
+
+3.  **Set up Environment Variables:**
+
+    Create a `.env.local` file in the root of the project by copying `sample.env.local`. Add your Gemini API key to this file:
+
+    ```
+    GEMINI_API_KEY=YOUR_API_KEY_VALUE
+    ```
+    Replace `YOUR_API_KEY_VALUE` with your actual Gemini API key.
 
 ## Running the Project
 
@@ -84,10 +94,12 @@ To run this project using Docker, follow these steps:
 ## Project Structure
 
 -   `/app`: Contains the Next.js application pages and API routes.
-    -   `/app/page.tsx`: The main landing page with the gallery.
-    -   `/app/apps/page.tsx`: Page specifically for displaying apps (though currently integrated into the main page).
-    -   `/app/games/page.tsx`: Page specifically for displaying games (though currently integrated into the main page).
-    -   `/app/api`: Contains API routes for file operations (upload, get file, get files) and comments.
+    -   `/app/page.tsx`: The main landing page.
+    -   `/app/apps/page.tsx`: Page specifically for displaying apps.
+    -   `/app/games/page.tsx`: Page specifically for displaying games.
+    -   `/app/create/page.tsx`: Page for creating content with Gemini models.
+    -   `/app/debug/page.tsx`: Page for debugging purposes.
+    -   `/app/api`: Contains API routes for file operations (upload, get file, get files), comments, and Gemini chat.
 -   `/components`: Reusable React components used in the application.
     -   `/components/gallery.tsx`: Component for displaying the gallery items.
     -   `/components/add-file-button.tsx`: Component for adding new files.
