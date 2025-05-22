@@ -88,7 +88,7 @@ export default function Navbar() {
               </Button>
             </Link>
 
-            <a href="https://github.com/PixifyAI/ai-html-creative-gallery" target="_blank" rel="noopener noreferrer">
+            <a href="https://github.com/PixifyAI/AI-HTML-Agent-Gallery" target="_blank" rel="noopener noreferrer">
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Github className="h-4 w-4" />
                 <span className="hidden sm:inline">GitHub</span>
